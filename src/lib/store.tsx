@@ -60,6 +60,7 @@ interface Ctx {
   route: Route;
   nav: (r: Route) => void;
   login: (userId: string) => void;
+  register: (name: string, email: string) => string | null;
   logout: () => void;
   resetAll: () => void;
   toasts: Toast[];
@@ -345,7 +346,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     mutate((d) => {
       const i = d.lessons.findIndex((l) => l.id === lesson.id);
       if (i >= 0) d.lessons[i] = lesson;
-      else d.lessons.push(lesson);
+      else {
+        d.lessons.push(lesson);
+        const topicTitle = d.topics.find((t) => t.id === lesson.topicId)?.title ?? "the curriculum";
+        for (const u of d.users)
+          if (u.role === "student")
+            pushNotif(d, u.id, { kind: "content", title: "New lesson published", body: `“${lesson.title}” is now available in ${topicTitle}.` });
+      }
       if (user) log(d, user.id, "system", `${i >= 0 ? "updated" : "published"} lesson “${lesson.title}”`);
     });
     toast("Lesson saved to curriculum", "ok");
@@ -385,6 +392,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setRoute({ name: u.role === "student" ? "dashboard" : "admin" });
     window.scrollTo(0, 0);
     toast(`Signed in as ${u.name} · ${u.role}`, "info");
+  };
+
+  const register = (name: string, email: string): string | null => {
+    const nm = name.trim();
+    const em = email.trim().toLowerCase();
+    if (nm.length < 2) return "Enter your full name.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return "Enter a valid email address.";
+    if (db.users.some((u) => u.email.toLowerCase() === em)) return "That email is already registered — use cohort sign-in.";
+    const id = `u-${newId()}`;
+    const hue = Math.floor(Math.random() * 360);
+    mutate((d) => {
+      d.users.push({ id, name: nm, email: em, role: "student", hue, joinedAt: Date.now(), active: true, title: "Student · Self-enrolled" });
+      d.students[id] = { lessons: {}, activities: {}, attempts: [], projects: {}, skills: {}, achievements: {}, certificates: [], xp: 0 };
+      const list = d.notifications[id] ?? (d.notifications[id] = []);
+      list.unshift({
+        id: `n-${newId()}`, at: Date.now(), read: false, kind: "system",
+        title: "Welcome to TechFoundry",
+        body: "Your workspace is ready. Four courses are open — most builders start with Artificial Intelligence, then follow the path.",
+      });
+      log(d, id, "system", "joined the platform");
+    });
+    localStorage.setItem(LS_SESSION, id);
+    setSessionId(id);
+    setRoute({ name: "dashboard" });
+    window.scrollTo(0, 0);
+    toast(`Workspace created — welcome, ${nm.split(" ")[0]}`, "ok");
+    return null;
   };
 
   const logout = () => {
@@ -600,7 +634,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const value: Ctx = {
-    db, user, st, route, nav, login, logout, resetAll,
+    db, user, st, route, nav, login, register, logout, resetAll,
     toasts, toast, dismissToast, notifOpen, setNotifOpen, menuOpen, setMenuOpen,
     getUser: (id) => db.users.find((u) => u.id === id),
     getCourse: (id) => db.courses.find((c) => c.id === id),
