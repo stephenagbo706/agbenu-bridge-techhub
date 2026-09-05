@@ -140,6 +140,52 @@ textarea, select {
   font-family: var(--font-sans);
 }
 
+/* ─── Buttons, inputs, stamps ─────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  font-weight: 600; font-size: 0.875rem; line-height: 1;
+  border: 1.5px solid var(--color-ink); border-radius: 8px;
+  padding: 0 1rem; height: 2.5rem;
+  background: var(--color-card); color: var(--color-ink);
+  cursor: pointer; user-select: none; white-space: nowrap;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.15s ease, opacity 0.15s ease;
+}
+.btn:hover { transform: translate(-1px, -1px); box-shadow: var(--shadow-lift-sm); }
+.btn:active { transform: translate(1px, 1px); box-shadow: none; }
+.btn:disabled { opacity: 0.45; pointer-events: none; }
+.btn-primary { background: var(--color-brand); border-color: var(--color-brand-deep); color: #f4faf7; }
+.btn-primary:hover { background: var(--color-brand-deep); }
+.btn-dark { background: var(--color-ink); border-color: var(--color-ink); color: var(--color-paper); }
+.btn-gold { background: var(--color-gold); border-color: #9a6a08; color: var(--color-ink); }
+.btn-danger { background: var(--color-card); border-color: var(--color-danger); color: var(--color-danger); }
+.btn-ghost { border-color: transparent; background: transparent; }
+.btn-ghost:hover { background: rgba(20, 24, 31, 0.06); box-shadow: none; transform: none; }
+.btn-sm { height: 2rem; padding: 0 0.7rem; font-size: 0.78rem; border-radius: 7px; }
+.btn-xs { height: 1.65rem; padding: 0 0.55rem; font-size: 0.72rem; border-radius: 6px; gap: 0.35rem; }
+
+.inp {
+  width: 100%; border: 1.5px solid var(--color-line); background: #fff;
+  border-radius: 8px; padding: 0.5rem 0.7rem; font-size: 0.9rem; color: var(--color-ink);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.inp:focus { outline: none; border-color: var(--color-brand); box-shadow: 0 0 0 3px rgba(14, 124, 107, 0.14); }
+.inp::placeholder { color: #9aa094; }
+
+.lbl {
+  display: block; font-family: var(--font-mono); font-size: 0.66rem; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-mute); margin-bottom: 0.35rem;
+}
+
+.stamp {
+  display: inline-block; border: 2.5px solid currentColor; border-radius: 6px;
+  padding: 0.1rem 0.6rem 0.05rem; font-family: var(--font-mono); font-weight: 700;
+  font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+  transform: rotate(-5deg);
+}
+
+.thin-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
