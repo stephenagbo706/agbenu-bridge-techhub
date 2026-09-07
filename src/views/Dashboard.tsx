@@ -49,8 +49,11 @@ function CourseSelection() {
           <h1 className="mt-2 font-display text-3xl font-bold tracking-tight sm:text-4xl">
             {greet}, {user.name.split(" ")[0]}.
           </h1>
+          <h2 className="mt-2 font-display text-xl font-semibold tracking-tight text-ink">
+            Choose Your Technology Path
+          </h2>
           <p className="mx-auto mt-3 max-w-xl text-[15px] leading-relaxed text-mute">
-            Choose your technology pathway to begin your learning journey. Select one primary course to personalize your curriculum, simulations, and projects.
+            Select the course you want to learn. You can choose one primary learning pathway. Once settled, this course becomes your personalized learning journey.
           </p>
         </div>
       </Reveal>
@@ -121,8 +124,8 @@ function CourseSelection() {
                     <span>{lessons.length} lessons</span>
                   </div>
                   <div className="mt-4 flex items-center justify-between border-t-1.5 border-dashed border-line pt-3.5">
-                    <span className="text-xs text-mute">
-                      {isSelected ? "Selected" : "Click to select"}
+                    <span className={cn("text-xs", isSelected ? "font-semibold text-se" : "text-mute")}>
+                      {isSelected ? "✓ Selected" : "Click to select"}
                     </span>
                     <span 
                       className={cn(
@@ -131,7 +134,7 @@ function CourseSelection() {
                       )} 
                       style={{ color: m.hex }}
                     >
-                      {isSelected ? "Selected" : "Select"} <Icon name="arrowR" size={13} />
+                      {isSelected ? "Selected ✓" : "Select"} <Icon name="arrowR" size={13} />
                     </span>
                   </div>
                 </div>
@@ -147,7 +150,10 @@ function CourseSelection() {
           {error && (
             <div className="anim-fade-in flex items-start gap-2 rounded-md border-1.5 border-danger/40 bg-[#f6e3e0] px-4 py-2.5 text-sm font-medium text-danger">
               <Icon name="flag" size={14} className="mt-0.5 shrink-0" />
-              {error}
+              <div>
+                <div className="font-semibold">Unable to save your course selection.</div>
+                <div className="mt-0.5 text-xs">{error}</div>
+              </div>
             </div>
           )}
           
@@ -155,25 +161,31 @@ function CourseSelection() {
             onClick={handleContinue}
             disabled={!selectedCourseId || isEnrolling}
             className={cn(
-              "btn btn-primary min-w-[200px]",
+              "btn btn-primary min-w-[240px]",
               !selectedCourseId && "opacity-50 cursor-not-allowed"
             )}
           >
             {isEnrolling ? (
               <>
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                Saving your course...
+                Settling on your course...
               </>
             ) : (
               <>
-                Continue to Dashboard
+                Settle on This Course
                 <Icon name="arrowR" size={14} />
               </>
             )}
           </button>
           
           {!selectedCourseId && !isEnrolling && (
-            <p className="text-xs text-mute">Select a course to continue</p>
+            <p className="text-xs text-mute">Select a course to settle on your learning pathway</p>
+          )}
+          {selectedCourseId && !isEnrolling && (
+            <p className="text-xs font-medium text-se">
+              <Icon name="check" size={12} className="inline mr-1" />
+              Your course is ready to be saved
+            </p>
           )}
         </div>
       </Reveal>
@@ -626,8 +638,19 @@ function DiffChip({ level }: { level: string }) {
 
 export default function Dashboard() {
   const app = useApp();
-  const { st } = app;
-  if (!st) return null;
+  const { st, user } = app;
+
+  // Loading state while student data loads
+  if (!user || !st) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand/30 border-t-brand" />
+          <p className="font-mono text-xs uppercase tracking-wider text-mute">Loading your learning path...</p>
+        </div>
+      </div>
+    );
+  }
 
   // If student has an active course, show the personalized dashboard
   if (app.hasActiveCourse()) {

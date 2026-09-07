@@ -620,7 +620,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
       sub: `${db.courses.find((c) => c.id === l.courseId)?.short} · ${db.topics.find((t) => t.id === l.topicId)?.title}`,
       courseId: l.courseId,
     });
-    // Resume the course of the last lesson if unfinished; otherwise the first open course.
+    // Use active course if settled, otherwise fall back to ordered courses
+    const activeCourseId = s.activeCourseId;
+    if (activeCourseId) {
+      // Only look at the active course
+      const next = courseLessons(activeCourseId).find((l) => !s.lessons[l.id]);
+      if (next) return findLessonRec(next);
+      // Check checkpoint for active course
+      const cp = db.assessments.find((a) => a.courseId === activeCourseId && a.kind === "Checkpoint" && !(bestAttempt(a.id, userId)?.pass));
+      if (cp) return { kind: "assessment", id: cp.id, label: cp.title, sub: "Final checkpoint", courseId: cp.courseId };
+      // Check projects for active course
+      const proj = db.projects.find((p) => p.courseIds.includes(activeCourseId) && (!(s.projects[p.id]?.status) || s.projects[p.id]?.status === "not_started"));
+      if (proj) return { kind: "project", id: proj.id, label: proj.title, sub: "Project · not started" };
+      return null;
+    }
+    // Fallback for students without active course (legacy behavior)
     const ordered = [...db.lessons].sort((a, b) => {
       const ca = db.courses.findIndex((c) => c.id === a.courseId);
       const cb = db.courses.findIndex((c) => c.id === b.courseId);
@@ -655,34 +669,64 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
     const nu = nextUp(userId);
     push(nu);
-    // In-progress projects with open milestones.
-    for (const [pid, ps] of Object.entries(s.projects)) {
-      if (ps.status !== "in_progress") continue;
-      const p = db.projects.find((x) => x.id === pid);
-      if (!p) continue;
-      push({ kind: "project", id: pid, label: p.title, sub: `${ps.milestones.length}/${p.milestones.length} milestones · in progress` });
-    }
-    // Open assessments for courses already started.
-    for (const c of db.courses) {
-      if (coursePct(c.id, userId) === 0) continue;
-      for (const a of db.assessments.filter((x) => x.courseId === c.id)) {
+    // If student has active course, only show items from that course
+    const activeCourseId = s.activeCourseId;
+    if (activeCourseId) {
+      // In-progress projects for active course
+      for (const [pid, ps] of Object.entries(s.projects)) {
+        if (ps.status !== "in_progress") continue;
+        const p = db.projects.find((x) => x.id === pid);
+        if (!p || !p.courseIds.includes(activeCourseId)) continue;
+        push({ kind: "project", id: pid, label: p.title, sub: `${ps.milestones.length}/${p.milestones.length} milestones · in progress` });
+      }
+      // Open assessments for active course
+      for (const a of db.assessments.filter((x) => x.courseId === activeCourseId)) {
         if (!bestAttempt(a.id, userId)?.pass)
-          push({ kind: "assessment", id: a.id, label: a.title, sub: `${a.kind} · ${a.questions.length} questions · pass ${a.passPct}%`, courseId: c.id });
+          push({ kind: "assessment", id: a.id, label: a.title, sub: `${a.kind} · ${a.questions.length} questions · pass ${a.passPct}%`, courseId: activeCourseId });
+      }
+      // Activities for active course topics
+      for (const a of db.activities.filter((x) => x.courseId === activeCourseId)) {
+        if (s.activities[a.id]) continue;
+        if (topicPct(a.topicId, userId) > 0 || coursePct(activeCourseId, userId) > 0)
+          push({ kind: "activity", id: a.id, label: a.title, sub: `Practical · ${a.kind.toLowerCase()} · ${a.minutes} min`, courseId: activeCourseId });
+      }
+      // Projects not yet started for active course
+      for (const p of db.projects.filter((x) => x.courseIds.includes(activeCourseId))) {
+        const ps = s.projects[p.id];
+        if (!ps || ps.status === "not_started")
+          push({ kind: "project", id: p.id, label: p.title, sub: `${p.difficulty} project · ~${p.hours} h` });
+      }
+    } else {
+      // Fallback for students without active course (legacy behavior)
+      // In-progress projects with open milestones.
+      for (const [pid, ps] of Object.entries(s.projects)) {
+        if (ps.status !== "in_progress") continue;
+        const p = db.projects.find((x) => x.id === pid);
+        if (!p) continue;
+        push({ kind: "project", id: pid, label: p.title, sub: `${ps.milestones.length}/${p.milestones.length} milestones · in progress` });
+      }
+      // Open assessments for courses already started.
+      for (const c of db.courses) {
+        if (coursePct(c.id, userId) === 0) continue;
+        for (const a of db.assessments.filter((x) => x.courseId === c.id)) {
+          if (!bestAttempt(a.id, userId)?.pass)
+            push({ kind: "assessment", id: a.id, label: a.title, sub: `${a.kind} · ${a.questions.length} questions · pass ${a.passPct}%`, courseId: c.id });
+        }
+      }
+      // Activities whose topic is at least started.
+      for (const a of db.activities) {
+        if (s.activities[a.id]) continue;
+        if (topicPct(a.topicId, userId) > 0 || coursePct(a.courseId, userId) > 0)
+          push({ kind: "activity", id: a.id, label: a.title, sub: `Practical · ${a.kind.toLowerCase()} · ${a.minutes} min`, courseId: a.courseId });
+      }
+      // Projects not yet started.
+      for (const p of db.projects) {
+        const ps = s.projects[p.id];
+        if (!ps || ps.status === "not_started")
+          push({ kind: "project", id: p.id, label: p.title, sub: `${p.difficulty} project · ~${p.hours} h` });
       }
     }
-    // Activities whose topic is at least started.
-    for (const a of db.activities) {
-      if (s.activities[a.id]) continue;
-      if (topicPct(a.topicId, userId) > 0 || coursePct(a.courseId, userId) > 0)
-        push({ kind: "activity", id: a.id, label: a.title, sub: `Practical · ${a.kind.toLowerCase()} · ${a.minutes} min`, courseId: a.courseId });
-    }
-    // Projects not yet started.
-    for (const p of db.projects) {
-      const ps = s.projects[p.id];
-      if (!ps || ps.status === "not_started")
-        push({ kind: "project", id: p.id, label: p.title, sub: `${p.difficulty} project · ~${p.hours} h` });
-    }
-    return out.slice(0, 3);
+    return out.slice(0, 5);
   };
 
   const pathStage = (userId?: string): number => {
