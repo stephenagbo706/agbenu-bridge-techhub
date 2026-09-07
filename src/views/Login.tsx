@@ -171,11 +171,26 @@ export default function Login() {
           {db.courses.map((c, i) => {
             const m = courseMeta(c.id);
             return (
-              <div key={c.id} className="anim-fade-up flex items-center gap-3 rounded-lg border-1.5 border-paper/12 bg-ink2/70 px-4 py-3" style={{ animationDelay: `${150 + i * 90}ms` }}>
-                <span className={cn("h-2.5 w-2.5 rounded-full", m.dot)} />
-                <span className="font-mono text-[11px] text-paper/45">{c.code}</span>
-                <span className="font-display text-sm font-semibold">{c.title}</span>
-                <span className="ml-auto font-mono text-[11px] text-paper/40">~{c.hours}h</span>
+              <div key={c.id} className="anim-fade-up overflow-hidden rounded-lg border-1.5 border-paper/12 bg-ink2/70" style={{ animationDelay: `${150 + i * 90}ms` }}>
+                {c.image_url ? (
+                  <div className="relative h-16 w-full overflow-hidden">
+                    <img src={c.image_url} alt={c.title} className="h-full w-full object-cover opacity-70" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-ink2/90 via-ink2/60 to-transparent" />
+                    <div className="absolute inset-0 flex items-center gap-3 px-4">
+                      <span className={cn("h-2.5 w-2.5 rounded-full", m.dot)} />
+                      <span className="font-mono text-[10px] text-paper/50">{c.code}</span>
+                      <span className="font-display text-sm font-semibold">{c.title}</span>
+                      <span className="ml-auto font-mono text-[10px] text-paper/40">~{c.hours}h</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <span className={cn("h-2.5 w-2.5 rounded-full", m.dot)} />
+                    <span className="font-mono text-[11px] text-paper/45">{c.code}</span>
+                    <span className="font-display text-sm font-semibold">{c.title}</span>
+                    <span className="ml-auto font-mono text-[11px] text-paper/40">~{c.hours}h</span>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -235,38 +250,119 @@ export default function Login() {
           {/* Sign In Form */}
           {mode === "signin" && (
             <>
-              <div className="mt-5 space-y-3">
-                {accounts.map((u, i) => u && (
-                  <Reveal key={u.id} delay={120 + i * 100}>
-                    <button
-                      onClick={() => handleSignIn(u.id)}
-                      disabled={loading}
-                      className="card-ink card-ink-hover group flex w-full items-center gap-4 bg-card px-4 py-3.5 text-left focus-ring disabled:opacity-50"
-                    >
-                      <Avatar user={u} size={42} />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-display text-[15px] font-semibold">{u.name}</span>
-                          <Chip className={ROLE_CHIP[u.role]}>{u.role}</Chip>
-                        </div>
-                        <div className="mt-0.5 truncate text-xs text-mute">{u.title} · {u.email}</div>
-                      </div>
-                      <span className="flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-brand-deep transition-transform group-hover:translate-x-0.5">
-                        {loading ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand/30 border-t-brand" /> : <>Enter <Icon name="arrowR" size={14} /></>}
-                      </span>
-                    </button>
-                  </Reveal>
-                ))}
-              </div>
+              <Reveal delay={120}>
+                <div className="card-ink mt-5 bg-card p-5">
+                  <div className="flex items-center gap-2">
+                    <Icon name="key" size={16} className="text-brand-deep" />
+                    <h3 className="font-display text-base font-bold tracking-tight">Sign in with email</h3>
+                  </div>
 
-              <Reveal delay={420}>
-                <div className="mt-6 text-center">
+                  <label className="lbl mt-4">Email</label>
+                  <input
+                    className="inp"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); setErr(null); }}
+                    disabled={loading}
+                  />
+
+                  <label className="lbl mt-3">Password</label>
+                  <div className="relative">
+                    <input
+                      className="inp pr-10"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => { setPassword(e.target.value); setErr(null); }}
+                      disabled={loading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-mute hover:text-ink"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      <Icon name={showPassword ? "eyeOff" : "eye"} size={16} />
+                    </button>
+                  </div>
+
+                  {err && (
+                    <div className="anim-fade-in mt-3 flex items-start gap-2 rounded-md border-1.5 border-danger/40 bg-[#f6e3e0] px-3 py-2 text-xs font-medium text-danger">
+                      <Icon name="flag" size={13} className="mt-0.5 shrink-0" /> {err}
+                    </div>
+                  )}
+
                   <button
-                    onClick={() => { setMode("forgot"); setErr(null); }}
-                    className="font-mono text-[11px] uppercase tracking-wider text-brand-deep hover:underline"
+                    className="btn btn-primary mt-4 w-full"
+                    onClick={() => handleSignIn()}
+                    disabled={loading || !validateEmail(email) || password.length === 0}
                   >
-                    Forgot password?
+                    {loading ? (
+                      <>
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        Signing you in...
+                      </>
+                    ) : (
+                      <>
+                        <Icon name="arrowR" size={14} /> Sign In
+                      </>
+                    )}
                   </button>
+
+                  <div className="mt-4 text-center">
+                    <button
+                      onClick={() => { setMode("forgot"); setErr(null); }}
+                      className="font-mono text-[11px] uppercase tracking-wider text-brand-deep hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                </div>
+              </Reveal>
+
+              <Reveal delay={360}>
+                <div className="mt-6 text-center text-sm text-mute">
+                  Don't have an account?{" "}
+                  <button onClick={() => { setMode("join"); setErr(null); }} className="font-semibold text-brand-deep hover:underline">
+                    Create account
+                  </button>
+                </div>
+              </Reveal>
+
+              <Reveal delay={240}>
+                <div className="mt-6">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-line"></div>
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-paper px-2 font-mono text-[10px] tracking-wider text-mute">Or use demo account</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    {accounts.map((u, i) => u && (
+                      <button
+                        key={u.id}
+                        onClick={() => handleSignIn(u.id)}
+                        disabled={loading}
+                        className="card-ink card-ink-hover group flex w-full items-center gap-4 bg-card px-4 py-3.5 text-left focus-ring disabled:opacity-50"
+                      >
+                        <Avatar user={u} size={42} />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-display text-[15px] font-semibold">{u.name}</span>
+                            <Chip className={ROLE_CHIP[u.role]}>{u.role}</Chip>
+                          </div>
+                          <div className="mt-0.5 truncate text-xs text-mute">{u.title} · {u.email}</div>
+                        </div>
+                        <span className="flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-brand-deep transition-transform group-hover:translate-x-0.5">
+                          {loading ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand/30 border-t-brand" /> : <>Enter <Icon name="arrowR" size={14} /></>}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </Reveal>
             </>
@@ -274,6 +370,7 @@ export default function Login() {
 
           {/* Create Account Form */}
           {mode === "join" && (
+            <>
             <Reveal delay={120}>
               <div className="card-ink mt-5 bg-card p-5">
                 <div className="flex items-center gap-2">
@@ -393,6 +490,16 @@ export default function Login() {
                 </button>
               </div>
             </Reveal>
+
+            <Reveal delay={360}>
+              <div className="mt-6 text-center text-sm text-mute">
+                Already have an account?{" "}
+                <button onClick={() => { setMode("signin"); setErr(null); }} className="font-semibold text-brand-deep hover:underline">
+                  Sign in
+                </button>
+              </div>
+            </Reveal>
+            </>
           )}
 
           {/* Forgot Password Form */}
