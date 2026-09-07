@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useApp } from "../lib/store";
 import type { Rec } from "../lib/store";
 import { courseMeta } from "../lib/data";
@@ -13,11 +14,31 @@ const PHILOSOPHY = ["Learn", "Practice", "Build", "Solve", "Innovate"];
 function CourseSelection() {
   const app = useApp();
   const { db, user } = app;
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+  const [isEnrolling, setIsEnrolling] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   if (!user) return null;
 
   const hour = new Date().getHours();
   const greet = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const today = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+
+  const handleContinue = async () => {
+    if (!selectedCourseId) return;
+    
+    setIsEnrolling(true);
+    setError(null);
+    
+    try {
+      // Simulate API call delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 800));
+      app.enrollInCourse(selectedCourseId);
+    } catch (err) {
+      setError("Unable to save your course selection. Please try again.");
+      setIsEnrolling(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -29,7 +50,7 @@ function CourseSelection() {
             {greet}, {user.name.split(" ")[0]}.
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-[15px] leading-relaxed text-mute">
-            Choose your technology pathway to begin your learning journey. Your selection determines your personalized curriculum, simulations, and projects.
+            Choose your technology pathway to begin your learning journey. Select one primary course to personalize your curriculum, simulations, and projects.
           </p>
         </div>
       </Reveal>
@@ -40,16 +61,46 @@ function CourseSelection() {
           const m = courseMeta(c.id);
           const topics = db.topics.filter((t) => t.courseId === c.id);
           const lessons = db.lessons.filter((l) => l.courseId === c.id);
+          const isSelected = selectedCourseId === c.id;
+          
           return (
             <Reveal key={c.id} delay={i * 80}>
               <button
-                onClick={() => app.enrollInCourse(c.id)}
-                className="card-ink card-ink-hover group flex h-full w-full flex-col overflow-hidden bg-card text-left"
+                onClick={() => {
+                  setSelectedCourseId(c.id);
+                  setError(null);
+                }}
+                disabled={isEnrolling}
+                className={cn(
+                  "card-ink group relative flex h-full w-full flex-col overflow-hidden bg-card text-left transition-all",
+                  isSelected 
+                    ? "ring-2 ring-offset-2" 
+                    : "card-ink-hover",
+                  isEnrolling && "opacity-50 cursor-not-allowed"
+                )}
+                style={isSelected ? { outlineColor: m.hex, outline: `2px solid ${m.hex}`, outlineOffset: '2px' } : undefined}
               >
+                {/* Selected indicator */}
+                {isSelected && (
+                  <div 
+                    className="absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full shadow-lg"
+                    style={{ backgroundColor: m.hex }}
+                  >
+                    <Icon name="check" size={18} className="text-white" />
+                  </div>
+                )}
+
                 {/* Course image */}
                 {c.image_url && (
                   <div className="relative h-40 w-full overflow-hidden">
-                    <img src={c.image_url} alt={c.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <img 
+                      src={c.image_url} 
+                      alt={c.title} 
+                      className={cn(
+                        "h-full w-full object-cover transition-transform duration-500",
+                        isSelected ? "scale-105" : "group-hover:scale-105"
+                      )} 
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-ink/60 via-transparent to-transparent" />
                     <div className="absolute bottom-3 left-4">
                       <span className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-paper/80">{c.code}</span>
@@ -57,6 +108,7 @@ function CourseSelection() {
                   </div>
                 )}
                 {!c.image_url && <div className="h-2 w-full" style={{ backgroundColor: m.hex }} />}
+                
                 <div className="flex flex-1 flex-col p-5 sm:p-6">
                   <div className="flex items-center gap-2">
                     <Chip className={m.chip}>{c.level}</Chip>
@@ -69,9 +121,17 @@ function CourseSelection() {
                     <span>{lessons.length} lessons</span>
                   </div>
                   <div className="mt-4 flex items-center justify-between border-t-1.5 border-dashed border-line pt-3.5">
-                    <span className="text-xs text-mute">Select to begin</span>
-                    <span className="flex items-center gap-1 font-mono text-[11px] font-medium uppercase tracking-wider transition-transform group-hover:translate-x-0.5" style={{ color: m.hex }}>
-                      Enroll <Icon name="arrowR" size={13} />
+                    <span className="text-xs text-mute">
+                      {isSelected ? "Selected" : "Click to select"}
+                    </span>
+                    <span 
+                      className={cn(
+                        "flex items-center gap-1 font-mono text-[11px] font-medium uppercase tracking-wider transition-transform",
+                        isSelected ? "translate-x-0" : "group-hover:translate-x-0.5"
+                      )} 
+                      style={{ color: m.hex }}
+                    >
+                      {isSelected ? "Selected" : "Select"} <Icon name="arrowR" size={13} />
                     </span>
                   </div>
                 </div>
@@ -81,8 +141,45 @@ function CourseSelection() {
         })}
       </div>
 
+      {/* Continue button */}
+      <Reveal delay={320}>
+        <div className="flex flex-col items-center gap-3">
+          {error && (
+            <div className="anim-fade-in flex items-start gap-2 rounded-md border-1.5 border-danger/40 bg-[#f6e3e0] px-4 py-2.5 text-sm font-medium text-danger">
+              <Icon name="flag" size={14} className="mt-0.5 shrink-0" />
+              {error}
+            </div>
+          )}
+          
+          <button
+            onClick={handleContinue}
+            disabled={!selectedCourseId || isEnrolling}
+            className={cn(
+              "btn btn-primary min-w-[200px]",
+              !selectedCourseId && "opacity-50 cursor-not-allowed"
+            )}
+          >
+            {isEnrolling ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                Saving your course...
+              </>
+            ) : (
+              <>
+                Continue to Dashboard
+                <Icon name="arrowR" size={14} />
+              </>
+            )}
+          </button>
+          
+          {!selectedCourseId && !isEnrolling && (
+            <p className="text-xs text-mute">Select a course to continue</p>
+          )}
+        </div>
+      </Reveal>
+
       {/* Philosophy strip */}
-      <Reveal delay={350}>
+      <Reveal delay={380}>
         <div className="card-ink flex flex-wrap items-center justify-center gap-2 bg-card px-4 py-4 sm:gap-3">
           {PHILOSOPHY.map((p, i) => (
             <span key={p} className="flex items-center gap-2">
