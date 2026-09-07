@@ -150,28 +150,41 @@ export default function Profile() {
         </Reveal>
       </div>
 
-      {/* Course snapshot */}
+      {/* Course snapshot - show active course only */}
       <Reveal delay={180}>
         <section className="card-ink bg-card p-5 sm:p-6">
           <h2 className="mb-4 font-display text-lg font-semibold tracking-tight">Course standing</h2>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {db.courses.map((c) => {
-              const pct = app.coursePct(c.id);
-              const best = db.assessments.filter((a) => a.courseId === c.id).map((a) => app.bestAttempt(a.id)?.pct).filter((x): x is number => x !== undefined);
-              return (
-                <div key={c.id} className="rounded-lg border-1.5 border-line bg-paper/50 px-4 py-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-display text-sm font-bold">{c.short}</span>
-                    <span className="font-mono text-xs font-bold text-ink">{pct}%</span>
+          {app.hasActiveCourse() ? (
+            <div className="grid gap-3">
+              {(() => {
+                const c = app.activeCourse()!;
+                const pct = app.coursePct(c.id);
+                const best = db.assessments.filter((a) => a.courseId === c.id).map((a) => app.bestAttempt(a.id)?.pct).filter((x): x is number => x !== undefined);
+                return (
+                  <div key={c.id} className="rounded-lg border-1.5 border-line bg-paper/50 px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="font-display text-sm font-bold">{c.short}</span>
+                        <span className="rounded-full bg-se-soft px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-se">active</span>
+                      </div>
+                      <span className="font-mono text-xs font-bold text-ink">{pct}%</span>
+                    </div>
+                    <Bar value={pct} color={c.color} className="mt-2 h-1.5" />
+                    <div className="mt-1.5 font-mono text-[10px] uppercase tracking-wider text-mute">
+                      best assessment {best.length ? `${Math.max(...best)}%` : "—"}
+                    </div>
                   </div>
-                  <Bar value={pct} color={c.color} className="mt-2 h-1.5" />
-                  <div className="mt-1.5 font-mono text-[10px] uppercase tracking-wider text-mute">
-                    best assessment {best.length ? `${Math.max(...best)}%` : "—"}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })()}
+            </div>
+          ) : (
+            <div className="rounded-lg border-1.5 border-dashed border-line bg-paper/30 px-4 py-6 text-center">
+              <p className="text-sm text-mute">No active course yet.</p>
+              <button onClick={() => app.nav({ name: "dashboard" })} className="btn btn-primary btn-sm mt-3">
+                Choose your course
+              </button>
+            </div>
+          )}
         </section>
       </Reveal>
 

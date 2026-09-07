@@ -136,7 +136,15 @@ function NavContent() {
                 {sec.items.map((it) => (
                   <button
                     key={it.route}
-                    onClick={() => app.nav({ name: it.route })}
+                    onClick={() => {
+                      // For labs, include active course ID if available
+                      if (it.route === "labs" && app.hasActiveCourse()) {
+                        const activeCourse = app.activeCourse();
+                        app.nav({ name: it.route, id: activeCourse?.id });
+                      } else {
+                        app.nav({ name: it.route });
+                      }
+                    }}
                     className={cn(
                       "flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-semibold transition-all",
                       activeName === it.route
@@ -152,22 +160,24 @@ function NavContent() {
           ))
         )}
 
-        {!isStaff && (
+        {!isStaff && app.hasActiveCourse() && (
           <div>
             <div className="mb-1.5 px-3 font-mono text-[9.5px] uppercase tracking-[0.18em] text-paper/35">In progress</div>
             <div className="space-y-1 px-1">
-              {app.db.courses.map((c) => {
-                const pct = app.coursePct(c.id);
-                const m = courseMeta(c.id);
+              {(() => {
+                const activeCourse = app.activeCourse();
+                if (!activeCourse) return null;
+                const pct = app.coursePct(activeCourse.id);
+                const m = courseMeta(activeCourse.id);
                 return (
-                  <button key={c.id} onClick={() => app.nav({ name: "course", id: c.id })} className="group flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-paper/8">
+                  <button key={activeCourse.id} onClick={() => app.nav({ name: "course", id: activeCourse.id })} className="group flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-paper/8">
                     <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", m.dot)} />
-                    <span className="w-16 shrink-0 truncate font-mono text-[10px] text-paper/60">{c.short}</span>
+                    <span className="w-16 shrink-0 truncate font-mono text-[10px] text-paper/60">{activeCourse.short}</span>
                     <Seg value={pct} cells={10} color={m.hex} className="h-1.5 flex-1" />
                     <span className="w-8 text-right font-mono text-[10px] text-paper/50">{pct}%</span>
                   </button>
                 );
-              })}
+              })()}
             </div>
           </div>
         )}

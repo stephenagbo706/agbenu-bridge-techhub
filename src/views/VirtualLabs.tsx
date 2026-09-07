@@ -273,8 +273,10 @@ export function VirtualLabsView({ courseId }: { courseId?: string }) {
   const [activeLab, setActiveLab] = useState<LabId | null>(null);
   const [showDiagrams, setShowDiagrams] = useState(false);
 
-  const filteredLabs = courseId ? LABS.filter((l) => l.courseId === courseId) : LABS;
-  const courses = courseId ? db.courses.filter((c) => c.id === courseId) : db.courses;
+  // Default to active course if no courseId provided
+  const effectiveCourseId = courseId || (app.hasActiveCourse() ? app.activeCourse()?.id : undefined);
+  const filteredLabs = effectiveCourseId ? LABS.filter((l) => l.courseId === effectiveCourseId) : LABS;
+  const courses = effectiveCourseId ? db.courses.filter((c) => c.id === effectiveCourseId) : db.courses;
 
   const renderLab = (labId: LabId) => {
     switch (labId) {
@@ -347,8 +349,8 @@ export function VirtualLabsView({ courseId }: { courseId?: string }) {
         </Reveal>
       )}
 
-      {/* Course filter tabs */}
-      {!courseId && (
+      {/* Course filter tabs - only show if no active course */}
+      {!effectiveCourseId && (
         <div className="flex flex-wrap gap-2">
           {db.courses.map((c) => {
             const m = courseMeta(c.id);
