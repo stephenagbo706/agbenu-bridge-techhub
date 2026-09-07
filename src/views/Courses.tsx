@@ -27,10 +27,20 @@ export function CoursesView() {
                 onClick={() => app.nav({ name: "course", id: c.id })}
                 className="card-ink card-ink-hover group flex h-full w-full flex-col overflow-hidden bg-card text-left"
               >
-                <div className="h-1.5 w-full" style={{ backgroundColor: m.hex }} />
+                {/* Course Image */}
+                {c.image_url && (
+                  <div className="relative h-36 w-full overflow-hidden">
+                    <img src={c.image_url} alt={c.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+                    <div className="absolute inset-0" style={{ background: `linear-gradient(to top, ${m.hex}40, transparent 60%)` }} />
+                    <div className="absolute bottom-2 left-3">
+                      <Chip className="bg-ink/70 text-paper backdrop-blur-sm">{c.code}</Chip>
+                    </div>
+                  </div>
+                )}
+                {!c.image_url && <div className="h-1.5 w-full" style={{ backgroundColor: m.hex }} />}
                 <div className="flex flex-1 flex-col p-5 sm:p-6">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-mute">{c.code}</span>
+                    {!c.image_url && <span className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-mute">{c.code}</span>}
                     <Chip className={m.chip}>{c.level}</Chip>
                     <span className={cn("ml-auto font-mono text-[10px] uppercase tracking-wider", pct === 100 ? "text-se" : started ? "text-brand-deep" : "text-mute")}>
                       {pct === 100 ? "✓ complete" : started ? "in progress" : "not started"}
@@ -91,12 +101,27 @@ export function CourseView({ id }: { id: string }) {
       <Reveal>
         <div className="card-ink overflow-hidden bg-card">
           <div className="h-2 w-full" style={{ backgroundColor: m.hex }} />
+          {/* Course Image Banner */}
+          {course.image_url && (
+            <div className="relative h-48 w-full overflow-hidden sm:h-56">
+              <img src={course.image_url} alt={course.title} className="h-full w-full object-cover" loading="lazy" />
+              <div className="absolute inset-0" style={{ background: `linear-gradient(to top, rgba(20,24,31,0.85), transparent 70%)` }} />
+              <div className="absolute bottom-4 left-6 right-6">
+                <div className="flex flex-wrap items-center gap-2">
+                  <CourseTag course={course} />
+                  <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-paper/70">{course.code} · {course.level} · ~{course.hours}h</span>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="grid gap-6 p-6 sm:p-7 lg:grid-cols-[minmax(0,1fr)_260px]">
             <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <CourseTag course={course} />
-                <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">{course.code} · {course.level} · ~{course.hours}h</span>
-              </div>
+              {!course.image_url && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <CourseTag course={course} />
+                  <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-mute">{course.code} · {course.level} · ~{course.hours}h</span>
+                </div>
+              )}
               <h1 className="mt-2 font-display text-2xl font-bold tracking-tight sm:text-3xl">{course.title}</h1>
               <p className="mt-2 max-w-2xl text-sm leading-relaxed text-mute">{course.description}</p>
               <div className="mt-5">
@@ -222,6 +247,25 @@ export function CourseView({ id }: { id: string }) {
           );
         })}
       </div>
+
+      {/* Virtual Labs Link */}
+      <Reveal delay={60}>
+        <button
+          onClick={() => app.nav({ name: "labs", id: course.id })}
+          className="card-ink card-ink-hover group flex w-full items-center gap-4 overflow-hidden bg-card p-5 text-left sm:p-6"
+        >
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border-1.5" style={{ borderColor: m.hex + "40", backgroundColor: m.hex + "12" }}>
+            <Icon name="spark" size={20} className={m.text} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-display text-base font-bold tracking-tight">Virtual Labs & Simulations</h3>
+            <p className="text-[13px] text-mute">Interactive diagrams, simulations, and hands-on experiments for this course</p>
+          </div>
+          <span className="flex items-center gap-1 font-mono text-[11px] font-medium uppercase tracking-wider transition-transform group-hover:translate-x-0.5" style={{ color: m.hex }}>
+            Open labs <Icon name="arrowR" size={13} />
+          </span>
+        </button>
+      </Reveal>
 
       {/* Assessments + projects for this course */}
       <div className="grid gap-5 lg:grid-cols-2">

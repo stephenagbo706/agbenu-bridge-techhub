@@ -13,7 +13,7 @@ import type { Career } from "./data";
 export type RouteName =
   | "dashboard" | "courses" | "course" | "lesson" | "practice" | "activity"
   | "assessments" | "assessment" | "projects" | "project" | "skills" | "path"
-  | "careers" | "profile" | "admin";
+  | "careers" | "profile" | "admin" | "labs";
 
 export interface Route { name: RouteName; id?: string; tab?: string; }
 

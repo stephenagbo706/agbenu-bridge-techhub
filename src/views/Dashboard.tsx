@@ -161,6 +161,27 @@ export default function Dashboard() {
             </section>
           </Reveal>
 
+          {/* Virtual Labs */}
+          <Reveal delay={160}>
+            <section className="card-ink overflow-hidden bg-card">
+              <button
+                onClick={() => app.nav({ name: "labs" })}
+                className="group flex w-full items-center gap-4 p-5 text-left sm:p-6"
+              >
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border-1.5 border-brand/30 bg-brand-soft text-brand-deep">
+                  <Icon name="spark" size={20} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-display text-base font-bold tracking-tight">Virtual Labs</h3>
+                  <p className="text-[12px] text-mute">Interactive simulations, diagrams & experiments across all courses</p>
+                </div>
+                <span className="flex items-center gap-1 font-mono text-[10px] font-medium uppercase tracking-wider text-brand-deep transition-transform group-hover:translate-x-0.5">
+                  Explore <Icon name="arrowR" size={12} />
+                </span>
+              </button>
+            </section>
+          </Reveal>
+
           {/* Projects */}
           <Reveal delay={170}>
             <section className="card-ink bg-card p-5 sm:p-6">

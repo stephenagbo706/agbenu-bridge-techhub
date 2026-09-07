@@ -27,6 +27,7 @@ export interface Course {
   hours: number;
   objectives: string[];
   order: number;
+  image_url?: string; // course visual identity
 }
 
 export interface Topic {

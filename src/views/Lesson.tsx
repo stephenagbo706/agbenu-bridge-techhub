@@ -3,6 +3,85 @@ import { useApp } from "../lib/store";
 import { courseMeta } from "../lib/data";
 import { Chip, CourseTag, Reveal, Seg, cn, fmtDate } from "../components/ui";
 import { Icon } from "../components/icons";
+import { DiagramNode, DiagramArrow } from "../components/simulations";
+
+// ─── Inline lesson diagrams ─────────────────────────────────────────────────
+
+function LessonDiagram({ courseId, topicOrder, accent }: { courseId: string; topicOrder: number; accent: string }) {
+  const [active, setActive] = useState<string | null>(null);
+
+  const diagrams: Record<string, { title: string; nodes: { label: string; sub?: string; icon?: string }[] }> = {
+    "c-ai": {
+      title: "How AI Processes Information",
+      nodes: [
+        { label: "Input Data", sub: "Raw information", icon: "📥" },
+        { label: "Feature Extraction", sub: "Pattern recognition", icon: "🔍" },
+        { label: "Model Processing", sub: "Neural computation", icon: "🧠" },
+        { label: "Output / Prediction", sub: "Result or decision", icon: "📤" },
+      ],
+    },
+    "c-rob": {
+      title: "Sense → Think → Act Loop",
+      nodes: [
+        { label: "Sensors", sub: "Measure environment", icon: "📡" },
+        { label: "Controller", sub: "Process & decide", icon: "🔧" },
+        { label: "Actuators", sub: "Physical action", icon: "⚙️" },
+        { label: "Result", sub: "Changed state", icon: "✅" },
+      ],
+    },
+    "c-se": {
+      title: "Application Data Flow",
+      nodes: [
+        { label: "User Interface", sub: "What users see", icon: "🖥️" },
+        { label: "API Layer", sub: "Request/response", icon: "📡" },
+        { label: "Business Logic", sub: "Rules & processing", icon: "⚙️" },
+        { label: "Database", sub: "Persistent storage", icon: "🗄️" },
+      ],
+    },
+    "c-di": {
+      title: "Product Development Cycle",
+      nodes: [
+        { label: "Discover Problem", sub: "Find real pain", icon: "🔍" },
+        { label: "Design Solution", sub: "Hypothesize fix", icon: "💡" },
+        { label: "Build Prototype", sub: "Make it tangible", icon: "🔧" },
+        { label: "Test & Learn", sub: "Validate with users", icon: "🧪" },
+      ],
+    },
+  };
+
+  const diagram = diagrams[courseId] ?? diagrams["c-ai"];
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Icon name="spark" size={14} className="text-mute" />
+        <span className="font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-mute">{diagram.title}</span>
+      </div>
+      <div className="flex flex-wrap items-center justify-center gap-1">
+        {diagram.nodes.map((node, i, arr) => (
+          <div key={node.label} className="flex items-center gap-1">
+            <DiagramNode
+              label={node.label}
+              sublabel={node.sub}
+              icon={node.icon}
+              active={active === node.label}
+              onClick={() => setActive(active === node.label ? null : node.label)}
+              accent={accent}
+            />
+            {i < arr.length - 1 && <DiagramArrow direction="right" accent={accent} />}
+          </div>
+        ))}
+      </div>
+      {active && (
+        <div className="anim-fade-up rounded-md border-l-4 bg-paper/50 px-4 py-2.5" style={{ borderColor: accent }}>
+          <p className="text-[12px] leading-relaxed">
+            <strong>{active}:</strong> Click each component to explore the system. Open the full Virtual Lab for interactive simulations where you can experiment with these concepts hands-on.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function LessonView({ id }: { id: string }) {
   const app = useApp();
@@ -95,6 +174,30 @@ export default function LessonView({ id }: { id: string }) {
               </section>
             </Reveal>
           ))}
+
+          {/* Interactive Diagram Section */}
+          <Reveal delay={190}>
+            <section className="card-ink overflow-hidden bg-card">
+              <button
+                onClick={() => app.nav({ name: "labs", id: course.id })}
+                className="group flex w-full items-center gap-4 border-b-1.5 border-line bg-paper/60 px-5 py-3 text-left transition-colors hover:bg-paper"
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-md border-1.5" style={{ borderColor: m.hex + "40", backgroundColor: m.hex + "12" }}>
+                  <Icon name="spark" size={14} className={m.text} />
+                </span>
+                <div className="flex-1">
+                  <span className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-mute">Interactive diagrams & simulations</span>
+                  <p className="text-[12px] text-mute">Visualize concepts, run simulations, and experiment in the virtual lab</p>
+                </div>
+                <span className="flex items-center gap-1 font-mono text-[10px] font-medium uppercase tracking-wider transition-transform group-hover:translate-x-0.5" style={{ color: m.hex }}>
+                  Open lab <Icon name="arrowR" size={11} />
+                </span>
+              </button>
+              <div className="p-5 sm:p-6">
+                <LessonDiagram courseId={course.id} topicOrder={topic.order} accent={m.hex} />
+              </div>
+            </section>
+          </Reveal>
 
           <Reveal delay={200}>
             <section className="card-ink overflow-hidden bg-card">

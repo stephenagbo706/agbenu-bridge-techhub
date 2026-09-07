@@ -9,6 +9,7 @@ export const COURSES: Course[] = [
     description:
       "This course takes you from understanding what AI actually is, to using generative AI tools effectively, engineering strong prompts, grasping core machine-learning concepts, and applying AI responsibly. You finish by building an AI-assisted solution to a real problem.",
     color: "#2f5fe3", level: "Foundation → Applied", hours: 14, order: 1,
+    image_url: "https://image.qwenlm.ai/generated-images/1e835190-c27a-483e-8189-104384a8b9fd/_result.png",
     objectives: [
       "Explain how AI systems learn from data and make predictions",
       "Use generative AI tools as a partner for real work",
@@ -23,6 +24,7 @@ export const COURSES: Course[] = [
     description:
       "Robotics and IoT is where code meets the physical world. You will learn how robots sense-think-act, how circuits and sensors measure reality, how microcontrollers run your programs, and how devices connect into IoT systems — ending with a working automation or robotics build.",
     color: "#d95f0e", level: "Foundation → Builder", hours: 16, order: 2,
+    image_url: "https://image.qwenlm.ai/generated-images/0f544980-595d-4ac9-905e-a98137226c03/_result.png",
     objectives: [
       "Describe the sense–think–act loop behind every robot",
       "Read basic circuits and choose sensors for a task",
@@ -37,6 +39,7 @@ export const COURSES: Course[] = [
     description:
       "Programming is the starting point; engineering is the discipline. This course moves you from fundamentals through web and mobile development into testing, databases, APIs, and version control — the full lifecycle of real software, with an emphasis on shipping working applications.",
     color: "#1b8a4c", level: "Foundation → Engineer", hours: 18, order: 3,
+    image_url: "https://image.qwenlm.ai/generated-images/d5a75c3e-1838-4183-88eb-8fdec52b5d9c/_result.png",
     objectives: [
       "Write clean programs using variables, logic, loops, and functions",
       "Explain how the web works and build interactive pages",
@@ -51,6 +54,7 @@ export const COURSES: Course[] = [
     description:
       "Technology only matters when it solves a problem for someone. This course teaches you to find real problems, prototype digital solutions, validate ideas before building, design business models, and plan a launch — transforming technical skills into products and potential ventures.",
     color: "#c2317e", level: "Applied → Creator", hours: 12, order: 4,
+    image_url: "https://image.qwenlm.ai/generated-images/3d9ea6bb-d8ac-497f-9901-30e3596eb65c/_result.png",
     objectives: [
       "Identify and frame real problems worth solving",
       "Build and test minimum viable products (MVPs)",

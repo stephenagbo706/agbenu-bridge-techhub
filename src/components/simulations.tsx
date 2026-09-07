@@ -1,0 +1,1215 @@
+import { useState, useCallback, useRef, useEffect } from "react";
+import { cn } from "./ui";
+import { Icon } from "./icons";
+
+// ─── Reusable Simulation Container ──────────────────────────────────────────
+
+export function SimulationContainer({
+  title, subtitle, badge, accent, children, className,
+}: {
+  title: string; subtitle?: string; badge?: string; accent: string;
+  children: React.ReactNode; className?: string;
+}) {
+  return (
+    <section className={cn("card-ink overflow-hidden bg-card", className)}>
+      <div className="h-1 w-full" style={{ backgroundColor: accent }} />
+      <div className="p-5 sm:p-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="flex h-7 w-7 items-center justify-center rounded-md border-1.5" style={{ borderColor: accent + "40", backgroundColor: accent + "12" }}>
+            <Icon name="spark" size={14} style={{ color: accent }} />
+          </span>
+          <div>
+            <h3 className="font-display text-base font-bold tracking-tight">{title}</h3>
+            {subtitle && <p className="text-[12px] text-mute">{subtitle}</p>}
+          </div>
+          {badge && (
+            <span className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider" style={{ backgroundColor: accent + "15", color: accent }}>
+              {badge}
+            </span>
+          )}
+        </div>
+        <div className="mt-4">{children}</div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Interactive Diagram Node ────────────────────────────────────────────────
+
+export function DiagramNode({
+  label, sublabel, active, onClick, accent, icon,
+}: {
+  label: string; sublabel?: string; active?: boolean; onClick?: () => void; accent: string; icon?: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex flex-col items-center gap-1 rounded-lg border-2 px-4 py-3 text-center transition-all",
+        active ? "scale-105 shadow-md" : "hover:scale-[1.02]",
+      )}
+      style={{
+        borderColor: active ? accent : "#d9dbd0",
+        backgroundColor: active ? accent + "12" : "#fbfbf7",
+      }}
+    >
+      {icon && <span className="text-lg">{icon}</span>}
+      <span className="text-sm font-semibold">{label}</span>
+      {sublabel && <span className="text-[10px] text-mute">{sublabel}</span>}
+    </button>
+  );
+}
+
+export function DiagramArrow({ direction = "down", accent }: { direction?: "down" | "right"; accent: string }) {
+  if (direction === "right") {
+    return (
+      <div className="flex items-center px-1">
+        <svg width="24" height="16" viewBox="0 0 24 16" fill="none">
+          <path d="M0 8h20M16 2l6 6-6 6" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+    );
+  }
+  return (
+    <div className="flex justify-center py-1">
+      <svg width="16" height="24" viewBox="0 0 16 24" fill="none">
+        <path d="M8 0v20M2 16l6 6 6-6" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+}
+
+// ─── Neural Network Simulation ───────────────────────────────────────────────
+
+export function NeuralNetworkSim() {
+  const [inputs, setInputs] = useState([0.5, 0.3, 0.8]);
+  const [weights] = useState(() => ({
+    inputToHidden: Array.from({ length: 3 }, () => Array.from({ length: 4 }, () => Math.random() * 2 - 1)),
+    hiddenToOutput: Array.from({ length: 4 }, () => Array.from({ length: 2 }, () => Math.random() * 2 - 1)),
+  }));
+
+  const sigmoid = (x: number) => 1 / (1 + Math.exp(-x));
+
+  const hiddenLayer = weights.inputToHidden[0].map((_, j) =>
+    sigmoid(inputs.reduce((sum, inp, i) => sum + inp * weights.inputToHidden[i][j], 0))
+  );
+  const outputLayer = weights.hiddenToOutput[0].map((_, j) =>
+    sigmoid(hiddenLayer.reduce((sum, h, i) => sum + h * weights.hiddenToOutput[i][j], 0))
+  );
+
+  return (
+    <SimulationContainer title="Neural Network Simulation" subtitle="Adjust inputs and watch how data flows through the network" badge="Interactive" accent="#2f5fe3">
+      <div className="space-y-4">
+        {/* Input Controls */}
+        <div className="grid gap-3 sm:grid-cols-3">
+          {inputs.map((val, i) => (
+            <div key={i} className="rounded-lg border-1.5 border-line bg-paper/50 p-3">
+              <label className="lbl">Input {i + 1}</label>
+              <input
+                type="range" min="0" max="1" step="0.05" value={val}
+                onChange={(e) => { const n = [...inputs]; n[i] = parseFloat(e.target.value); setInputs(n); }}
+                className="w-full accent-[#2f5fe3]"
+              />
+              <div className="mt-1 text-center font-mono text-sm font-bold text-ai">{val.toFixed(2)}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Network Visualization */}
+        <div className="rounded-lg border-1.5 border-line bg-paper/30 p-4">
+          <div className="flex items-center justify-between gap-2">
+            {/* Input Layer */}
+            <div className="flex flex-col items-center gap-2">
+              <span className="font-mono text-[9px] uppercase tracking-wider text-mute">Input</span>
+              {inputs.map((v, i) => (
+                <div key={i} className="flex h-10 w-10 items-center justify-center rounded-full border-2 bg-ai-soft font-mono text-xs font-bold text-ai" style={{ borderColor: "#2f5fe3" }}>
+                  {v.toFixed(1)}
+                </div>
+              ))}
+            </div>
+
+            {/* Connections + Hidden */}
+            <div className="flex flex-col items-center gap-2">
+              <span className="font-mono text-[9px] uppercase tracking-wider text-mute">Hidden</span>
+              {hiddenLayer.map((v, i) => (
+                <div key={i} className="flex h-10 w-10 items-center justify-center rounded-full border-2 bg-ai-soft/60 font-mono text-xs font-bold text-ai" style={{ borderColor: "#2f5fe360" }}>
+                  {v.toFixed(2)}
+                </div>
+              ))}
+            </div>
+
+            {/* Output */}
+            <div className="flex flex-col items-center gap-2">
+              <span className="font-mono text-[9px] uppercase tracking-wider text-mute">Output</span>
+              {outputLayer.map((v, i) => (
+                <div key={i} className="flex h-10 w-10 items-center justify-center rounded-full border-2 font-mono text-xs font-bold text-[#f4faf7]" style={{ backgroundColor: "#2f5fe3", borderColor: "#1a3fa0" }}>
+                  {v.toFixed(2)}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Explanation */}
+        <div className="rounded-md border-l-4 border-ai bg-ai-soft/40 px-4 py-3">
+          <p className="text-[13px] leading-relaxed">
+            <strong>How it works:</strong> Each input is multiplied by weights, summed at each neuron, and passed through an activation function (sigmoid). The network transforms raw inputs into predictions through layers of computation. Move the sliders to see how changing inputs affects outputs.
+          </p>
+        </div>
+      </div>
+    </SimulationContainer>
+  );
+}
+
+// ─── ML Classification Simulation ────────────────────────────────────────────
+
+interface DataPoint { x: number; y: number; label: 0 | 1; }
+
+export function ClassificationSim() {
+  const [points, setPoints] = useState<DataPoint[]>([
+    { x: 20, y: 70, label: 0 }, { x: 30, y: 80, label: 0 }, { x: 15, y: 60, label: 0 },
+    { x: 25, y: 55, label: 0 }, { x: 70, y: 30, label: 1 }, { x: 80, y: 25, label: 1 },
+    { x: 75, y: 40, label: 1 }, { x: 85, y: 20, label: 1 },
+  ]);
+  const [trained, setTrained] = useState(false);
+  const [testPoint, setTestPoint] = useState<{ x: number; y: number } | null>(null);
+  const [prediction, setPrediction] = useState<number | null>(null);
+
+  // Simple linear classifier: find midpoint between class centroids
+  const train = () => {
+    setTrained(true);
+  };
+
+  const classify = (px: number, py: number): number => {
+    const c0 = points.filter(p => p.label === 0);
+    const c1 = points.filter(p => p.label === 1);
+    const cx0 = c0.reduce((s, p) => s + p.x, 0) / c0.length;
+    const cy0 = c0.reduce((s, p) => s + p.y, 0) / c0.length;
+    const cx1 = c1.reduce((s, p) => s + p.x, 0) / c1.length;
+    const cy1 = c1.reduce((s, p) => s + p.y, 0) / c1.length;
+    const d0 = Math.sqrt((px - cx0) ** 2 + (py - cy0) ** 2);
+    const d1 = Math.sqrt((px - cx1) ** 2 + (py - cy1) ** 2);
+    return d0 < d1 ? 0 : 1;
+  };
+
+  const addPoint = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = 100 - ((e.clientY - rect.top) / rect.height) * 100;
+    const label = (classify(x, y)) as 0 | 1;
+    setPoints([...points, { x, y, label }]);
+    setTrained(false);
+  };
+
+  const testPrediction = () => {
+    if (!testPoint || !trained) return;
+    setPrediction(classify(testPoint.x, testPoint.y));
+  };
+
+  const reset = () => {
+    setPoints([
+      { x: 20, y: 70, label: 0 }, { x: 30, y: 80, label: 0 }, { x: 15, y: 60, label: 0 },
+      { x: 25, y: 55, label: 0 }, { x: 70, y: 30, label: 1 }, { x: 80, y: 25, label: 1 },
+      { x: 75, y: 40, label: 1 }, { x: 85, y: 20, label: 1 },
+    ]);
+    setTrained(false);
+    setTestPoint(null);
+    setPrediction(null);
+  };
+
+  return (
+    <SimulationContainer title="Classification Lab" subtitle="Click the graph to add data points, then train the classifier" badge="Lab" accent="#2f5fe3">
+      <div className="space-y-4">
+        <div className="flex flex-wrap gap-2">
+          <button onClick={train} className={cn("btn btn-sm", trained ? "btn-dark" : "btn-primary")}>
+            <Icon name="spark" size={12} /> {trained ? "Retrain" : "Train Classifier"}
+          </button>
+          <button onClick={reset} className="btn btn-sm">Reset Data</button>
+          {trained && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-se-soft px-2 py-1 font-mono text-[10px] font-medium text-se">
+              <Icon name="check" size={10} /> Model trained on {points.length} points
+            </span>
+          )}
+        </div>
+
+        {/* Graph */}
+        <div
+          onClick={addPoint}
+          className="relative h-64 cursor-crosshair overflow-hidden rounded-lg border-1.5 border-line bg-paper/50"
+        >
+          {/* Grid */}
+          <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(rgba(20,24,31,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(20,24,31,0.05) 1px, transparent 1px)", backgroundSize: "20% 20%" }} />
+          {/* Decision boundary */}
+          {trained && (
+            <div className="absolute inset-0">
+              <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                {(() => {
+                  const c0 = points.filter(p => p.label === 0);
+                  const c1 = points.filter(p => p.label === 1);
+                  const cx0 = c0.reduce((s, p) => s + p.x, 0) / c0.length;
+                  const cy0 = 100 - c0.reduce((s, p) => s + p.y, 0) / c0.length;
+                  const cx1 = c1.reduce((s, p) => s + p.x, 0) / c1.length;
+                  const cy1 = 100 - c1.reduce((s, p) => s + p.y, 0) / c1.length;
+                  const mx = (cx0 + cx1) / 2;
+                  const my = (cy0 + cy1) / 2;
+                  const dx = cx1 - cx0;
+                  const dy = cy1 - cy0;
+                  // Perpendicular line through midpoint
+                  const len = 80;
+                  const nx = -dy / Math.sqrt(dx * dx + dy * dy) * len;
+                  const ny = dx / Math.sqrt(dx * dx + dy * dy) * len;
+                  return <line x1={mx - nx} y1={my - ny} x2={mx + nx} y2={my + ny} stroke="#2f5fe3" strokeWidth="0.4" strokeDasharray="2,2" />;
+                })()}
+              </svg>
+            </div>
+          )}
+          {/* Points */}
+          {points.map((p, i) => (
+            <div
+              key={i}
+              className="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2"
+              style={{
+                left: `${p.x}%`, top: `${100 - p.y}%`,
+                backgroundColor: p.label === 0 ? "#2f5fe3" : "#d95f0e",
+                borderColor: p.label === 0 ? "#1a3fa0" : "#a04a0a",
+              }}
+            />
+          ))}
+          {/* Test point */}
+          {testPoint && (
+            <div
+              className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-gold bg-gold-soft"
+              style={{ left: `${testPoint.x}%`, top: `${100 - testPoint.y}%` }}
+            />
+          )}
+          {/* Labels */}
+          <div className="absolute bottom-1 left-1 font-mono text-[9px] text-mute">Click to add points</div>
+          <div className="absolute right-2 top-2 flex gap-2">
+            <span className="flex items-center gap-1 font-mono text-[9px]"><span className="h-2 w-2 rounded-full bg-ai" /> Class A</span>
+            <span className="flex items-center gap-1 font-mono text-[9px]"><span className="h-2 w-2 rounded-full bg-rob" /> Class B</span>
+          </div>
+        </div>
+
+        {/* Test area */}
+        {trained && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3">
+              <label className="lbl">Test Point X</label>
+              <input type="range" min="0" max="100" value={testPoint?.x ?? 50} onChange={(e) => setTestPoint({ x: parseInt(e.target.value), y: testPoint?.y ?? 50 })} className="w-full accent-[#2f5fe3]" />
+            </div>
+            <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3">
+              <label className="lbl">Test Point Y</label>
+              <input type="range" min="0" max="100" value={testPoint?.y ?? 50} onChange={(e) => setTestPoint({ x: testPoint?.x ?? 50, y: parseInt(e.target.value) })} className="w-full accent-[#2f5fe3]" />
+            </div>
+          </div>
+        )}
+        {trained && testPoint && (
+          <div className="flex items-center gap-3">
+            <button onClick={testPrediction} className="btn btn-sm btn-dark">Predict Class</button>
+            {prediction !== null && (
+              <span className={cn("rounded-md px-3 py-1 font-mono text-xs font-bold", prediction === 0 ? "bg-ai-soft text-ai" : "bg-rob-soft text-rob")}>
+                → Predicted: Class {prediction === 0 ? "A" : "B"}
+              </span>
+            )}
+          </div>
+        )}
+
+        <div className="rounded-md border-l-4 border-ai bg-ai-soft/40 px-4 py-3">
+          <p className="text-[13px] leading-relaxed">
+            <strong>How classification works:</strong> The model finds the center (centroid) of each class and draws a boundary between them. New points are classified based on which centroid they're closest to. Click the graph to add training data, then train and test predictions.
+          </p>
+        </div>
+      </div>
+    </SimulationContainer>
+  );
+}
+
+// ─── Prompt Engineering Simulation ───────────────────────────────────────────
+
+export function PromptEngineeringSim() {
+  const [prompt, setPrompt] = useState("");
+  const [role, setRole] = useState("");
+  const [context, setContext] = useState("");
+  const [format, setFormat] = useState("");
+  const [constraints, setConstraints] = useState("");
+  const [output, setOutput] = useState("");
+  const [running, setRunning] = useState(false);
+
+  const runSimulation = () => {
+    if (!prompt.trim()) return;
+    setRunning(true);
+    setOutput("");
+
+    // Educational simulation - generates structured response based on prompt components
+    setTimeout(() => {
+      const parts: string[] = [];
+      if (role) parts.push(`[Role Applied: ${role}]`);
+      if (context) parts.push(`[Context: ${context}]`);
+      parts.push(`\nResponse to: "${prompt}"`);
+      if (format) parts.push(`\n[Format: ${format}]`);
+      if (constraints) parts.push(`[Constraints: ${constraints}]`);
+
+      // Simulate different quality based on prompt completeness
+      const score = [role, context, format, constraints].filter(Boolean).length;
+      const quality = score === 0 ? "basic" : score <= 2 ? "moderate" : "strong";
+
+      const responses: Record<string, string> = {
+        basic: `\n─── Basic Response (no structure) ───\n\nThis is a simple, unstructured response because no role, context, or constraints were provided. The output is generic and may not match your specific needs.\n\n💡 Tip: Adding role, context, and format instructions dramatically improves AI output quality.`,
+        moderate: `\n─── Moderate Response ───\n\n${parts.join("\n")}\n\nThe response is shaped by ${score} structural elements. It's more targeted than a basic prompt but could benefit from additional constraints and output format specifications.\n\n💡 Tip: The five-part structure (Role + Context + Task + Format + Constraints) produces the most reliable outputs.`,
+        strong: `\n─── High-Quality Response ───\n\n${parts.join("\n")}\n\n✓ All five prompt engineering elements are present.\n✓ The response will be focused, well-structured, and constrained.\n✓ Output format ensures consistency.\n\nThis demonstrates how structured prompts produce significantly better AI outputs. Each element reduces ambiguity and guides the model toward your specific needs.`,
+      };
+      setOutput(responses[quality]);
+      setRunning(false);
+    }, 1200);
+  };
+
+  return (
+    <SimulationContainer title="Prompt Engineering Lab" subtitle="Build structured prompts and see how each element affects output quality" badge="Simulation" accent="#2f5fe3">
+      <div className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3">
+            <label className="lbl">Role</label>
+            <input className="inp" placeholder="e.g., Expert data scientist" value={role} onChange={(e) => setRole(e.target.value)} />
+          </div>
+          <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3">
+            <label className="lbl">Context</label>
+            <input className="inp" placeholder="e.g., Teaching beginners" value={context} onChange={(e) => setContext(e.target.value)} />
+          </div>
+        </div>
+        <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3">
+          <label className="lbl">Task / Prompt</label>
+          <textarea className="inp min-h-[60px]" placeholder="What do you want the AI to do?" value={prompt} onChange={(e) => setPrompt(e.target.value)} />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3">
+            <label className="lbl">Output Format</label>
+            <input className="inp" placeholder="e.g., Bullet points, 3 items" value={format} onChange={(e) => setFormat(e.target.value)} />
+          </div>
+          <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3">
+            <label className="lbl">Constraints</label>
+            <input className="inp" placeholder="e.g., Under 100 words" value={constraints} onChange={(e) => setConstraints(e.target.value)} />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button onClick={runSimulation} disabled={running || !prompt.trim()} className="btn btn-primary btn-sm">
+            {running ? <><span className="h-3 w-3 animate-spin rounded-full border-2 border-white/30 border-t-white" /> Running...</> : <><Icon name="spark" size={12} /> Run Simulation</>}
+          </button>
+          <span className="font-mono text-[10px] text-mute">
+            Structure score: {[role, context, format, constraints].filter(Boolean).length}/4
+          </span>
+        </div>
+
+        {output && (
+          <div className="rounded-lg border-1.5 border-line bg-ink p-4">
+            <pre className="whitespace-pre-wrap font-mono text-[13px] leading-relaxed text-paper/90">{output}</pre>
+          </div>
+        )}
+
+        <div className="rounded-md border-l-4 border-ai bg-ai-soft/40 px-4 py-3">
+          <p className="text-[13px] leading-relaxed">
+            <strong>Educational Simulation:</strong> This demonstrates how prompt structure affects AI output quality. In production, these structured prompts would be sent to a real AI model. The five-part structure (Role + Context + Task + Format + Constraints) is the foundation of effective prompt engineering.
+          </p>
+        </div>
+      </div>
+    </SimulationContainer>
+  );
+}
+
+// ─── Robot Movement Simulator ────────────────────────────────────────────────
+
+type Direction = "up" | "down" | "left" | "right";
+type RobotCommand = "FORWARD" | "LEFT" | "RIGHT";
+
+export function RobotSimulator() {
+  const GRID_SIZE = 6;
+  const [robot, setRobot] = useState({ x: 0, y: 0, dir: "right" as Direction });
+  const [target, setTarget] = useState({ x: 5, y: 5 });
+  const [commands, setCommands] = useState<RobotCommand[]>([]);
+  const [executing, setExecuting] = useState(false);
+  const [currentStep, setCurrentStep] = useState(-1);
+  const [reached, setReached] = useState(false);
+
+  const dirToDelta: Record<Direction, { dx: number; dy: number }> = {
+    up: { dx: 0, dy: -1 }, down: { dx: 0, dy: 1 }, left: { dx: -1, dy: 0 }, right: { dx: 1, dy: 0 },
+  };
+  const dirEmoji: Record<Direction, string> = { up: "↑", down: "↓", left: "←", right: "→" };
+  const turnLeft: Record<Direction, Direction> = { up: "left", left: "down", down: "right", right: "up" };
+  const turnRight: Record<Direction, Direction> = { up: "right", right: "down", down: "left", left: "up" };
+
+  const addCommand = (cmd: RobotCommand) => setCommands([...commands, cmd]);
+
+  const executeCommands = async () => {
+    setExecuting(true);
+    setReached(false);
+    setCurrentStep(-1);
+    let pos = { ...robot };
+    for (let i = 0; i < commands.length; i++) {
+      setCurrentStep(i);
+      await new Promise((r) => setTimeout(r, 500));
+      const cmd = commands[i];
+      if (cmd === "FORWARD") {
+        const delta = dirToDelta[pos.dir];
+        pos = { ...pos, x: Math.max(0, Math.min(GRID_SIZE - 1, pos.x + delta.dx)), y: Math.max(0, Math.min(GRID_SIZE - 1, pos.y + delta.dy)) };
+      } else if (cmd === "LEFT") {
+        pos = { ...pos, dir: turnLeft[pos.dir] };
+      } else {
+        pos = { ...pos, dir: turnRight[pos.dir] };
+      }
+      setRobot({ ...pos });
+      if (pos.x === target.x && pos.y === target.y) {
+        setReached(true);
+        break;
+      }
+    }
+    setExecuting(false);
+  };
+
+  const reset = () => {
+    setRobot({ x: 0, y: 0, dir: "right" });
+    setCommands([]);
+    setCurrentStep(-1);
+    setReached(false);
+    setExecuting(false);
+  };
+
+  return (
+    <SimulationContainer title="Robot Movement Simulator" subtitle="Program the robot to reach the target using commands" badge="Lab" accent="#d95f0e">
+      <div className="space-y-4">
+        {/* Grid */}
+        <div className="mx-auto grid w-fit gap-0" style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)` }}>
+          {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, idx) => {
+            const x = idx % GRID_SIZE;
+            const y = Math.floor(idx / GRID_SIZE);
+            const isRobot = x === robot.x && y === robot.y;
+            const isTarget = x === target.x && y === target.y;
+            return (
+              <div key={idx} className="flex h-10 w-10 items-center justify-center border border-line bg-paper/30 sm:h-12 sm:w-12">
+                {isRobot && <span className="text-xl" title={`Facing ${robot.dir}`}>🤖</span>}
+                {isTarget && !isRobot && <span className="text-lg">🎯</span>}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Controls */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button onClick={() => addCommand("FORWARD")} disabled={executing} className="btn btn-sm">FORWARD</button>
+          <button onClick={() => addCommand("LEFT")} disabled={executing} className="btn btn-sm">← LEFT</button>
+          <button onClick={() => addCommand("RIGHT")} disabled={executing} className="btn btn-sm">RIGHT →</button>
+          <button onClick={executeCommands} disabled={executing || commands.length === 0} className="btn btn-sm btn-dark">
+            {executing ? "Running..." : "▶ Run Program"}
+          </button>
+          <button onClick={reset} className="btn btn-sm">Reset</button>
+        </div>
+
+        {/* Command Queue */}
+        {commands.length > 0 && (
+          <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3">
+            <div className="lbl">Program ({commands.length} commands)</div>
+            <div className="flex flex-wrap gap-1.5">
+              {commands.map((cmd, i) => (
+                <span key={i} className={cn(
+                  "rounded-md px-2 py-0.5 font-mono text-[11px] font-medium",
+                  i === currentStep ? "bg-gold-soft text-[#8a5a06] ring-1 ring-gold" : i < currentStep ? "bg-se-soft text-se" : "bg-paper text-mute",
+                )}>
+                  {cmd}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Status */}
+        <div className="flex flex-wrap gap-3 font-mono text-[11px]">
+          <span className="rounded-md bg-paper px-2 py-1">Position: ({robot.x}, {robot.y})</span>
+          <span className="rounded-md bg-paper px-2 py-1">Facing: {dirEmoji[robot.dir]} {robot.dir}</span>
+          {reached && <span className="rounded-md bg-se-soft px-2 py-1 font-bold text-se">✓ Target reached!</span>}
+        </div>
+
+        <div className="rounded-md border-l-4 border-rob bg-rob-soft/40 px-4 py-3">
+          <p className="text-[13px] leading-relaxed">
+            <strong>How robots move:</strong> Robots follow programmed instructions sequentially. FORWARD moves one step in the current direction. LEFT/RIGHT rotate the robot 90°. This is the foundation of robot programming — sequence, direction, and control flow.
+          </p>
+        </div>
+      </div>
+    </SimulationContainer>
+  );
+}
+
+// ─── Sensor Simulation ───────────────────────────────────────────────────────
+
+export function SensorSim() {
+  const [temp, setTemp] = useState(24);
+  const [light, setLight] = useState(65);
+  const [distance, setDistance] = useState(50);
+  const [fanOn, setFanOn] = useState(false);
+  const [lightOn, setLightOn] = useState(false);
+  const [alarmOn, setAlarmOn] = useState(false);
+
+  // Automation rules
+  useEffect(() => { setFanOn(temp > 30); }, [temp]);
+  useEffect(() => { setLightOn(light < 40); }, [light]);
+  useEffect(() => { setAlarmOn(distance < 20); }, [distance]);
+
+  return (
+    <SimulationContainer title="Sensor & Automation Lab" subtitle="Adjust sensors and observe automation rules in action" badge="Lab" accent="#d95f0e">
+      <div className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-3">
+          {/* Temperature */}
+          <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🌡️</span>
+              <span className="lbl mb-0">Temperature</span>
+            </div>
+            <input type="range" min="10" max="45" value={temp} onChange={(e) => setTemp(parseInt(e.target.value))} className="mt-2 w-full accent-[#d95f0e]" />
+            <div className="mt-1 text-center font-mono text-lg font-bold text-rob">{temp}°C</div>
+            <div className="mt-2 rounded border-1.5 border-dashed border-line p-2 text-center">
+              <span className="font-mono text-[10px] text-mute">IF temp &gt; 30°C → </span>
+              <span className={cn("font-mono text-[10px] font-bold", fanOn ? "text-se" : "text-mute")}>
+                FAN {fanOn ? "ON ✓" : "OFF"}
+              </span>
+            </div>
+          </div>
+
+          {/* Light */}
+          <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">💡</span>
+              <span className="lbl mb-0">Light Level</span>
+            </div>
+            <input type="range" min="0" max="100" value={light} onChange={(e) => setLight(parseInt(e.target.value))} className="mt-2 w-full accent-[#d95f0e]" />
+            <div className="mt-1 text-center font-mono text-lg font-bold text-rob">{light}%</div>
+            <div className="mt-2 rounded border-1.5 border-dashed border-line p-2 text-center">
+              <span className="font-mono text-[10px] text-mute">IF light &lt; 40% → </span>
+              <span className={cn("font-mono text-[10px] font-bold", lightOn ? "text-se" : "text-mute")}>
+                LIGHT {lightOn ? "ON ✓" : "OFF"}
+              </span>
+            </div>
+          </div>
+
+          {/* Distance */}
+          <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">📡</span>
+              <span className="lbl mb-0">Distance</span>
+            </div>
+            <input type="range" min="0" max="100" value={distance} onChange={(e) => setDistance(parseInt(e.target.value))} className="mt-2 w-full accent-[#d95f0e]" />
+            <div className="mt-1 text-center font-mono text-lg font-bold text-rob">{distance} cm</div>
+            <div className="mt-2 rounded border-1.5 border-dashed border-line p-2 text-center">
+              <span className="font-mono text-[10px] text-mute">IF dist &lt; 20cm → </span>
+              <span className={cn("font-mono text-[10px] font-bold", alarmOn ? "text-danger" : "text-mute")}>
+                ALARM {alarmOn ? "ON ⚠" : "OFF"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Actuator Status */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className={cn("rounded-lg border-2 p-3 text-center transition-all", fanOn ? "border-se bg-se-soft" : "border-line bg-paper/50")}>
+            <span className="text-2xl">{fanOn ? "🌀" : "⭕"}</span>
+            <div className="mt-1 font-mono text-[11px] font-bold">{fanOn ? "Fan ON" : "Fan OFF"}</div>
+          </div>
+          <div className={cn("rounded-lg border-2 p-3 text-center transition-all", lightOn ? "border-gold bg-gold-soft" : "border-line bg-paper/50")}>
+            <span className="text-2xl">{lightOn ? "💡" : "⭕"}</span>
+            <div className="mt-1 font-mono text-[11px] font-bold">{lightOn ? "Light ON" : "Light OFF"}</div>
+          </div>
+          <div className={cn("rounded-lg border-2 p-3 text-center transition-all", alarmOn ? "border-danger bg-[#f6e3e0]" : "border-line bg-paper/50")}>
+            <span className="text-2xl">{alarmOn ? "🚨" : "⭕"}</span>
+            <div className="mt-1 font-mono text-[11px] font-bold">{alarmOn ? "ALARM!" : "Alarm OFF"}</div>
+          </div>
+        </div>
+
+        <div className="rounded-md border-l-4 border-rob bg-rob-soft/40 px-4 py-3">
+          <p className="text-[13px] leading-relaxed">
+            <strong>Sense → Think → Act:</strong> Sensors measure the environment (temperature, light, distance). The controller evaluates rules (IF conditions). Actuators respond (fan, light, alarm). This is the core automation loop used in robotics and IoT systems.
+          </p>
+        </div>
+      </div>
+    </SimulationContainer>
+  );
+}
+
+// ─── IoT Architecture Simulation ─────────────────────────────────────────────
+
+export function IoTSim() {
+  const [temp, setTemp] = useState(28);
+  const [flowing, setFlowing] = useState(false);
+  const [stages, setStages] = useState([false, false, false, false, false]);
+
+  const sendData = () => {
+    setFlowing(true);
+    setStages([false, false, false, false, false]);
+    const delays = [300, 600, 900, 1200, 1500];
+    delays.forEach((d, i) => {
+      setTimeout(() => setStages((prev) => { const n = [...prev]; n[i] = true; return n; }), d);
+    });
+    setTimeout(() => setFlowing(false), 1800);
+  };
+
+  const labels = ["Sensor", "Microcontroller", "Internet", "Cloud", "Dashboard"];
+  const icons = ["🌡️", "🔧", "🌐", "☁️", "📊"];
+
+  return (
+    <SimulationContainer title="IoT Data Flow Simulation" subtitle="Send sensor data through the complete IoT architecture" badge="Simulation" accent="#d95f0e">
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3">
+            <label className="lbl">Sensor Reading</label>
+            <div className="flex items-center gap-2">
+              <input type="range" min="10" max="45" value={temp} onChange={(e) => setTemp(parseInt(e.target.value))} className="w-32 accent-[#d95f0e]" />
+              <span className="font-mono text-sm font-bold text-rob">{temp}°C</span>
+            </div>
+          </div>
+          <button onClick={sendData} disabled={flowing} className="btn btn-sm btn-dark">
+            {flowing ? "Sending..." : "📤 Send Data"}
+          </button>
+        </div>
+
+        {/* Flow Visualization */}
+        <div className="flex flex-wrap items-center justify-center gap-1 rounded-lg border-1.5 border-line bg-paper/30 p-4">
+          {labels.map((label, i) => (
+            <div key={i} className="flex items-center gap-1">
+              <div className={cn(
+                "flex flex-col items-center gap-1 rounded-lg border-2 px-3 py-2 transition-all",
+                stages[i] ? "border-se bg-se-soft scale-105" : "border-line bg-card",
+              )}>
+                <span className="text-lg">{icons[i]}</span>
+                <span className="font-mono text-[9px] font-medium">{label}</span>
+                {stages[i] && <span className="text-se text-[10px]">✓</span>}
+              </div>
+              {i < labels.length - 1 && (
+                <div className={cn("px-1 font-mono text-sm", stages[i] && stages[i + 1] ? "text-se" : "text-mute")}>→</div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Dashboard Output */}
+        {stages[4] && (
+          <div className="rounded-lg border-2 border-se bg-se-soft/50 p-4">
+            <div className="lbl text-se">Dashboard Received</div>
+            <div className="font-mono text-sm">Temperature: <strong className="text-rob">{temp}°C</strong></div>
+            <div className="mt-1 font-mono text-[11px] text-mute">
+              Timestamp: {new Date().toLocaleTimeString()} · Status: Normal {temp > 35 ? "⚠️ HIGH" : temp < 15 ? "⚠️ LOW" : "✓"}
+            </div>
+          </div>
+        )}
+
+        <div className="rounded-md border-l-4 border-rob bg-rob-soft/40 px-4 py-3">
+          <p className="text-[13px] leading-relaxed">
+            <strong>IoT Architecture:</strong> Sensors collect data → Microcontroller processes it → Data travels over the internet → Cloud stores/processes it → Dashboard displays it. This is how smart devices connect to create intelligent systems.
+          </p>
+        </div>
+      </div>
+    </SimulationContainer>
+  );
+}
+
+// ─── API Simulation Lab ──────────────────────────────────────────────────────
+
+export function APISim() {
+  const [method, setMethod] = useState<"GET" | "POST">("GET");
+  const [endpoint, setEndpoint] = useState("/users");
+  const [body, setBody] = useState('{ "name": "New User", "email": "user@example.com" }');
+  const [response, setResponse] = useState("");
+  const [status, setStatus] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  const sendRequest = () => {
+    setLoading(true);
+    setResponse("");
+    setTimeout(() => {
+      if (method === "GET" && endpoint === "/users") {
+        setStatus(200);
+        setResponse(JSON.stringify([
+          { id: 1, name: "Amara Kide", email: "amara@techfoundry.ac" },
+          { id: 2, name: "Noah Berg", email: "noah@techfoundry.ac" },
+          { id: 3, name: "Zara Hussen", email: "zara@techfoundry.ac" },
+        ], null, 2));
+      } else if (method === "GET" && endpoint === "/courses") {
+        setStatus(200);
+        setResponse(JSON.stringify([
+          { id: "c-ai", title: "Artificial Intelligence", lessons: 10 },
+          { id: "c-rob", title: "Robotics & IoT", lessons: 12 },
+        ], null, 2));
+      } else if (method === "POST") {
+        try {
+          JSON.parse(body);
+          setStatus(201);
+          setResponse(JSON.stringify({ success: true, message: "Resource created", data: JSON.parse(body), id: Math.floor(Math.random() * 1000) }, null, 2));
+        } catch {
+          setStatus(400);
+          setResponse(JSON.stringify({ error: "Invalid JSON body" }, null, 2));
+        }
+      } else {
+        setStatus(404);
+        setResponse(JSON.stringify({ error: "Endpoint not found" }, null, 2));
+      }
+      setLoading(false);
+    }, 800);
+  };
+
+  return (
+    <SimulationContainer title="API Lab" subtitle="Send HTTP requests and observe server responses" badge="Lab" accent="#1b8a4c">
+      <div className="space-y-4">
+        <div className="flex flex-wrap gap-2">
+          <select value={method} onChange={(e) => setMethod(e.target.value as "GET" | "POST")} className="inp w-auto">
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+          </select>
+          <select value={endpoint} onChange={(e) => setEndpoint(e.target.value)} className="inp flex-1 min-w-[150px]">
+            <option value="/users">/users</option>
+            <option value="/courses">/courses</option>
+            <option value="/unknown">/unknown (404)</option>
+          </select>
+          <button onClick={sendRequest} disabled={loading} className="btn btn-sm btn-dark">
+            {loading ? "Sending..." : "📡 Send Request"}
+          </button>
+        </div>
+
+        {method === "POST" && (
+          <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3">
+            <label className="lbl">Request Body (JSON)</label>
+            <textarea className="inp min-h-[60px] font-mono text-[12px]" value={body} onChange={(e) => setBody(e.target.value)} />
+          </div>
+        )}
+
+        {/* Request/Response Flow */}
+        <div className="flex items-center justify-center gap-2 rounded-lg border-1.5 border-line bg-paper/30 p-3">
+          <div className="rounded border-1.5 border-se bg-se-soft px-3 py-2 text-center">
+            <div className="font-mono text-[10px] font-bold">Client</div>
+          </div>
+          <div className="font-mono text-xs text-mute">
+            {method} {endpoint} →
+          </div>
+          <div className="rounded border-1.5 border-ink bg-ink px-3 py-2 text-center">
+            <div className="font-mono text-[10px] font-bold text-paper">Server</div>
+          </div>
+          {status > 0 && (
+            <>
+              <div className="font-mono text-xs text-mute">→ {status}</div>
+              <div className={cn("rounded border-1.5 px-3 py-2 text-center", status < 300 ? "border-se bg-se-soft" : "border-danger bg-[#f6e3e0]")}>
+                <div className="font-mono text-[10px] font-bold">Response</div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {response && (
+          <div className="rounded-lg border-1.5 border-line bg-ink p-4">
+            <div className="mb-2 flex items-center gap-2">
+              <span className={cn("rounded px-2 py-0.5 font-mono text-[10px] font-bold", status < 300 ? "bg-se text-[#f4faf7]" : "bg-danger text-white")}>
+                {status}
+              </span>
+              <span className="font-mono text-[10px] text-paper/60">Response Body</span>
+            </div>
+            <pre className="overflow-x-auto font-mono text-[12px] leading-relaxed text-paper/90">{response}</pre>
+          </div>
+        )}
+
+        <div className="rounded-md border-l-4 border-se bg-se-soft/40 px-4 py-3">
+          <p className="text-[13px] leading-relaxed">
+            <strong>How APIs work:</strong> Your application sends an HTTP request (GET to read, POST to create) to a server. The server processes it and returns a response with a status code (200 = success, 404 = not found, 400 = bad request) and data.
+          </p>
+        </div>
+      </div>
+    </SimulationContainer>
+  );
+}
+
+// ─── Database Simulation ─────────────────────────────────────────────────────
+
+export function DatabaseSim() {
+  const [rows, setRows] = useState([
+    { id: 1, name: "Amara Kide", email: "amara@techfoundry.ac", course: "AI" },
+    { id: 2, name: "Noah Berg", email: "noah@techfoundry.ac", course: "Robotics" },
+    { id: 3, name: "Zara Hussen", email: "zara@techfoundry.ac", course: "AI" },
+    { id: 4, name: "Miguel Santos", email: "miguel@techfoundry.ac", course: "Software" },
+  ]);
+  const [query, setQuery] = useState("SELECT * FROM students");
+  const [result, setResult] = useState<typeof rows>(rows);
+  const [newRow, setNewRow] = useState({ name: "", email: "", course: "AI" });
+
+  const runQuery = () => {
+    const q = query.toLowerCase().trim();
+    if (q.includes("select * from students")) {
+      setResult(rows);
+    } else if (q.includes("where course")) {
+      const match = q.match(/'([^']+)'/);
+      if (match) {
+        setResult(rows.filter(r => r.course.toLowerCase() === match[1].toLowerCase()));
+      }
+    } else if (q.includes("count")) {
+      setResult([{ id: 0, name: `Count: ${rows.length}`, email: "", course: "" }] as typeof rows);
+    } else {
+      setResult([]);
+    }
+  };
+
+  const addRow = () => {
+    if (!newRow.name || !newRow.email) return;
+    const id = Math.max(...rows.map(r => r.id)) + 1;
+    setRows([...rows, { id, ...newRow }]);
+    setNewRow({ name: "", email: "", course: "AI" });
+  };
+
+  return (
+    <SimulationContainer title="Database Lab" subtitle="Query and manage a simulated database" badge="Lab" accent="#1b8a4c">
+      <div className="space-y-4">
+        <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3">
+          <label className="lbl">SQL Query</label>
+          <div className="flex gap-2">
+            <input className="inp flex-1 font-mono text-[12px]" value={query} onChange={(e) => setQuery(e.target.value)} />
+            <button onClick={runQuery} className="btn btn-sm btn-dark">▶ Run</button>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            <button onClick={() => setQuery("SELECT * FROM students")} className="btn btn-xs">SELECT *</button>
+            <button onClick={() => setQuery("SELECT * FROM students WHERE course = 'AI'")} className="btn btn-xs">WHERE course='AI'</button>
+            <button onClick={() => setQuery("SELECT COUNT(*) FROM students")} className="btn btn-xs">COUNT</button>
+          </div>
+        </div>
+
+        {/* Result Table */}
+        <div className="overflow-x-auto rounded-lg border-1.5 border-line">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b-1.5 border-line bg-paper">
+                <th className="px-3 py-2 text-left font-mono text-[10px] uppercase tracking-wider text-mute">id</th>
+                <th className="px-3 py-2 text-left font-mono text-[10px] uppercase tracking-wider text-mute">name</th>
+                <th className="px-3 py-2 text-left font-mono text-[10px] uppercase tracking-wider text-mute">email</th>
+                <th className="px-3 py-2 text-left font-mono text-[10px] uppercase tracking-wider text-mute">course</th>
+              </tr>
+            </thead>
+            <tbody>
+              {result.map((r) => (
+                <tr key={r.id} className="border-b border-line/50">
+                  <td className="px-3 py-2 font-mono text-[12px]">{r.id}</td>
+                  <td className="px-3 py-2">{r.name}</td>
+                  <td className="px-3 py-2 font-mono text-[12px] text-mute">{r.email}</td>
+                  <td className="px-3 py-2"><span className="rounded bg-paper px-1.5 py-0.5 font-mono text-[10px]">{r.course}</span></td>
+                </tr>
+              ))}
+              {result.length === 0 && (
+                <tr><td colSpan={4} className="px-3 py-4 text-center text-mute">No results</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Insert */}
+        <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3">
+          <label className="lbl">INSERT new record</label>
+          <div className="flex flex-wrap gap-2">
+            <input className="inp flex-1 min-w-[120px]" placeholder="Name" value={newRow.name} onChange={(e) => setNewRow({ ...newRow, name: e.target.value })} />
+            <input className="inp flex-1 min-w-[150px]" placeholder="Email" value={newRow.email} onChange={(e) => setNewRow({ ...newRow, email: e.target.value })} />
+            <select className="inp w-auto" value={newRow.course} onChange={(e) => setNewRow({ ...newRow, course: e.target.value })}>
+              <option>AI</option><option>Robotics</option><option>Software</option><option>Innovation</option>
+            </select>
+            <button onClick={addRow} className="btn btn-sm">+ Insert</button>
+          </div>
+        </div>
+
+        <div className="rounded-md border-l-4 border-se bg-se-soft/40 px-4 py-3">
+          <p className="text-[13px] leading-relaxed">
+            <strong>How databases work:</strong> Applications send SQL queries to a database. SELECT retrieves data, WHERE filters it, INSERT adds new records. The database returns structured results. This is how applications store and retrieve persistent data.
+          </p>
+        </div>
+      </div>
+    </SimulationContainer>
+  );
+}
+
+// ─── Business Model Canvas Simulation ────────────────────────────────────────
+
+export function BusinessModelSim() {
+  const [canvas, setCanvas] = useState({
+    problem: "", solution: "", customers: "", channels: "", revenue: "", costs: "", keyResources: "", partners: "", metrics: "",
+  });
+  const [validated, setValidated] = useState(false);
+
+  const blocks = [
+    { key: "problem", label: "Problem", hint: "What pain point exists?" },
+    { key: "solution", label: "Solution", hint: "How do you solve it?" },
+    { key: "customers", label: "Target Users", hint: "Who has this problem?" },
+    { key: "channels", label: "Channels", hint: "How do you reach them?" },
+    { key: "revenue", label: "Revenue Model", hint: "How do you make money?" },
+    { key: "costs", label: "Cost Structure", hint: "What does it cost to run?" },
+    { key: "keyResources", label: "Key Resources", hint: "What do you need?" },
+    { key: "partners", label: "Partners", hint: "Who helps you?" },
+    { key: "metrics", label: "Key Metrics", hint: "How do you measure success?" },
+  ] as const;
+
+  const validate = () => {
+    const filled = Object.values(canvas).filter(Boolean).length;
+    setValidated(filled >= 7);
+  };
+
+  const score = Object.values(canvas).filter((v) => v.trim().length > 5).length;
+
+  return (
+    <SimulationContainer title="Business Model Canvas" subtitle="Build and validate your startup's business model" badge="Simulation" accent="#c2317e">
+      <div className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-3">
+          {blocks.map((b) => (
+            <div key={b.key} className="rounded-lg border-1.5 border-line bg-paper/50 p-3">
+              <label className="lbl">{b.label}</label>
+              <textarea
+                className="inp min-h-[50px] text-[12px]"
+                placeholder={b.hint}
+                value={canvas[b.key]}
+                onChange={(e) => setCanvas({ ...canvas, [b.key]: e.target.value })}
+              />
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button onClick={validate} className="btn btn-sm btn-dark">Validate Model</button>
+          <span className="font-mono text-[11px] text-mute">Completeness: {score}/9 blocks</span>
+          <div className="flex-1">
+            <div className="h-2 overflow-hidden rounded-full bg-[#e3e6da]">
+              <div className="h-full rounded-full bg-di transition-all" style={{ width: `${(score / 9) * 100}%` }} />
+            </div>
+          </div>
+        </div>
+
+        {validated && (
+          <div className="rounded-lg border-2 border-se bg-se-soft/50 p-4">
+            <div className="flex items-center gap-2">
+              <Icon name="check" size={16} className="text-se" />
+              <span className="font-display text-sm font-bold text-se">Business Model Valid</span>
+            </div>
+            <p className="mt-1 text-[13px] text-mute">
+              Your canvas has {score} defined blocks. Next step: identify the riskiest assumption and design the cheapest experiment to test it.
+            </p>
+          </div>
+        )}
+
+        <div className="rounded-md border-l-4 border-di bg-di-soft/40 px-4 py-3">
+          <p className="text-[13px] leading-relaxed">
+            <strong>Business Model Canvas:</strong> A one-page framework that maps how a business creates, delivers, and captures value. Fill all nine blocks to ensure your model is complete. The riskiest block is the one you're least certain about — test that first.
+          </p>
+        </div>
+      </div>
+    </SimulationContainer>
+  );
+}
+
+// ─── Microcontroller Lab ─────────────────────────────────────────────────────
+
+export function MicrocontrollerSim() {
+  const [buttonPressed, setButtonPressed] = useState(false);
+  const [ledOn, setLedOn] = useState(false);
+  const [motorSpeed, setMotorSpeed] = useState(0);
+  const [buzzerOn, setBuzzerOn] = useState(false);
+  const [mode, setMode] = useState<"button-led" | "sensor-motor" | "alarm">("button-led");
+
+  useEffect(() => {
+    if (mode === "button-led") {
+      setLedOn(buttonPressed);
+      setMotorSpeed(0);
+      setBuzzerOn(false);
+    } else if (mode === "sensor-motor") {
+      setLedOn(motorSpeed > 0);
+      setBuzzerOn(false);
+    } else {
+      setLedOn(buttonPressed);
+      setBuzzerOn(buttonPressed);
+      setMotorSpeed(0);
+    }
+  }, [buttonPressed, motorSpeed, mode]);
+
+  return (
+    <SimulationContainer title="Microcontroller Lab" subtitle="Connect virtual components and observe the control logic" badge="Lab" accent="#d95f0e">
+      <div className="space-y-4">
+        {/* Mode Selection */}
+        <div className="flex flex-wrap gap-2">
+          {(["button-led", "sensor-motor", "alarm"] as const).map((m) => (
+            <button key={m} onClick={() => { setMode(m); setButtonPressed(false); setMotorSpeed(0); }} className={cn("btn btn-sm", mode === m ? "btn-dark" : "")}>
+              {m === "button-led" ? "Button → LED" : m === "sensor-motor" ? "Sensor → Motor" : "Alarm System"}
+            </button>
+          ))}
+        </div>
+
+        {/* Circuit Visualization */}
+        <div className="flex flex-wrap items-center justify-center gap-3 rounded-lg border-1.5 border-line bg-paper/30 p-4">
+          {/* Input */}
+          <div className="flex flex-col items-center gap-2">
+            <span className="font-mono text-[9px] uppercase tracking-wider text-mute">Input</span>
+            {mode === "sensor-motor" ? (
+              <div className="flex flex-col items-center gap-1">
+                <input type="range" min="0" max="100" value={motorSpeed} onChange={(e) => setMotorSpeed(parseInt(e.target.value))} className="w-20 accent-[#d95f0e]" style={{ writingMode: "vertical-lr" as any, height: "60px" }} />
+                <span className="font-mono text-[10px]">Sensor: {motorSpeed}%</span>
+              </div>
+            ) : (
+              <button
+                onMouseDown={() => setButtonPressed(true)}
+                onMouseUp={() => setButtonPressed(false)}
+                onMouseLeave={() => setButtonPressed(false)}
+                onTouchStart={() => setButtonPressed(true)}
+                onTouchEnd={() => setButtonPressed(false)}
+                className={cn("h-14 w-14 rounded-full border-3 transition-all", buttonPressed ? "border-se bg-se text-white scale-95" : "border-line bg-paper text-mute")}
+              >
+                <span className="text-lg">{buttonPressed ? "⬤" : "○"}</span>
+              </button>
+            )}
+          </div>
+
+          <div className="font-mono text-lg text-mute">→</div>
+
+          {/* Microcontroller */}
+          <div className="flex flex-col items-center gap-1 rounded-lg border-2 border-ink bg-ink px-4 py-3">
+            <span className="text-lg">🔧</span>
+            <span className="font-mono text-[9px] font-bold text-paper">MCU</span>
+            <span className="font-mono text-[8px] text-paper/60">Processing</span>
+          </div>
+
+          <div className="font-mono text-lg text-mute">→</div>
+
+          {/* Outputs */}
+          <div className="flex flex-col items-center gap-2">
+            <span className="font-mono text-[9px] uppercase tracking-wider text-mute">Output</span>
+            <div className="flex gap-2">
+              <div className={cn("flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all", ledOn ? "border-gold bg-gold text-ink" : "border-line bg-paper")}>
+                <span className="text-lg">{ledOn ? "💡" : "⭕"}</span>
+              </div>
+              {mode === "sensor-motor" && (
+                <div className={cn("flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all", motorSpeed > 0 ? "border-se bg-se-soft" : "border-line bg-paper")}>
+                  <span className={cn("text-lg", motorSpeed > 0 && "animate-spin")} style={{ animationDuration: `${Math.max(0.2, 2 - motorSpeed / 50)}s` }}>⚙️</span>
+                </div>
+              )}
+              {mode === "alarm" && (
+                <div className={cn("flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all", buzzerOn ? "border-danger bg-[#f6e3e0]" : "border-line bg-paper")}>
+                  <span className="text-lg">{buzzerOn ? "🔔" : "⭕"}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Code representation */}
+        <div className="rounded-lg border-1.5 border-line bg-ink p-3">
+          <div className="font-mono text-[11px] leading-relaxed text-paper/80">
+            <span className="text-paper/40">// Microcontroller code</span><br />
+            <span className="text-[#7ec8e3]">if</span> ({mode === "button-led" ? "button.isPressed()" : mode === "sensor-motor" ? `sensor.read() > ${50}` : "button.isPressed()"}) {"{"}<br />
+            <span className="ml-4">{mode === "alarm" ? "buzzer.on(); led.on();" : mode === "sensor-motor" ? `motor.setSpeed(sensor.read());` : "led.on();"}</span><br />
+            {"}"} <span className="text-[#7ec8e3]">else</span> {"{"}<br />
+            <span className="ml-4">{mode === "alarm" ? "buzzer.off(); led.off();" : mode === "sensor-motor" ? "motor.stop();" : "led.off();"}</span><br />
+            {"}"}
+          </div>
+        </div>
+
+        <div className="rounded-md border-l-4 border-rob bg-rob-soft/40 px-4 py-3">
+          <p className="text-[13px] leading-relaxed">
+            <strong>Microcontrollers:</strong> Read inputs (buttons, sensors), process logic (if/else rules), and control outputs (LEDs, motors, buzzers). This sense-process-act loop runs thousands of times per second in real devices.
+          </p>
+        </div>
+      </div>
+    </SimulationContainer>
+  );
+}
+
+// ─── Product Development Simulation ──────────────────────────────────────────
+
+export function ProductDevSim() {
+  type Stage = "problem" | "research" | "idea" | "prototype" | "test" | "launch";
+  const stages: { key: Stage; label: string; icon: string }[] = [
+    { key: "problem", label: "Problem", icon: "🔍" },
+    { key: "research", label: "Research", icon: "📊" },
+    { key: "idea", label: "Idea", icon: "💡" },
+    { key: "prototype", label: "Prototype", icon: "🔧" },
+    { key: "test", label: "Test", icon: "🧪" },
+    { key: "launch", label: "Launch", icon: "🚀" },
+  ];
+  const [current, setCurrent] = useState(0);
+  const [decisions, setDecisions] = useState<Record<string, string>>({});
+  const [feedback, setFeedback] = useState("");
+
+  const stageQuestions: Record<Stage, { q: string; options: string[] }> = {
+    problem: { q: "What problem are you solving?", options: ["Students can't find study groups", "Campus food is always cold", "Parking is impossible to find"] },
+    research: { q: "How will you validate the problem?", options: ["Survey 50 students", "Interview 10 people", "Observe behavior for a week"] },
+    idea: { q: "What's your solution approach?", options: ["Mobile app", "Web platform", "Physical product + app"] },
+    prototype: { q: "What's your MVP scope?", options: ["One core feature only", "Three features minimum", "Full product vision"] },
+    test: { q: "How will you measure success?", options: ["10 active daily users", "80% would recommend", "Users pay for it"] },
+    launch: { q: "What's your launch strategy?", options: ["Soft launch to friends", "Campus-wide announcement", "Paid marketing campaign"] },
+  };
+
+  const advance = () => {
+    if (current < stages.length - 1) {
+      setCurrent(current + 1);
+      setFeedback("");
+    } else {
+      setFeedback("🎉 Product development cycle complete! You've gone from problem to launch.");
+    }
+  };
+
+  const selectOption = (opt: string) => {
+    setDecisions({ ...decisions, [stages[current].key]: opt });
+    const feedbacks = [
+      "Good — a clearly defined problem is the foundation of every successful product.",
+      "Smart — direct user research beats assumptions every time.",
+      "Interesting — consider which approach fastest validates your hypothesis.",
+      "Wise — start small, learn fast, iterate based on evidence.",
+      "Clear metrics prevent vanity numbers and keep you honest.",
+      "Strategic — match your launch energy to your confidence level.",
+    ];
+    setFeedback(feedbacks[current]);
+  };
+
+  return (
+    <SimulationContainer title="Product Development Simulator" subtitle="Walk through the product development lifecycle" badge="Simulation" accent="#c2317e">
+      <div className="space-y-4">
+        {/* Stage Progress */}
+        <div className="flex items-center justify-between">
+          {stages.map((s, i) => (
+            <div key={s.key} className="flex flex-col items-center gap-1">
+              <div className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-full border-2 text-sm transition-all",
+                i < current ? "border-se bg-se-soft" : i === current ? "border-di bg-di-soft scale-110" : "border-line bg-paper",
+              )}>
+                {i < current ? "✓" : s.icon}
+              </div>
+              <span className="font-mono text-[8px] uppercase tracking-wider text-mute">{s.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Current Stage */}
+        <div className="rounded-lg border-1.5 border-line bg-paper/50 p-4">
+          <div className="lbl">Stage: {stages[current].label}</div>
+          <p className="text-sm font-semibold">{stageQuestions[stages[current].key].q}</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            {stageQuestions[stages[current].key].options.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => selectOption(opt)}
+                className={cn(
+                  "rounded-lg border-2 px-3 py-2 text-left text-[13px] transition-all",
+                  decisions[stages[current].key] === opt ? "border-di bg-di-soft font-semibold" : "border-line bg-card hover:border-di/50",
+                )}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {feedback && (
+          <div className="rounded-md border-l-4 border-di bg-di-soft/40 px-4 py-3">
+            <p className="text-[13px] leading-relaxed">{feedback}</p>
+          </div>
+        )}
+
+        <button
+          onClick={advance}
+          disabled={!decisions[stages[current].key]}
+          className="btn btn-sm btn-dark"
+        >
+          {current < stages.length - 1 ? "Next Stage →" : "Complete ✓"}
+        </button>
+      </div>
+    </SimulationContainer>
+  );
+}
