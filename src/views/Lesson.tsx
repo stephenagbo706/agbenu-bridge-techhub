@@ -4,6 +4,7 @@ import { courseMeta } from "../lib/data";
 import { Chip, CourseTag, Reveal, Seg, cn, fmtDate } from "../components/ui";
 import { Icon } from "../components/icons";
 import { DiagramNode, DiagramArrow } from "../components/simulations";
+import { VideoPlayer } from "../components/VideoPlayer";
 
 // ─── Inline lesson diagrams ─────────────────────────────────────────────────
 
@@ -174,6 +175,54 @@ export default function LessonView({ id }: { id: string }) {
               </section>
             </Reveal>
           ))}
+
+          {/* Video Section */}
+          {(() => {
+            const videos = app.getLessonVideos(lesson.id);
+            if (videos.length === 0) return null;
+            return (
+              <Reveal delay={180}>
+                <section className="card-ink overflow-hidden bg-card">
+                  <div className="flex items-center gap-2 border-b-1.5 border-line bg-paper/60 px-5 py-3">
+                    <Icon name="play" size={15} className={m.text} />
+                    <span className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-mute">
+                      {videos.length === 1 ? "Video lesson" : `${videos.length} video lessons`}
+                    </span>
+                    {videos[0].isRequired && (
+                      <Chip className="ml-auto bg-gold-soft text-[#8a5a06]">Required</Chip>
+                    )}
+                  </div>
+                  <div className="p-5 sm:p-6 space-y-4">
+                    {videos.map((video) => {
+                      const videoProgress = st.videoProgress[video.id];
+                      return (
+                        <div key={video.id} className="space-y-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1">
+                              <h3 className="font-display text-base font-bold tracking-tight">{video.title}</h3>
+                              <p className="mt-1 text-[13px] leading-relaxed text-mute">{video.description}</p>
+                              <div className="mt-2 flex items-center gap-3 font-mono text-[10px] uppercase tracking-wider text-mute">
+                                <span>{Math.floor(video.duration / 60)}:{String(video.duration % 60).padStart(2, "0")}</span>
+                                {videoProgress?.completed && (
+                                  <span className="flex items-center gap-1 text-se">
+                                    <Icon name="check" size={10} /> Completed
+                                  </span>
+                                )}
+                                {videoProgress && !videoProgress.completed && videoProgress.percentage > 0 && (
+                                  <span>{videoProgress.percentage}% watched</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <VideoPlayer video={video} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              </Reveal>
+            );
+          })()}
 
           {/* Interactive Diagram Section */}
           <Reveal delay={190}>

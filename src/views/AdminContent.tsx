@@ -3,7 +3,7 @@ import { useApp } from "../lib/store";
 import { courseMeta, uid as newId } from "../lib/data";
 import { Chip, Modal, SectionHead, cn } from "../components/ui";
 import { Icon } from "../components/icons";
-import type { Lesson, Question, QuestionKind } from "../lib/types";
+import type { Lesson, Question, QuestionKind, Video } from "../lib/types";
 
 interface LessonDraft {
   id?: string;
@@ -40,11 +40,56 @@ const draftFromLesson = (l: Lesson): LessonDraft => ({
   ckPrompt: l.check.prompt, ckOptions: [...l.check.options], ckAnswer: l.check.answer, ckExplain: l.check.explain,
 });
 
+interface VideoDraft {
+  id?: string;
+  lessonId: string;
+  title: string;
+  description: string;
+  videoUrl: string;
+  thumbnailUrl: string;
+  provider: "youtube" | "vimeo" | "direct" | "storage" | "external";
+  duration: number;
+  captionsUrl: string;
+  sortOrder: number;
+  isRequired: boolean;
+  published: boolean;
+}
+
+const emptyVideoDraft = (lessonId: string, sortOrder: number): VideoDraft => ({
+  lessonId,
+  title: "",
+  description: "",
+  videoUrl: "",
+  thumbnailUrl: "",
+  provider: "youtube",
+  duration: 300,
+  captionsUrl: "",
+  sortOrder,
+  isRequired: true,
+  published: true,
+});
+
+const draftFromVideo = (v: Video): VideoDraft => ({
+  id: v.id,
+  lessonId: v.lessonId,
+  title: v.title,
+  description: v.description,
+  videoUrl: v.videoUrl,
+  thumbnailUrl: v.thumbnailUrl ?? "",
+  provider: v.provider,
+  duration: v.duration,
+  captionsUrl: v.captionsUrl ?? "",
+  sortOrder: v.sortOrder,
+  isRequired: v.isRequired,
+  published: v.published,
+});
+
 export default function AdminContent() {
   const app = useApp();
   const { db } = app;
   const [courseId, setCourseId] = useState(db.courses[0]?.id ?? "c-ai");
   const [draft, setDraft] = useState<LessonDraft | null>(null);
+  const [videoDraft, setVideoDraft] = useState<VideoDraft | null>(null);
   const [topicOpen, setTopicOpen] = useState(false);
   const [topicTitle, setTopicTitle] = useState("");
   const [topicSummary, setTopicSummary] = useState("");
@@ -74,6 +119,28 @@ export default function AdminContent() {
     };
     app.saveLesson(lesson);
     setDraft(null);
+  };
+
+  const saveVideoDraft = () => {
+    if (!videoDraft) return;
+    const video: Video = {
+      id: videoDraft.id ?? `v-x-${newId()}`,
+      lessonId: videoDraft.lessonId,
+      title: videoDraft.title.trim(),
+      description: videoDraft.description.trim(),
+      videoUrl: videoDraft.videoUrl.trim(),
+      thumbnailUrl: videoDraft.thumbnailUrl.trim() || undefined,
+      provider: videoDraft.provider,
+      duration: Math.max(10, videoDraft.duration),
+      captionsUrl: videoDraft.captionsUrl.trim() || undefined,
+      sortOrder: videoDraft.sortOrder,
+      isRequired: videoDraft.isRequired,
+      published: videoDraft.published,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    app.saveVideo(video);
+    setVideoDraft(null);
   };
 
   const draftValid = !!draft &&
@@ -140,18 +207,31 @@ export default function AdminContent() {
                 </button>
               </div>
               <div className="border-t-1.5 border-dashed border-line px-3 py-2">
-                {lessons.map((l) => (
-                  <div key={l.id} className="group flex items-center gap-3 rounded-md px-2 py-2 transition-colors hover:bg-paper">
-                    <Icon name="book" size={14} className="shrink-0 text-mute" />
-                    <div className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold leading-tight">{l.title}</span>
-                      <span className="font-mono text-[10px] uppercase tracking-wider text-mute">Lesson {l.order} · {l.minutes} min · {l.sections.length} sections · 1 check</span>
+                {lessons.map((l) => {
+                  const lessonVideos = db.videos.filter((v) => v.lessonId === l.id);
+                  return (
+                    <div key={l.id} className="group flex items-center gap-3 rounded-md px-2 py-2 transition-colors hover:bg-paper">
+                      <Icon name="book" size={14} className="shrink-0 text-mute" />
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold leading-tight">{l.title}</span>
+                        <span className="font-mono text-[10px] uppercase tracking-wider text-mute">
+                          Lesson {l.order} · {l.minutes} min · {l.sections.length} sections · 1 check
+                          {lessonVideos.length > 0 && ` · ${lessonVideos.length} video${lessonVideos.length > 1 ? "s" : ""}`}
+                        </span>
+                      </div>
+                      <button
+                        className="btn btn-ghost btn-xs opacity-0 transition-opacity group-hover:opacity-100"
+                        onClick={() => setVideoDraft(emptyVideoDraft(l.id, lessonVideos.length + 1))}
+                        title="Add video"
+                      >
+                        <Icon name="play" size={12} /> Video
+                      </button>
+                      <button className="btn btn-ghost btn-xs opacity-0 transition-opacity group-hover:opacity-100" onClick={() => setDraft(draftFromLesson(l))}>
+                        <Icon name="edit" size={12} /> Edit
+                      </button>
                     </div>
-                    <button className="btn btn-ghost btn-xs opacity-0 transition-opacity group-hover:opacity-100" onClick={() => setDraft(draftFromLesson(l))}>
-                      <Icon name="edit" size={12} /> Edit
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
                 {lessons.length === 0 && <div className="px-2 py-2 text-xs italic text-mute">No lessons yet — add the first one.</div>}
               </div>
             </section>
@@ -289,6 +369,101 @@ export default function AdminContent() {
           editors slot in without model changes. Marked pending rather than simulated.
         </p>
       </section>
+
+      {/* Video editor */}
+      <Modal
+        open={!!videoDraft}
+        onClose={() => setVideoDraft(null)}
+        kicker={videoDraft?.id ? "Edit video" : `New video · ${app.getLesson(videoDraft?.lessonId ?? "")?.title ?? ""}`}
+        title={videoDraft?.id ? videoDraft.title : "Add a video"}
+        wide
+        footer={
+          <>
+            <button className="btn btn-ghost btn-sm" onClick={() => setVideoDraft(null)}>Cancel</button>
+            {videoDraft?.id && (
+              <button
+                className="btn btn-danger btn-sm"
+                onClick={() => {
+                  if (videoDraft.id && confirm("Delete this video?")) {
+                    app.deleteVideo(videoDraft.id);
+                    setVideoDraft(null);
+                  }
+                }}
+              >
+                <Icon name="trash" size={13} /> Delete
+              </button>
+            )}
+            <button
+              className="btn btn-primary btn-sm"
+              disabled={!videoDraft || !videoDraft.title.trim() || !videoDraft.videoUrl.trim()}
+              onClick={saveVideoDraft}
+            >
+              <Icon name="check" size={13} /> {videoDraft?.id ? "Save changes" : "Add video"}
+            </button>
+          </>
+        }
+      >
+        {videoDraft && (
+          <div className="space-y-3">
+            <div>
+              <label className="lbl">Video title</label>
+              <input className="inp" placeholder="e.g. Introduction to Neural Networks" value={videoDraft.title} onChange={(e) => setVideoDraft({ ...videoDraft, title: e.target.value })} />
+            </div>
+            <div>
+              <label className="lbl">Description</label>
+              <textarea className="inp min-h-16" placeholder="What students will learn from this video" value={videoDraft.description} onChange={(e) => setVideoDraft({ ...videoDraft, description: e.target.value })} />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="lbl">Video URL</label>
+                <input className="inp" placeholder="https://youtube.com/embed/..." value={videoDraft.videoUrl} onChange={(e) => setVideoDraft({ ...videoDraft, videoUrl: e.target.value })} />
+              </div>
+              <div>
+                <label className="lbl">Provider</label>
+                <select className="inp" value={videoDraft.provider} onChange={(e) => setVideoDraft({ ...videoDraft, provider: e.target.value as Video["provider"] })}>
+                  <option value="youtube">YouTube</option>
+                  <option value="vimeo">Vimeo</option>
+                  <option value="direct">Direct URL</option>
+                  <option value="storage">Storage</option>
+                  <option value="external">External</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="lbl">Thumbnail URL (optional)</label>
+                <input className="inp" placeholder="https://..." value={videoDraft.thumbnailUrl} onChange={(e) => setVideoDraft({ ...videoDraft, thumbnailUrl: e.target.value })} />
+              </div>
+              <div>
+                <label className="lbl">Duration (seconds)</label>
+                <input type="number" className="inp" min={10} value={videoDraft.duration} onChange={(e) => setVideoDraft({ ...videoDraft, duration: parseInt(e.target.value) || 300 })} />
+              </div>
+            </div>
+            <div>
+              <label className="lbl">Captions URL (optional)</label>
+              <input className="inp" placeholder="https://... .vtt" value={videoDraft.captionsUrl} onChange={(e) => setVideoDraft({ ...videoDraft, captionsUrl: e.target.value })} />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <label className="lbl">Sort order</label>
+                <input type="number" className="inp" min={1} value={videoDraft.sortOrder} onChange={(e) => setVideoDraft({ ...videoDraft, sortOrder: parseInt(e.target.value) || 1 })} />
+              </div>
+              <div className="flex items-end">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={videoDraft.isRequired} onChange={(e) => setVideoDraft({ ...videoDraft, isRequired: e.target.checked })} className="h-4 w-4 rounded border-line" />
+                  <span className="text-sm font-medium">Required</span>
+                </label>
+              </div>
+              <div className="flex items-end">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={videoDraft.published} onChange={(e) => setVideoDraft({ ...videoDraft, published: e.target.checked })} className="h-4 w-4 rounded border-line" />
+                  <span className="text-sm font-medium">Published</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <QuestionBuilder open={qOpen} onClose={() => setQOpen(false)} defaultCourseId={courseId} />
     </div>

@@ -45,6 +45,32 @@ export interface KnowledgeCheck {
   explain: string;
 }
 
+export interface Video {
+  id: string;
+  lessonId: string;
+  title: string;
+  description: string;
+  videoUrl: string;
+  thumbnailUrl?: string;
+  provider: "youtube" | "vimeo" | "direct" | "storage" | "external";
+  duration: number; // seconds
+  captionsUrl?: string;
+  sortOrder: number;
+  isRequired: boolean;
+  published: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface VideoProgress {
+  videoId: string;
+  currentPosition: number; // seconds
+  percentage: number; // 0-100
+  completed: boolean;
+  lastWatchedAt: number;
+  completedAt?: number;
+}
+
 export interface Lesson {
   id: string;
   courseId: string;
@@ -177,6 +203,7 @@ export interface StudentState {
   lastLessonId?: string;
   activeCourseId?: string; // primary enrolled course
   enrollments: Enrollment[]; // all enrollments (active + historical)
+  videoProgress: Record<string, VideoProgress>; // videoId → progress
 }
 
 export interface AppNotification {
@@ -206,6 +233,7 @@ export interface DB {
   projects: Project[];
   skills: Skill[];
   achievements: Achievement[];
+  videos: Video[];
   students: Record<string, StudentState>;
   notifications: Record<string, AppNotification[]>;
   log: ActivityEvent[];

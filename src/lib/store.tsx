@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import confetti from "canvas-confetti";
 import type {
   Activity, AppNotification, Assessment, Attempt, Course, DB, Lesson, Project, Question,
-  StudentState, Topic, User,
+  StudentState, Topic, User, Video,
 } from "./types";
 import { buildSeedDB, syncStudent, uid as newId } from "./data";
 import type { Career } from "./data";
@@ -38,11 +38,18 @@ function loadDB(): DB {
     if (raw) {
       const parsed = JSON.parse(raw) as DB;
       if (parsed && parsed.version === 1 && Array.isArray(parsed.lessons)) {
-        // Migrate: ensure all student states have enrollments array
+        // Migrate: ensure all student states have enrollments and videoProgress
         for (const sid of Object.keys(parsed.students)) {
           if (!parsed.students[sid].enrollments) {
             parsed.students[sid].enrollments = [];
           }
+          if (!parsed.students[sid].videoProgress) {
+            parsed.students[sid].videoProgress = {};
+          }
+        }
+        // Migrate: ensure videos array exists
+        if (!parsed.videos) {
+          parsed.videos = [];
         }
         return parsed;
       }
@@ -109,11 +116,18 @@ interface Ctx {
   startProject: (projectId: string) => void;
   toggleMilestone: (projectId: string, milestoneId: string) => void;
   submitProject: (projectId: string, text: string, link?: string) => void;
+  getVideo: (videoId: string) => Video | undefined;
+  getLessonVideos: (lessonId: string) => Video[];
+  updateVideoProgress: (videoId: string, position: number, duration: number) => void;
+  completeVideo: (videoId: string) => void;
+  getVideoProgress: (videoId: string) => { currentPosition: number; percentage: number; completed: boolean } | undefined;
   beginReview: (userId: string, projectId: string) => void;
   reviewProject: (userId: string, projectId: string, verdict: "approved" | "revise", feedback: string) => void;
   markRead: (id: string) => void;
   markAllRead: () => void;
   saveLesson: (lesson: Lesson) => void;
+  saveVideo: (video: Video) => void;
+  deleteVideo: (videoId: string) => void;
   addTopic: (courseId: string, title: string, summary: string) => void;
   addQuestion: (assessmentId: string, q: Question) => void;
   announce: (title: string, body: string) => void;
@@ -237,6 +251,63 @@ export function AppProvider({ children }: { children: ReactNode }) {
       pushNotif(d, meId, { kind: "course", title: "Course enrolled", body: `You are now learning ${course.title}. Your personalized path is ready.` });
     });
     toast(`Enrolled in ${course.title}`, "ok");
+  };
+
+  // ── Video Functions ──
+
+  const getVideo = (videoId: string): Video | undefined => {
+    return db.videos.find((v) => v.id === videoId);
+  };
+
+  const getLessonVideos = (lessonId: string): Video[] => {
+    return db.videos
+      .filter((v) => v.lessonId === lessonId && v.published)
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+  };
+
+  const updateVideoProgress = (videoId: string, position: number, duration: number) => {
+    const meId = requireStudent();
+    const percentage = duration > 0 ? Math.min(100, Math.round((position / duration) * 100)) : 0;
+    mutate((d) => {
+      const s = d.students[meId];
+      s.videoProgress[videoId] = {
+        videoId,
+        currentPosition: position,
+        percentage,
+        completed: percentage >= 90, // 90% threshold for completion
+        lastWatchedAt: Date.now(),
+        completedAt: percentage >= 90 && !s.videoProgress[videoId]?.completed ? Date.now() : s.videoProgress[videoId]?.completedAt,
+      };
+    });
+  };
+
+  const completeVideo = (videoId: string) => {
+    const meId = requireStudent();
+    const video = db.videos.find((v) => v.id === videoId);
+    if (!video) return;
+    mutate((d) => {
+      const s = d.students[meId];
+      s.videoProgress[videoId] = {
+        videoId,
+        currentPosition: video.duration,
+        percentage: 100,
+        completed: true,
+        lastWatchedAt: Date.now(),
+        completedAt: Date.now(),
+      };
+      log(d, meId, "system", `completed video "${video.title}"`);
+    });
+    toast(`Video complete: ${video.title}`, "ok");
+  };
+
+  const getVideoProgress = (videoId: string) => {
+    if (!st?.videoProgress[videoId]) return undefined;
+    const p = st.videoProgress[videoId];
+    return {
+      currentPosition: p.currentPosition,
+      percentage: p.percentage,
+      completed: p.completed,
+    };
   };
 
   // ── Actions ──
@@ -405,6 +476,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     toast("Lesson saved to curriculum", "ok");
   };
 
+  const saveVideo = (video: Video) => {
+    mutate((d) => {
+      const i = d.videos.findIndex((v) => v.id === video.id);
+      if (i >= 0) d.videos[i] = video;
+      else d.videos.push(video);
+      if (user) log(d, user.id, "system", `${i >= 0 ? "updated" : "added"} video "${video.title}"`);
+    });
+    toast("Video saved", "ok");
+  };
+
+  const deleteVideo = (videoId: string) => {
+    mutate((d) => {
+      const video = d.videos.find((v) => v.id === videoId);
+      d.videos = d.videos.filter((v) => v.id !== videoId);
+      if (user && video) log(d, user.id, "system", `deleted video "${video.title}"`);
+    });
+    toast("Video deleted", "ok");
+  };
+
   const addTopic = (courseId: string, title: string, summary: string) => {
     mutate((d) => {
       const order = Math.max(0, ...d.topics.filter((t) => t.courseId === courseId).map((t) => t.order)) + 1;
@@ -451,7 +541,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const hue = Math.floor(Math.random() * 360);
     mutate((d) => {
       d.users.push({ id, name: nm, email: em, role: "student", hue, joinedAt: Date.now(), active: true, title: "Student · Self-enrolled" });
-      d.students[id] = { lessons: {}, activities: {}, attempts: [], projects: {}, skills: {}, achievements: {}, certificates: [], xp: 0, enrollments: [] };
+      d.students[id] = { lessons: {}, activities: {}, attempts: [], projects: {}, skills: {}, achievements: {}, certificates: [], xp: 0, enrollments: [], videoProgress: {} };
       const list = d.notifications[id] ?? (d.notifications[id] = []);
       list.unshift({
         id: `n-${newId()}`, at: Date.now(), read: false, kind: "system",
@@ -690,11 +780,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     getActivity: (id) => db.activities.find((a) => a.id === id),
     getAssessment: (id) => db.assessments.find((a) => a.id === id),
     getProject: (id) => db.projects.find((p) => p.id === id),
+    getVideo: (id) => db.videos.find((v) => v.id === id),
+    getLessonVideos: (lessonId) => db.videos.filter((v) => v.lessonId === lessonId && v.published).sort((a, b) => a.sortOrder - b.sortOrder),
     courseLessons, topicLessons, coursePct, topicPct, overallPct, topicDone, courseDone,
     bestAttempt, nextUp, upNextQueue, pathStage, careerPct, unread, levelInfo, studentStats,
     activeCourse, hasActiveCourse, enrollInCourse,
     completeLesson, saveActivity, submitAssessment, startProject, toggleMilestone, submitProject,
-    beginReview, reviewProject, markRead, markAllRead, saveLesson, addTopic, addQuestion, announce,
+    updateVideoProgress, completeVideo, getVideoProgress,
+    beginReview, reviewProject, markRead, markAllRead, saveLesson, saveVideo, deleteVideo, addTopic, addQuestion, announce,
     pendingQueue, courseAvgPct, activeStudents,
   };
 

@@ -1,5 +1,5 @@
 import type {
-  Achievement, ActivityEvent, AppNotification, DB, Lesson, Project, Skill, StudentState, User,
+  Achievement, ActivityEvent, AppNotification, DB, Lesson, Project, Skill, StudentState, User, Video,
 } from "./types";
 import { ASSESSMENTS, ACTIVITIES, COURSES, LESSONS, TOPICS } from "./seed-content";
 
@@ -204,6 +204,127 @@ export const DEMO_USERS: User[] = [
   { id: "u-ade",    name: "Ade Okonkwo",   email: "ade@techfoundry.ac",    role: "admin",      hue: 230, joinedAt: Date.now() - 120 * D, active: true, title: "Administrator · Director" },
 ];
 
+// ─── Videos ─────────────────────────────────────────────────────────────────
+
+export const VIDEOS: Video[] = [
+  // AI Course Videos
+  {
+    id: "v-ai-1",
+    lessonId: "l-ai-1",
+    title: "What Is Artificial Intelligence?",
+    description: "An introduction to AI concepts, history, and real-world applications. Learn how AI systems learn from data and make predictions.",
+    videoUrl: "https://www.youtube.com/embed/aircAruvnKk",
+    thumbnailUrl: "https://img.youtube.com/vi/aircAruvnKk/maxresdefault.jpg",
+    provider: "youtube",
+    duration: 324, // 5:24
+    captionsUrl: undefined,
+    sortOrder: 1,
+    isRequired: true,
+    published: true,
+    createdAt: Date.now() - 30 * 86400000,
+    updatedAt: Date.now() - 30 * 86400000,
+  },
+  {
+    id: "v-ai-2",
+    lessonId: "l-ai-3",
+    title: "How Generative AI Works",
+    description: "Understanding how generative AI models produce content. Explore the architecture behind modern AI systems.",
+    videoUrl: "https://www.youtube.com/embed/wxq5rN3UYhU",
+    thumbnailUrl: "https://img.youtube.com/vi/wxq5rN3UYhU/maxresdefault.jpg",
+    provider: "youtube",
+    duration: 412, // 6:52
+    captionsUrl: undefined,
+    sortOrder: 1,
+    isRequired: true,
+    published: true,
+    createdAt: Date.now() - 28 * 86400000,
+    updatedAt: Date.now() - 28 * 86400000,
+  },
+  {
+    id: "v-ai-3",
+    lessonId: "l-ai-5",
+    title: "Prompt Engineering Fundamentals",
+    description: "Learn how to write effective prompts for AI systems. Master the art of getting better results from generative AI.",
+    videoUrl: "https://www.youtube.com/embed/T9aRN5JkmL8",
+    thumbnailUrl: "https://img.youtube.com/vi/T9aRN5JkmL8/maxresdefault.jpg",
+    provider: "youtube",
+    duration: 378, // 6:18
+    captionsUrl: undefined,
+    sortOrder: 1,
+    isRequired: true,
+    published: true,
+    createdAt: Date.now() - 26 * 86400000,
+    updatedAt: Date.now() - 26 * 86400000,
+  },
+  {
+    id: "v-ai-4",
+    lessonId: "l-ai-7",
+    title: "Machine Learning Explained",
+    description: "How machine learning models learn from data. Understand supervised vs unsupervised learning and training processes.",
+    videoUrl: "https://www.youtube.com/embed/ukzFI9rgwfU",
+    thumbnailUrl: "https://img.youtube.com/vi/ukzFI9rgwfU/maxresdefault.jpg",
+    provider: "youtube",
+    duration: 456, // 7:36
+    captionsUrl: undefined,
+    sortOrder: 1,
+    isRequired: true,
+    published: true,
+    createdAt: Date.now() - 24 * 86400000,
+    updatedAt: Date.now() - 24 * 86400000,
+  },
+  // Robotics Course Videos
+  {
+    id: "v-rb-1",
+    lessonId: "l-rb-1",
+    title: "Introduction to Robotics",
+    description: "What is robotics? Learn about robot components, sensors, and how robots interact with the physical world.",
+    videoUrl: "https://www.youtube.com/embed/fqzQGlZmuJ8",
+    thumbnailUrl: "https://img.youtube.com/vi/fqzQGlZmuJ8/maxresdefault.jpg",
+    provider: "youtube",
+    duration: 345, // 5:45
+    captionsUrl: undefined,
+    sortOrder: 1,
+    isRequired: true,
+    published: true,
+    createdAt: Date.now() - 22 * 86400000,
+    updatedAt: Date.now() - 22 * 86400000,
+  },
+  // Software Engineering Videos
+  {
+    id: "v-se-1",
+    lessonId: "l-se-1",
+    title: "Programming Fundamentals",
+    description: "Learn the basics of programming: variables, data types, functions, and control flow. Build your foundation.",
+    videoUrl: "https://www.youtube.com/embed/zOjov-2OZ0E",
+    thumbnailUrl: "https://img.youtube.com/vi/zOjov-2OZ0E/maxresdefault.jpg",
+    provider: "youtube",
+    duration: 489, // 8:09
+    captionsUrl: undefined,
+    sortOrder: 1,
+    isRequired: true,
+    published: true,
+    createdAt: Date.now() - 20 * 86400000,
+    updatedAt: Date.now() - 20 * 86400000,
+  },
+  // Digital Innovation Videos
+  {
+    id: "v-di-1",
+    lessonId: "l-di-1",
+    title: "Digital Product Development",
+    description: "How to build digital products that solve real problems. Learn the product development lifecycle.",
+    videoUrl: "https://www.youtube.com/embed/7PCkvCPvUkA",
+    thumbnailUrl: "https://img.youtube.com/vi/7PCkvCPvUkA/maxresdefault.jpg",
+    provider: "youtube",
+    duration: 398, // 6:38
+    captionsUrl: undefined,
+    sortOrder: 1,
+    isRequired: true,
+    published: true,
+    createdAt: Date.now() - 18 * 86400000,
+    updatedAt: Date.now() - 18 * 86400000,
+  },
+];
+
 // ─── Ordered curriculum helpers ─────────────────────────────────────────────
 
 export const ORDERED_LESSONS: Lesson[] = [...LESSONS].sort((a, b) => {
@@ -218,7 +339,7 @@ export const ORDERED_LESSONS: Lesson[] = [...LESSONS].sort((a, b) => {
 export const uid = () => Math.random().toString(36).slice(2, 10);
 
 function emptyState(): StudentState {
-  return { lessons: {}, activities: {}, attempts: [], projects: {}, skills: {}, achievements: {}, certificates: [], xp: 0, enrollments: [] };
+  return { lessons: {}, activities: {}, attempts: [], projects: {}, skills: {}, achievements: {}, certificates: [], xp: 0, enrollments: [], videoProgress: {} };
 }
 
 function recomputeXp(st: StudentState): number {
@@ -417,6 +538,7 @@ export function buildSeedDB(): DB {
     projects: PROJECTS,
     skills: SKILLS,
     achievements: ACHIEVEMENTS,
+    videos: VIDEOS,
     students,
     notifications,
     log: log.sort((a, b) => b.at - a.at),
