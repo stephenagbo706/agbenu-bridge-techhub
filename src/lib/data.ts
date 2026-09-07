@@ -218,7 +218,7 @@ export const ORDERED_LESSONS: Lesson[] = [...LESSONS].sort((a, b) => {
 export const uid = () => Math.random().toString(36).slice(2, 10);
 
 function emptyState(): StudentState {
-  return { lessons: {}, activities: {}, attempts: [], projects: {}, skills: {}, achievements: {}, certificates: [], xp: 0 };
+  return { lessons: {}, activities: {}, attempts: [], projects: {}, skills: {}, achievements: {}, certificates: [], xp: 0, enrollments: [] };
 }
 
 function recomputeXp(st: StudentState): number {
@@ -316,6 +316,8 @@ export function buildSeedDB(): DB {
   // Amara — the demo student: AI deep, software started, robotics touched, capstone underway.
   {
     const st = students["u-amara"];
+    st.activeCourseId = "c-ai";
+    st.enrollments.push({ courseId: "c-ai", status: "active", enrolledAt: now - 90 * D });
     done(st, ["l-ai-1", "l-ai-2", "l-ai-3", "l-ai-4", "l-ai-5", "l-se-1", "l-se-2", "l-se-3", "l-rb-1"], 24);
     st.lastLessonId = "l-ai-5";
     st.activities["act-ai-1"] = { at: now - 9 * D, text: "Built a five-part prompt that turns my weekly syllabus + exam dates into a revision plan. v1 was generic; v2 added difficulty weighting per topic; v3 constrained output to a printable one-page table. Verified dates against the official calendar by hand." };
@@ -340,6 +342,8 @@ export function buildSeedDB(): DB {
   // Cohort — deterministic varied progress for real analytics.
   {
     const noah = students["u-noah"];
+    noah.activeCourseId = "c-ai";
+    noah.enrollments.push({ courseId: "c-ai", status: "active", enrolledAt: now - 88 * D });
     done(noah, L.slice(0, 16), 40);
     noah.lastLessonId = L[15];
     noah.activities["act-ai-1"] = { at: now - 12 * D, text: "Prompt for weekly football training plans; iterated twice." };
@@ -348,6 +352,8 @@ export function buildSeedDB(): DB {
     noah.projects["p-rb-1"] = { status: "in_progress", startedAt: now - 8 * D, milestones: ["p-rb-1-m1", "p-rb-1-m2"] };
 
     const zara = students["u-zara"];
+    zara.activeCourseId = "c-ai";
+    zara.enrollments.push({ courseId: "c-ai", status: "active", enrolledAt: now - 86 * D });
     done(zara, L.slice(0, 12), 55);
     zara.lastLessonId = L[11];
     zara.activities["act-se-1"] = { at: now - 20 * D, text: "Grade calculator one-pager; state: subjects list, weights, result — UI derives from state." };
@@ -361,6 +367,8 @@ export function buildSeedDB(): DB {
     };
 
     const miguel = students["u-miguel"];
+    miguel.activeCourseId = "c-ai";
+    miguel.enrollments.push({ courseId: "c-ai", status: "active", enrolledAt: now - 83 * D });
     done(miguel, L.slice(0, 8), 30);
     miguel.lastLessonId = L[7];
     miguel.attempts.push({ assessmentId: "a-se-1", answers: {}, score: 8, total: 13, pct: 62, pass: false, at: now - 5 * D });
@@ -371,15 +379,21 @@ export function buildSeedDB(): DB {
     };
 
     const lin = students["u-lin"];
+    lin.activeCourseId = "c-di";
+    lin.enrollments.push({ courseId: "c-di", status: "active", enrolledAt: now - 78 * D });
     done(lin, L.slice(0, 6), 21);
     lin.lastLessonId = L[5];
     lin.projects["p-di-1"] = { status: "in_progress", startedAt: now - 4 * D, milestones: ["p-di-1-m1"] };
 
     const tariq = students["u-tariq"];
+    tariq.activeCourseId = "c-rob";
+    tariq.enrollments.push({ courseId: "c-rob", status: "active", enrolledAt: now - 68 * D });
     done(tariq, L.slice(0, 3), 12);
     tariq.lastLessonId = L[2];
 
     const elsa = students["u-elsa"];
+    elsa.activeCourseId = "c-se";
+    elsa.enrollments.push({ courseId: "c-se", status: "active", enrolledAt: now - 58 * D });
     done(elsa, L.slice(0, 20), 50);
     elsa.lastLessonId = L[19];
     elsa.activities["act-ai-2"] = { at: now - 16 * D, text: "Audited a video recommendation feed: data flows, two bias risks, one required improvement." };

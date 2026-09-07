@@ -37,7 +37,15 @@ function loadDB(): DB {
     const raw = localStorage.getItem(LS_DB);
     if (raw) {
       const parsed = JSON.parse(raw) as DB;
-      if (parsed && parsed.version === 1 && Array.isArray(parsed.lessons)) return parsed;
+      if (parsed && parsed.version === 1 && Array.isArray(parsed.lessons)) {
+        // Migrate: ensure all student states have enrollments array
+        for (const sid of Object.keys(parsed.students)) {
+          if (!parsed.students[sid].enrollments) {
+            parsed.students[sid].enrollments = [];
+          }
+        }
+        return parsed;
+      }
     }
   } catch { /* fall through to seed */ }
   return buildSeedDB();
@@ -92,6 +100,9 @@ interface Ctx {
   levelInfo: (userId?: string) => { name: string; xp: number; next: number | null; pct: number };
   studentStats: (userId?: string) => { lessons: number; activities: number; avgPct: number | null; projectsDone: number; skills: number };
 
+  activeCourse: () => Course | undefined;
+  hasActiveCourse: () => boolean;
+  enrollInCourse: (courseId: string) => void;
   completeLesson: (lessonId: string) => void;
   saveActivity: (activityId: string, text: string) => void;
   submitAssessment: (assessmentId: string, answers: Record<string, string>) => Attempt;
@@ -190,6 +201,42 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const requireStudent = (): string => {
     if (!user || user.role !== "student") throw new Error("student role required");
     return user.id;
+  };
+
+  // ── Enrollment / Active Course ──
+
+  const activeCourse = (): Course | undefined => {
+    if (!st?.activeCourseId) return undefined;
+    return db.courses.find((c) => c.id === st.activeCourseId);
+  };
+
+  const hasActiveCourse = (): boolean => {
+    return !!st?.activeCourseId;
+  };
+
+  const enrollInCourse = (courseId: string) => {
+    const meId = requireStudent();
+    const course = db.courses.find((c) => c.id === courseId);
+    if (!course) return;
+    mutate((d) => {
+      const s = d.students[meId];
+      // Archive any existing active enrollment
+      for (const e of s.enrollments) {
+        if (e.status === "active") e.status = "archived";
+      }
+      // Create new active enrollment
+      const existing = s.enrollments.find((e) => e.courseId === courseId);
+      if (existing) {
+        existing.status = "active";
+        existing.enrolledAt = Date.now();
+      } else {
+        s.enrollments.push({ courseId, status: "active", enrolledAt: Date.now() });
+      }
+      s.activeCourseId = courseId;
+      log(d, meId, "system", `enrolled in ${course.title}`);
+      pushNotif(d, meId, { kind: "course", title: "Course enrolled", body: `You are now learning ${course.title}. Your personalized path is ready.` });
+    });
+    toast(`Enrolled in ${course.title}`, "ok");
   };
 
   // ── Actions ──
@@ -404,7 +451,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const hue = Math.floor(Math.random() * 360);
     mutate((d) => {
       d.users.push({ id, name: nm, email: em, role: "student", hue, joinedAt: Date.now(), active: true, title: "Student · Self-enrolled" });
-      d.students[id] = { lessons: {}, activities: {}, attempts: [], projects: {}, skills: {}, achievements: {}, certificates: [], xp: 0 };
+      d.students[id] = { lessons: {}, activities: {}, attempts: [], projects: {}, skills: {}, achievements: {}, certificates: [], xp: 0, enrollments: [] };
       const list = d.notifications[id] ?? (d.notifications[id] = []);
       list.unshift({
         id: `n-${newId()}`, at: Date.now(), read: false, kind: "system",
@@ -645,6 +692,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     getProject: (id) => db.projects.find((p) => p.id === id),
     courseLessons, topicLessons, coursePct, topicPct, overallPct, topicDone, courseDone,
     bestAttempt, nextUp, upNextQueue, pathStage, careerPct, unread, levelInfo, studentStats,
+    activeCourse, hasActiveCourse, enrollInCourse,
     completeLesson, saveActivity, submitAssessment, startProject, toggleMilestone, submitProject,
     beginReview, reviewProject, markRead, markAllRead, saveLesson, addTopic, addQuestion, announce,
     pendingQueue, courseAvgPct, activeStudents,

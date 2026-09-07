@@ -8,17 +8,118 @@ import type { IconName } from "../components/icons";
 const KIND_ICON: Record<Rec["kind"], IconName> = { lesson: "book", assessment: "clipboard", project: "cube", activity: "wrench" };
 const PHILOSOPHY = ["Learn", "Practice", "Build", "Solve", "Innovate"];
 
-export default function Dashboard() {
+// ─── Course Selection Screen ─────────────────────────────────────────────────
+
+function CourseSelection() {
+  const app = useApp();
+  const { db, user } = app;
+  if (!user) return null;
+
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const today = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+
+  return (
+    <div className="space-y-6">
+      {/* Welcome header */}
+      <Reveal>
+        <div className="text-center">
+          <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-brand-deep/80">Welcome · {today}</div>
+          <h1 className="mt-2 font-display text-3xl font-bold tracking-tight sm:text-4xl">
+            {greet}, {user.name.split(" ")[0]}.
+          </h1>
+          <p className="mx-auto mt-3 max-w-xl text-[15px] leading-relaxed text-mute">
+            Choose your technology pathway to begin your learning journey. Your selection determines your personalized curriculum, simulations, and projects.
+          </p>
+        </div>
+      </Reveal>
+
+      {/* Course selection cards */}
+      <div className="grid gap-5 sm:grid-cols-2">
+        {db.courses.map((c, i) => {
+          const m = courseMeta(c.id);
+          const topics = db.topics.filter((t) => t.courseId === c.id);
+          const lessons = db.lessons.filter((l) => l.courseId === c.id);
+          return (
+            <Reveal key={c.id} delay={i * 80}>
+              <button
+                onClick={() => app.enrollInCourse(c.id)}
+                className="card-ink card-ink-hover group flex h-full w-full flex-col overflow-hidden bg-card text-left"
+              >
+                {/* Course image */}
+                {c.image_url && (
+                  <div className="relative h-40 w-full overflow-hidden">
+                    <img src={c.image_url} alt={c.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-ink/60 via-transparent to-transparent" />
+                    <div className="absolute bottom-3 left-4">
+                      <span className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-paper/80">{c.code}</span>
+                    </div>
+                  </div>
+                )}
+                {!c.image_url && <div className="h-2 w-full" style={{ backgroundColor: m.hex }} />}
+                <div className="flex flex-1 flex-col p-5 sm:p-6">
+                  <div className="flex items-center gap-2">
+                    <Chip className={m.chip}>{c.level}</Chip>
+                    <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-mute">~{c.hours}h</span>
+                  </div>
+                  <h3 className="mt-2 font-display text-xl font-bold tracking-tight">{c.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-mute">{c.tagline}</p>
+                  <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px] text-mute">
+                    <span>{topics.length} topics</span>
+                    <span>{lessons.length} lessons</span>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between border-t-1.5 border-dashed border-line pt-3.5">
+                    <span className="text-xs text-mute">Select to begin</span>
+                    <span className="flex items-center gap-1 font-mono text-[11px] font-medium uppercase tracking-wider transition-transform group-hover:translate-x-0.5" style={{ color: m.hex }}>
+                      Enroll <Icon name="arrowR" size={13} />
+                    </span>
+                  </div>
+                </div>
+              </button>
+            </Reveal>
+          );
+        })}
+      </div>
+
+      {/* Philosophy strip */}
+      <Reveal delay={350}>
+        <div className="card-ink flex flex-wrap items-center justify-center gap-2 bg-card px-4 py-4 sm:gap-3">
+          {PHILOSOPHY.map((p, i) => (
+            <span key={p} className="flex items-center gap-2">
+              <span className="font-display text-[13px] font-bold tracking-tight text-ink">{p}</span>
+              {i < PHILOSOPHY.length - 1 && <span className="text-mute/50">→</span>}
+            </span>
+          ))}
+        </div>
+      </Reveal>
+    </div>
+  );
+}
+
+// ─── Active Course Dashboard ─────────────────────────────────────────────────
+
+function ActiveCourseDashboard() {
   const app = useApp();
   const { user, st, db } = app;
   if (!user || !st) return null;
 
+  const activeCourse = app.activeCourse();
+  if (!activeCourse) return null;
+
+  const m = courseMeta(activeCourse.id);
+  const pct = app.coursePct(activeCourse.id);
+  const topics = db.topics.filter((t) => t.courseId === activeCourse.id).sort((a, b) => a.order - b.order);
+  const lessons = app.courseLessons(activeCourse.id);
+  const doneCount = lessons.filter((l) => st.lessons[l.id]).length;
+  const doneTopics = topics.filter((t) => app.topicDone(t.id)).length;
+  const currentTopic = topics.find((t) => !app.topicDone(t.id));
+  const currentLesson = currentTopic ? app.topicLessons(currentTopic.id).find((l) => !st.lessons[l.id]) : null;
+  const assessments = db.assessments.filter((a) => a.courseId === activeCourse.id);
+  const projects = db.projects.filter((p) => p.courseIds.includes(activeCourse.id));
+
   const rec = app.nextUp();
   const queue = app.upNextQueue();
-  const overall = app.overallPct();
   const level = app.levelInfo();
-  const stage = app.pathStage();
-  const philoIdx = stage >= 8 ? 4 : stage >= 6 ? 3 : stage >= 5 ? 2 : stage >= 3 ? 1 : 0;
 
   const gotoRec = (r: Rec) =>
     app.nav(r.kind === "lesson" ? { name: "lesson", id: r.id }
@@ -64,118 +165,176 @@ export default function Dashboard() {
         </div>
       </Reveal>
 
-      {/* Continue learning console */}
+      {/* Active Course Hero */}
       <Reveal delay={70}>
-        <div className="bg-sidebar-trace card-ink overflow-hidden bg-ink text-paper">
-          <div className="grid gap-6 p-6 sm:p-7 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-gold">
-                <span className="dot-live inline-block h-2 w-2 rounded-full bg-[#3ecf7a]" />
-                Continue learning
+        <div className="card-ink overflow-hidden bg-card">
+          <div className="h-1.5 w-full" style={{ backgroundColor: m.hex }} />
+          <div className="grid gap-6 p-6 sm:p-7 lg:grid-cols-[minmax(0,1fr)_280px]">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-brand-deep/80">My Course</span>
+                <CourseTag course={activeCourse} />
               </div>
-              {rec ? (
-                <>
-                  <div className="mt-3 flex items-start gap-3">
-                    <span className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-md border-1.5 border-paper/20 bg-ink2 text-gold">
-                      <Icon name={KIND_ICON[rec.kind]} size={18} />
-                    </span>
-                    <div className="min-w-0">
-                      <h2 className="font-display text-xl font-bold leading-tight tracking-tight sm:text-2xl">{rec.label}</h2>
-                      <p className="mt-1 text-sm text-paper/60">{rec.sub}</p>
+              <h2 className="mt-2 font-display text-2xl font-bold tracking-tight sm:text-3xl">{activeCourse.title}</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-mute">{activeCourse.tagline}</p>
+
+              {/* Progress */}
+              <div className="mt-5 flex items-center gap-4">
+                <Seg value={pct} cells={20} color={m.hex} className="h-3 flex-1" />
+                <span className="font-mono text-lg font-bold" style={{ color: m.hex }}>{pct}%</span>
+              </div>
+
+              {/* Current learning */}
+              {currentLesson ? (
+                <div className="mt-5">
+                  <div className="lbl">Current Learning</div>
+                  <div className="flex items-center gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold">{currentTopic?.title}</div>
+                      <div className="mt-0.5 text-[13px] text-mute">{currentLesson.title} · {currentLesson.minutes} min</div>
                     </div>
+                    <button onClick={() => app.nav({ name: "lesson", id: currentLesson.id })} className="btn btn-primary btn-sm">
+                      <Icon name="play" size={13} /> {doneCount > 0 ? "Continue" : "Start Learning"}
+                    </button>
                   </div>
-                  {rec.courseId && (
-                    <div className="mt-4 flex items-center gap-3">
-                      <Seg value={app.coursePct(rec.courseId)} cells={18} color={courseMeta(rec.courseId).hex} className="h-2.5 max-w-xs flex-1" />
-                      <span className="font-mono text-xs text-paper/70">{app.coursePct(rec.courseId)}%</span>
-                    </div>
-                  )}
-                  <button onClick={() => gotoRec(rec)} className="btn btn-gold mt-5">
-                    <Icon name="play" size={15} />
-                    {rec.kind === "lesson" ? "Resume lesson" : rec.kind === "assessment" ? "Start assessment" : rec.kind === "project" ? "Open project" : "Open activity"}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <h2 className="mt-3 font-display text-2xl font-bold tracking-tight">Curriculum complete.</h2>
-                  <p className="mt-2 max-w-md text-sm text-paper/65">
-                    Every lesson is done and every checkpoint passed. Your next frontier is the capstone — integrate all four areas into one working system.
-                  </p>
-                  <button onClick={() => app.nav({ name: "project", id: "p-cap-1" })} className="btn btn-gold mt-5">
-                    <Icon name="cube" size={15} /> Smart Agriculture capstone
-                  </button>
-                </>
-              )}
-            </div>
-            <div className="flex items-center gap-5 md:flex-col md:gap-2">
-              <Ring value={overall} size={104} stroke={9} color="#e8a11c">
-                <div className="text-center">
-                  <div className="font-display text-2xl font-bold leading-none">{overall}%</div>
-                  <div className="mt-1 font-mono text-[9px] uppercase tracking-[0.16em] text-paper/50">overall</div>
                 </div>
-              </Ring>
-              <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-paper/40 md:hidden">lesson progress</div>
+              ) : doneCount > 0 ? (
+                <div className="mt-5 rounded-md border-1.5 border-se/40 bg-se-soft px-4 py-3">
+                  <div className="flex items-center gap-2 text-se">
+                    <Icon name="check" size={16} />
+                    <span className="text-sm font-semibold">All lessons complete</span>
+                  </div>
+                  <p className="mt-1 text-xs text-se/80">Pass the checkpoint assessment to earn your course completion record.</p>
+                </div>
+              ) : null}
+
+              {/* Learning path */}
+              <div className="mt-5">
+                <div className="lbl">Learning Path</div>
+                <div className="space-y-1.5">
+                  {topics.map((t) => {
+                    const tDone = app.topicDone(t.id);
+                    const isCurrent = t.id === currentTopic?.id;
+                    const tLessons = app.topicLessons(t.id);
+                    const tDoneCount = tLessons.filter((l) => st.lessons[l.id]).length;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => {
+                          const nextL = tLessons.find((l) => !st.lessons[l.id]);
+                          if (nextL) app.nav({ name: "lesson", id: nextL.id });
+                        }}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors",
+                          tDone ? "bg-se-soft/50" : isCurrent ? "bg-gold-soft/50" : "hover:bg-paper",
+                        )}
+                      >
+                        <span className={cn(
+                          "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-1.5",
+                          tDone ? "border-se/40 bg-se text-[#f4faf7]" : isCurrent ? "border-gold/50 bg-gold-soft text-[#8a5a06]" : "border-line bg-card text-mute",
+                        )}>
+                          {tDone ? <Icon name="check" size={12} /> : isCurrent ? <span className="dot-live h-1.5 w-1.5 rounded-full bg-gold" /> : <Icon name="circle" size={13} />}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className={cn("block text-sm font-semibold leading-tight", !tDone && !isCurrent && "text-mute")}>{t.title}</span>
+                          <span className="font-mono text-[10px] uppercase tracking-wider text-mute">{tDoneCount}/{tLessons.length} lessons</span>
+                        </span>
+                        {isCurrent && <Chip className="bg-gold-soft text-[#8a5a06]">current</Chip>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Right side: course image + stats */}
+            <div className="flex flex-col items-center gap-4">
+              {activeCourse.image_url ? (
+                <div className="w-full overflow-hidden rounded-lg border-1.5 border-line">
+                  <img src={activeCourse.image_url} alt={activeCourse.title} className="h-40 w-full object-cover" />
+                </div>
+              ) : (
+                <div className="h-40 w-full rounded-lg border-1.5 border-line" style={{ backgroundColor: m.hex + "15" }} />
+              )}
+              <div className="flex w-full items-center justify-around gap-4 rounded-lg border-1.5 border-line bg-paper/60 p-4">
+                <Ring value={pct} size={90} stroke={8} color={m.hex}>
+                  <div className="text-center">
+                    <div className="font-display text-xl font-bold leading-none">{pct}%</div>
+                    <div className="mt-1 font-mono text-[8px] uppercase tracking-[0.14em] text-mute">progress</div>
+                  </div>
+                </Ring>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-center">
+                  <div>
+                    <div className="font-display text-base font-bold leading-none">{doneTopics}/{topics.length}</div>
+                    <div className="font-mono text-[9px] uppercase tracking-wider text-mute">topics</div>
+                  </div>
+                  <div>
+                    <div className="font-display text-base font-bold leading-none">{doneCount}/{lessons.length}</div>
+                    <div className="font-mono text-[9px] uppercase tracking-wider text-mute">lessons</div>
+                  </div>
+                </div>
+              </div>
+              <button onClick={() => app.nav({ name: "course", id: activeCourse.id })} className="btn btn-dark btn-sm w-full">
+                <Icon name="book" size={13} /> Full course view
+              </button>
             </div>
           </div>
         </div>
       </Reveal>
 
+      {/* Continue learning console */}
+      {rec && (
+        <Reveal delay={120}>
+          <div className="bg-sidebar-trace card-ink overflow-hidden bg-ink text-paper">
+            <div className="grid gap-6 p-6 sm:p-7 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-gold">
+                  <span className="dot-live inline-block h-2 w-2 rounded-full bg-[#3ecf7a]" />
+                  Continue learning
+                </div>
+                <div className="mt-3 flex items-start gap-3">
+                  <span className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-md border-1.5 border-paper/20 bg-ink2 text-gold">
+                    <Icon name={KIND_ICON[rec.kind]} size={18} />
+                  </span>
+                  <div className="min-w-0">
+                    <h2 className="font-display text-xl font-bold leading-tight tracking-tight sm:text-2xl">{rec.label}</h2>
+                    <p className="mt-1 text-sm text-paper/60">{rec.sub}</p>
+                  </div>
+                </div>
+                {rec.courseId && (
+                  <div className="mt-4 flex items-center gap-3">
+                    <Seg value={app.coursePct(rec.courseId)} cells={18} color={courseMeta(rec.courseId).hex} className="h-2.5 max-w-xs flex-1" />
+                    <span className="font-mono text-xs text-paper/70">{app.coursePct(rec.courseId)}%</span>
+                  </div>
+                )}
+                <button onClick={() => gotoRec(rec)} className="btn btn-gold mt-5">
+                  <Icon name="play" size={15} />
+                  {rec.kind === "lesson" ? "Resume lesson" : rec.kind === "assessment" ? "Start assessment" : rec.kind === "project" ? "Open project" : "Open activity"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left 2/3 */}
         <div className="space-y-6 lg:col-span-2">
-          {/* Course progress */}
-          <Reveal delay={120}>
-            <section className="card-ink bg-card p-5 sm:p-6">
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="font-display text-lg font-semibold tracking-tight">Course progress</h3>
-                <button className="btn btn-ghost btn-sm text-brand-deep" onClick={() => app.nav({ name: "courses" })}>
-                  All courses <Icon name="arrowR" size={13} />
-                </button>
-              </div>
-              <div className="space-y-1.5">
-                {db.courses.map((c) => {
-                  const pct = app.coursePct(c.id);
-                  const topics = db.topics.filter((t) => t.courseId === c.id);
-                  const doneTopics = topics.filter((t) => app.topicDone(t.id)).length;
-                  const m = courseMeta(c.id);
-                  return (
-                    <button
-                      key={c.id}
-                      onClick={() => app.nav({ name: "course", id: c.id })}
-                      className="group grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-lg border-1.5 border-transparent px-2.5 py-2.5 text-left transition-all hover:border-line hover:bg-paper sm:grid-cols-[auto_minmax(0,1.2fr)_minmax(0,1fr)_auto] sm:gap-x-4"
-                    >
-                      <span className={cn("h-2.5 w-2.5 rounded-full", m.dot)} />
-                      <span className="min-w-0">
-                        <span className="block truncate font-display text-sm font-semibold leading-tight">{c.title}</span>
-                        <span className="font-mono text-[10px] uppercase tracking-wider text-mute">{c.code} · {doneTopics}/{topics.length} topics</span>
-                      </span>
-                      <span className="hidden sm:block"><Seg value={pct} cells={16} color={m.hex} className="h-2.5" /></span>
-                      <span className="flex items-center gap-2 justify-self-end">
-                        <span className="font-mono text-sm font-bold" style={{ color: m.hex }}>{pct}%</span>
-                        <Icon name="chevR" size={14} className="text-mute transition-transform group-hover:translate-x-0.5" />
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          </Reveal>
-
           {/* Virtual Labs */}
           <Reveal delay={160}>
             <section className="card-ink overflow-hidden bg-card">
               <button
-                onClick={() => app.nav({ name: "labs" })}
+                onClick={() => app.nav({ name: "labs", id: activeCourse.id })}
                 className="group flex w-full items-center gap-4 p-5 text-left sm:p-6"
               >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border-1.5 border-brand/30 bg-brand-soft text-brand-deep">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border-1.5 text-[#f4faf7]" style={{ borderColor: m.hex + "60", backgroundColor: m.hex + "15", color: m.hex }}>
                   <Icon name="spark" size={20} />
                 </span>
                 <div className="min-w-0 flex-1">
                   <h3 className="font-display text-base font-bold tracking-tight">Virtual Labs</h3>
-                  <p className="text-[12px] text-mute">Interactive simulations, diagrams & experiments across all courses</p>
+                  <p className="text-[12px] text-mute">Interactive simulations, diagrams & experiments for {activeCourse.short}</p>
                 </div>
-                <span className="flex items-center gap-1 font-mono text-[10px] font-medium uppercase tracking-wider text-brand-deep transition-transform group-hover:translate-x-0.5">
+                <span className="flex items-center gap-1 font-mono text-[10px] font-medium uppercase tracking-wider transition-transform group-hover:translate-x-0.5" style={{ color: m.hex }}>
                   Explore <Icon name="arrowR" size={12} />
                 </span>
               </button>
@@ -191,37 +350,67 @@ export default function Dashboard() {
                   All projects <Icon name="arrowR" size={13} />
                 </button>
               </div>
-              {activeProjects.length === 0 ? (
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border-1.5 border-dashed border-line bg-paper/60 px-4 py-4">
-                  <div className="text-sm text-mute">No active projects yet. Projects are where lessons become things you can show.</div>
-                  <button className="btn btn-dark btn-sm" onClick={() => app.nav({ name: "projects" })}>Browse projects</button>
-                </div>
+              {projects.length === 0 ? (
+                <div className="text-sm text-mute">No projects for this course yet.</div>
               ) : (
                 <div className="space-y-2.5">
-                  {activeProjects.map(({ p, ps }) => p && (
-                    <button
-                      key={p.id}
-                      onClick={() => app.nav({ name: "project", id: p.id })}
-                      className="card-ink-hover group w-full rounded-lg border-1.5 border-line bg-paper/50 px-4 py-3 text-left"
-                    >
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-display text-sm font-semibold">{p.title}</span>
-                        {p.courseIds.map((cid) => <CourseTag key={cid} course={app.getCourse(cid)!} />)}
-                        <span className="ml-auto"><StatusPill status={ps.status} /></span>
-                      </div>
-                      <div className="mt-2.5 flex items-center gap-3">
-                        <div className="flex gap-1">
-                          {p.milestones.map((ms) => (
-                            <span key={ms.id} className={cn("h-2 w-6 rounded-sm", ps.milestones.includes(ms.id) ? "bg-brand" : "bg-[#e0e3d6]")} />
-                          ))}
+                  {projects.map((p) => {
+                    const ps = st.projects[p.id];
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => app.nav({ name: "project", id: p.id })}
+                        className="card-ink-hover group w-full rounded-lg border-1.5 border-line bg-paper/50 px-4 py-3 text-left"
+                      >
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-display text-sm font-semibold">{p.title}</span>
+                          <DiffChip level={p.difficulty} />
+                          <span className="ml-auto"><StatusPill status={ps?.status ?? "not_started"} /></span>
                         </div>
-                        <span className="font-mono text-[11px] text-mute">{ps.milestones.length}/{p.milestones.length} milestones</span>
-                        <Icon name="chevR" size={14} className="ml-auto text-mute transition-transform group-hover:translate-x-0.5" />
-                      </div>
-                    </button>
-                  ))}
+                        <div className="mt-2.5 flex items-center gap-3">
+                          <div className="flex gap-1">
+                            {p.milestones.map((ms) => (
+                              <span key={ms.id} className={cn("h-2 w-6 rounded-sm", ps?.milestones.includes(ms.id) ? "bg-brand" : "bg-[#e0e3d6]")} />
+                            ))}
+                          </div>
+                          <span className="font-mono text-[11px] text-mute">{ps?.milestones.length ?? 0}/{p.milestones.length} milestones</span>
+                          <Icon name="chevR" size={14} className="ml-auto text-mute transition-transform group-hover:translate-x-0.5" />
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
+            </section>
+          </Reveal>
+
+          {/* Assessments */}
+          <Reveal delay={180}>
+            <section className="card-ink bg-card p-5 sm:p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="font-display text-lg font-semibold tracking-tight">Assessments</h3>
+                <button className="btn btn-ghost btn-sm text-brand-deep" onClick={() => app.nav({ name: "assessments" })}>
+                  All <Icon name="arrowR" size={13} />
+                </button>
+              </div>
+              <div className="space-y-2.5">
+                {assessments.map((a) => {
+                  const best = app.bestAttempt(a.id);
+                  return (
+                    <div key={a.id} className="flex flex-wrap items-center gap-3 rounded-lg border-1.5 border-line bg-paper/50 px-4 py-3">
+                      <Chip className={a.kind === "Checkpoint" ? "bg-gold-soft text-[#8a5a06]" : "bg-ai-soft text-ai"}>{a.kind}</Chip>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-semibold">{a.title}</div>
+                        <div className="font-mono text-[10.5px] uppercase tracking-wider text-mute">{a.questions.length} questions · {a.minutes} min</div>
+                      </div>
+                      {best ? <Chip className={best.pass ? "bg-se-soft text-se" : "bg-[#f6e3e0] text-danger"}>best {best.pct}%</Chip> : <Chip className="bg-[#e8eadd] text-mute">not attempted</Chip>}
+                      <button className="btn btn-dark btn-sm" onClick={() => app.nav({ name: "assessment", id: a.id })}>
+                        {best ? "Retake" : "Start"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </section>
           </Reveal>
         </div>
@@ -232,7 +421,7 @@ export default function Dashboard() {
             <section className="card-ink bg-card p-5">
               <h3 className="mb-3 font-display text-base font-semibold tracking-tight">Up next</h3>
               <div className="space-y-2">
-                {queue.map((r) => (
+                {queue.slice(0, 5).map((r) => (
                   <button key={`${r.kind}:${r.id}`} onClick={() => gotoRec(r)} className="group flex w-full items-start gap-3 rounded-lg border-1.5 border-transparent px-2 py-2 text-left transition-all hover:border-line hover:bg-paper">
                     <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border-1.5 border-line bg-paper text-brand-deep">
                       <Icon name={KIND_ICON[r.kind]} size={14} />
@@ -244,38 +433,12 @@ export default function Dashboard() {
                     <Icon name="arrowR" size={13} className="mt-1.5 text-mute opacity-0 transition-opacity group-hover:opacity-100" />
                   </button>
                 ))}
-                {queue.length === 0 && <div className="text-sm text-mute">Everything recommended is done. Explore careers or start the capstone.</div>}
+                {queue.length === 0 && <div className="text-sm text-mute">All caught up. Keep going!</div>}
               </div>
             </section>
           </Reveal>
 
           <Reveal delay={200}>
-            <section className="card-ink bg-card p-5">
-              <h3 className="mb-3 font-display text-base font-semibold tracking-tight">Assessments</h3>
-              <div className="space-y-2">
-                {db.assessments.map((a) => {
-                  const best = app.bestAttempt(a.id);
-                  const c = app.getCourse(a.courseId);
-                  return (
-                    <button key={a.id} onClick={() => app.nav({ name: "assessment", id: a.id })} className="group flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-paper">
-                      <span className={cn("h-2 w-2 shrink-0 rounded-full", courseMeta(a.courseId).dot)} />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[13px] font-semibold leading-tight">{a.title}</span>
-                        <span className="font-mono text-[10px] uppercase tracking-wider text-mute">{c?.short} · {a.kind}</span>
-                      </span>
-                      {best ? (
-                        <Chip className={best.pass ? "bg-se-soft text-se" : "bg-[#f6e3e0] text-danger"}>{best.pct}%</Chip>
-                      ) : (
-                        <Chip className="bg-[#e8eadd] text-mute">new</Chip>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          </Reveal>
-
-          <Reveal delay={240}>
             <section className="card-ink bg-card p-5">
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="font-display text-base font-semibold tracking-tight">Achievements</h3>
@@ -303,6 +466,38 @@ export default function Dashboard() {
               </div>
             </section>
           </Reveal>
+
+          {/* Enrollment info */}
+          <Reveal delay={240}>
+            <section className="card-ink bg-card p-5">
+              <h3 className="mb-3 font-display text-base font-semibold tracking-tight">Enrollment</h3>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className={cn("h-2.5 w-2.5 rounded-full", m.dot)} />
+                  <span className="text-sm font-semibold">{activeCourse.title}</span>
+                  <Chip className="bg-se-soft text-se ml-auto">active</Chip>
+                </div>
+                <div className="font-mono text-[10px] uppercase tracking-wider text-mute">
+                  {activeCourse.code} · {activeCourse.level} · ~{activeCourse.hours}h
+                </div>
+                {st.enrollments.length > 1 && (
+                  <div className="mt-2 border-t-1.5 border-dashed border-line pt-2">
+                    <div className="font-mono text-[10px] uppercase tracking-wider text-mute mb-1">History</div>
+                    {st.enrollments.filter((e) => e.status !== "active").map((e) => {
+                      const c = db.courses.find((x) => x.id === e.courseId);
+                      return c ? (
+                        <div key={e.courseId} className="flex items-center gap-2 text-xs text-mute">
+                          <span className={cn("h-2 w-2 rounded-full", courseMeta(c.id).dot)} />
+                          <span>{c.title}</span>
+                          <span className="ml-auto font-mono text-[9px] uppercase">{e.status}</span>
+                        </div>
+                      ) : null;
+                    })}
+                  </div>
+                )}
+              </div>
+            </section>
+          </Reveal>
         </div>
       </div>
 
@@ -310,22 +505,38 @@ export default function Dashboard() {
       <Reveal delay={260}>
         <div className="card-ink flex flex-wrap items-center justify-center gap-2 bg-card px-4 py-4 sm:gap-3">
           {PHILOSOPHY.map((p, i) => (
-            <span key={p} className="flex items-center gap-2 sm:gap-3">
-              <span
-                className={cn(
-                  "flex items-center gap-2 rounded-md border-1.5 px-3 py-1.5 font-mono text-[11px] font-medium uppercase tracking-[0.14em] transition-colors",
-                  i === philoIdx ? "border-ink bg-ink text-gold" : i < philoIdx ? "border-brand/40 bg-brand-soft text-brand-deep" : "border-line text-mute",
-                )}
-              >
-                {i < philoIdx && <Icon name="check" size={11} />}
-                {i === philoIdx && <span className="dot-live h-1.5 w-1.5 rounded-full bg-gold" />}
-                {p}
-              </span>
-              {i < PHILOSOPHY.length - 1 && <Icon name="arrowR" size={13} className="text-line" />}
+            <span key={p} className="flex items-center gap-2">
+              <span className="font-display text-[13px] font-bold tracking-tight text-ink">{p}</span>
+              {i < PHILOSOPHY.length - 1 && <span className="text-mute/50">→</span>}
             </span>
           ))}
         </div>
       </Reveal>
     </div>
   );
+}
+
+// ─── DiffChip (reused from Projects) ─────────────────────────────────────────
+
+function DiffChip({ level }: { level: string }) {
+  const cls = level === "Capstone" ? "bg-gold-soft text-[#8a5a06]"
+    : level === "Independent" ? "bg-ai-soft text-ai"
+    : "bg-se-soft text-se";
+  return <Chip className={cls}>{level}</Chip>;
+}
+
+// ─── Main Dashboard ──────────────────────────────────────────────────────────
+
+export default function Dashboard() {
+  const app = useApp();
+  const { st } = app;
+  if (!st) return null;
+
+  // If student has an active course, show the personalized dashboard
+  if (app.hasActiveCourse()) {
+    return <ActiveCourseDashboard />;
+  }
+
+  // Otherwise, show course selection
+  return <CourseSelection />;
 }

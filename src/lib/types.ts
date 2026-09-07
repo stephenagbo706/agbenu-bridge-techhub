@@ -157,6 +157,14 @@ export interface Certificate {
   at: number;
 }
 
+export interface Enrollment {
+  courseId: string;
+  status: "active" | "completed" | "archived";
+  enrolledAt: number;
+  startedAt?: number;
+  completedAt?: number;
+}
+
 export interface StudentState {
   lessons: Record<string, number>; // lessonId → completedAt
   activities: Record<string, { at: number; text: string }>;
@@ -167,6 +175,8 @@ export interface StudentState {
   certificates: Certificate[];
   xp: number;
   lastLessonId?: string;
+  activeCourseId?: string; // primary enrolled course
+  enrollments: Enrollment[]; // all enrollments (active + historical)
 }
 
 export interface AppNotification {
