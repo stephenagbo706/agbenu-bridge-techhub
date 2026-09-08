@@ -9,6 +9,16 @@ interface VideoPlayerProps {
   className?: string;
 }
 
+// Helper to detect YouTube URLs
+function isYouTubeUrl(url: string): boolean {
+  return url.includes("youtube.com") || url.includes("youtu.be");
+}
+
+// Helper to detect Vimeo URLs
+function isVimeoUrl(url: string): boolean {
+  return url.includes("vimeo.com");
+}
+
 export function VideoPlayer({ video, className }: VideoPlayerProps) {
   const app = useApp();
   const { st } = app;
@@ -18,17 +28,21 @@ export function VideoPlayer({ video, className }: VideoPlayerProps) {
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const [duration, setDuration] = useState(video.duration || 0);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
 
   const progress = st?.videoProgress[video.id];
-  const resumePosition = progress?.currentPosition || 0;
+  
+  // Detect video provider
+  const isYouTube = isYouTubeUrl(video.videoUrl);
+  const isVimeo = isVimeoUrl(video.videoUrl);
+  const isExternalPlayer = isYouTube || isVimeo;
 
   // Format time as MM:SS
   const formatTime = (seconds: number): string => {
@@ -50,22 +64,19 @@ export function VideoPlayer({ video, className }: VideoPlayerProps) {
     if (progressSaveTimer.current) {
       clearTimeout(progressSaveTimer.current);
     }
-    progressSaveTimer.current = setTimeout(saveProgress, 2000); // Save every 2 seconds
+    progressSaveTimer.current = setTimeout(saveProgress, 2000);
   }, [saveProgress]);
 
-  // Load video and resume position
+  // Load video and resume position (only for HTML5 video)
   useEffect(() => {
+    if (isExternalPlayer) return; // Skip for YouTube/Vimeo
+    
     const videoEl = videoRef.current;
     if (!videoEl) return;
 
     const handleLoadedMetadata = () => {
       setDuration(videoEl.duration);
       setIsLoading(false);
-      // Resume from saved position
-      if (resumePosition > 0 && resumePosition < videoEl.duration - 5) {
-        videoEl.currentTime = resumePosition;
-        setCurrentTime(resumePosition);
-      }
     };
 
     const handleTimeUpdate = () => {
@@ -104,17 +115,16 @@ export function VideoPlayer({ video, className }: VideoPlayerProps) {
       videoEl.removeEventListener("error", handleError);
       videoEl.removeEventListener("waiting", handleWaiting);
       videoEl.removeEventListener("canplay", handleCanPlay);
-      // Save progress on unmount
       saveProgress();
       if (progressSaveTimer.current) {
         clearTimeout(progressSaveTimer.current);
       }
     };
-  }, [video.id, resumePosition, debouncedSaveProgress, saveProgress, app]);
+  }, [video.id, debouncedSaveProgress, saveProgress, app, isExternalPlayer]);
 
-  // Toggle play/pause
+  // Toggle play/pause (only for HTML5 video)
   const togglePlay = () => {
-    if (!videoRef.current) return;
+    if (!videoRef.current || isExternalPlayer) return;
     if (isPlaying) {
       videoRef.current.pause();
     } else {
@@ -122,26 +132,26 @@ export function VideoPlayer({ video, className }: VideoPlayerProps) {
     }
   };
 
-  // Seek to position
+  // Seek to position (only for HTML5 video)
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!videoRef.current) return;
+    if (!videoRef.current || isExternalPlayer) return;
     const time = parseFloat(e.target.value);
     videoRef.current.currentTime = time;
     setCurrentTime(time);
   };
 
-  // Volume control
+  // Volume control (only for HTML5 video)
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!videoRef.current) return;
+    if (!videoRef.current || isExternalPlayer) return;
     const vol = parseFloat(e.target.value);
     videoRef.current.volume = vol;
     setVolume(vol);
     setIsMuted(vol === 0);
   };
 
-  // Toggle mute
+  // Toggle mute (only for HTML5 video)
   const toggleMute = () => {
-    if (!videoRef.current) return;
+    if (!videoRef.current || isExternalPlayer) return;
     if (isMuted) {
       videoRef.current.volume = volume || 1;
       setIsMuted(false);
@@ -163,9 +173,9 @@ export function VideoPlayer({ video, className }: VideoPlayerProps) {
     }
   };
 
-  // Change playback speed
+  // Change playback speed (only for HTML5 video)
   const changePlaybackRate = () => {
-    if (!videoRef.current) return;
+    if (!videoRef.current || isExternalPlayer) return;
     const rates = [0.5, 0.75, 1, 1.25, 1.5, 2];
     const currentIndex = rates.indexOf(playbackRate);
     const nextRate = rates[(currentIndex + 1) % rates.length];
@@ -173,8 +183,10 @@ export function VideoPlayer({ video, className }: VideoPlayerProps) {
     setPlaybackRate(nextRate);
   };
 
-  // Keyboard controls
+  // Keyboard controls (only for HTML5 video)
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (isExternalPlayer) return;
+    
     if (e.key === " " || e.key === "k") {
       e.preventDefault();
       togglePlay();
@@ -197,8 +209,10 @@ export function VideoPlayer({ video, className }: VideoPlayerProps) {
     }
   };
 
-  // Hide controls after inactivity
+  // Hide controls after inactivity (only for HTML5 video)
   useEffect(() => {
+    if (isExternalPlayer) return;
+    
     let timeout: ReturnType<typeof setTimeout>;
     const handleMouseMove = () => {
       setShowControls(true);
@@ -219,7 +233,7 @@ export function VideoPlayer({ video, className }: VideoPlayerProps) {
       }
       clearTimeout(timeout);
     };
-  }, [isPlaying]);
+  }, [isPlaying, isExternalPlayer]);
 
   // Error state
   if (hasError) {
@@ -248,6 +262,33 @@ export function VideoPlayer({ video, className }: VideoPlayerProps) {
     );
   }
 
+  // YouTube/Vimeo iframe player
+  if (isExternalPlayer) {
+    return (
+      <div className={cn("card-ink overflow-hidden bg-ink relative", className)}>
+        <div className="relative aspect-video bg-black">
+          <iframe
+            src={video.videoUrl}
+            title={video.title}
+            className="absolute inset-0 h-full w-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            frameBorder="0"
+          />
+        </div>
+        
+        {/* Video completion indicator */}
+        {progress?.completed && (
+          <div className="absolute top-3 right-3 flex items-center gap-1.5 rounded-full bg-se px-3 py-1 text-xs font-semibold text-white">
+            <Icon name="check" size={12} />
+            Completed
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // HTML5 video player for direct video URLs
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
