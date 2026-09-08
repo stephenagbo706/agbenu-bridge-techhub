@@ -429,27 +429,106 @@ function ActiveCourseDashboard() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left 2/3 */}
         <div className="space-y-6 lg:col-span-2">
-          {/* Virtual Labs */}
-          <Reveal delay={160}>
-            <section className="card-ink overflow-hidden bg-card">
-              <button
-                onClick={() => app.nav({ name: "labs", id: activeCourse.id })}
-                className="group flex w-full items-center gap-4 p-5 text-left sm:p-6"
-              >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border-1.5 text-[#f4faf7]" style={{ borderColor: m.hex + "60", backgroundColor: m.hex + "15", color: m.hex }}>
-                  <Icon name="spark" size={20} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-display text-base font-bold tracking-tight">Virtual Labs</h3>
-                  <p className="text-[12px] text-mute">Interactive simulations, diagrams & experiments for {activeCourse.short}</p>
-                </div>
-                <span className="flex items-center gap-1 font-mono text-[10px] font-medium uppercase tracking-wider transition-transform group-hover:translate-x-0.5" style={{ color: m.hex }}>
-                  Explore <Icon name="arrowR" size={12} />
-                </span>
-              </button>
-            </section>
-          </Reveal>
+      {/* Virtual Labs */}
+      <Reveal delay={160}>
+        <section className="card-ink overflow-hidden bg-card">
+          <button
+            onClick={() => app.nav({ name: "labs", id: activeCourse.id })}
+            className="group flex w-full items-center gap-4 p-5 text-left sm:p-6"
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border-1.5 text-[#f4faf7]" style={{ borderColor: m.hex + "60", backgroundColor: m.hex + "15", color: m.hex }}>
+              <Icon name="spark" size={20} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-display text-base font-bold tracking-tight">Virtual Labs</h3>
+              <p className="text-[12px] text-mute">Interactive simulations, diagrams & experiments for {activeCourse.short}</p>
+            </div>
+            <span className="flex items-center gap-1 font-mono text-[10px] font-medium uppercase tracking-wider transition-transform group-hover:translate-x-0.5" style={{ color: m.hex }}>
+              Explore <Icon name="arrowR" size={12} />
+            </span>
+          </button>
+        </section>
+      </Reveal>
 
+      {/* Live Learning */}
+      <Reveal delay={165}>
+        <section className="card-ink overflow-hidden bg-card">
+          {(() => {
+            const studentClasses = app.getStudentLiveClasses();
+            const liveNow = studentClasses.filter((c) => c.status === "live");
+            const upcoming = studentClasses.filter((c) => c.status === "scheduled").slice(0, 2);
+
+            if (liveNow.length === 0 && upcoming.length === 0) {
+              return (
+                <button
+                  onClick={() => app.nav({ name: "liveclasses" })}
+                  className="group flex w-full items-center gap-4 p-5 text-left sm:p-6"
+                >
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border-1.5 text-[#f4faf7]" style={{ borderColor: m.hex + "60", backgroundColor: m.hex + "15", color: m.hex }}>
+                    <Icon name="video" size={20} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-display text-base font-bold tracking-tight">Live Classes</h3>
+                    <p className="text-[12px] text-mute">No live classes scheduled yet</p>
+                  </div>
+                  <span className="flex items-center gap-1 font-mono text-[10px] font-medium uppercase tracking-wider transition-transform group-hover:translate-x-0.5" style={{ color: m.hex }}>
+                    View all <Icon name="arrowR" size={12} />
+                  </span>
+                </button>
+              );
+            }
+
+            return (
+              <div>
+                <div className="flex items-center justify-between border-b-1.5 border-line px-5 py-3 sm:px-6">
+                  <div className="flex items-center gap-2">
+                    <Icon name="video" size={16} style={{ color: m.hex }} />
+                    <h3 className="font-display text-base font-bold tracking-tight">Live Learning</h3>
+                  </div>
+                  <button onClick={() => app.nav({ name: "liveclasses" })} className="font-mono text-[10px] font-medium uppercase tracking-wider hover:underline" style={{ color: m.hex }}>
+                    View all
+                  </button>
+                </div>
+                <div className="space-y-2 p-4 sm:p-5">
+                  {liveNow.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => app.nav({ name: "liveclass", id: c.id })}
+                      className="flex w-full items-center gap-3 rounded-lg border-1.5 border-danger/30 bg-danger/5 px-3 py-2.5 text-left transition-colors hover:bg-danger/10"
+                    >
+                      <span className="flex items-center gap-1 rounded-full bg-danger px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-white">
+                        <span className="dot-live h-1.5 w-1.5 rounded-full bg-white" />
+                        Live
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-semibold">{c.title}</span>
+                      <span className="btn btn-danger btn-sm shrink-0">Join</span>
+                    </button>
+                  ))}
+                  {upcoming.map((c) => {
+                    const date = new Date(c.scheduledAt);
+                    const isToday = date.toDateString() === new Date().toDateString();
+                    const label = isToday ? "Today" : date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => app.nav({ name: "liveclass", id: c.id })}
+                        className="flex w-full items-center gap-3 rounded-lg border-1.5 border-line bg-paper/50 px-3 py-2.5 text-left transition-colors hover:bg-paper"
+                      >
+                        <Icon name="calendar" size={14} className="shrink-0 text-mute" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-semibold">{c.title}</span>
+                          <span className="font-mono text-[10px] uppercase tracking-wider text-mute">{label} · {date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}</span>
+                        </span>
+                        <Icon name="arrowR" size={13} className="shrink-0 text-mute" />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+        </section>
+      </Reveal>
           {/* Projects */}
           <Reveal delay={170}>
             <section className="card-ink bg-card p-5 sm:p-6">

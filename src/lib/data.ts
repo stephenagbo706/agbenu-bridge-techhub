@@ -527,6 +527,95 @@ export function buildSeedDB(): DB {
     };
   }
 
+  // ─── Live Classes ───────────────────────────────────────────────────────────
+  const LIVE_CLASSES: import("./types").LiveClass[] = [
+    {
+      id: "lc-1",
+      title: "Introduction to Neural Networks",
+      description: "Live walkthrough of how neural networks process data, with interactive demonstrations.",
+      courseId: "c-ai",
+      topicId: "t-ai-1",
+      instructorId: "u-maya",
+      scheduledAt: now + 2 * D, // 2 days from now
+      duration: 60,
+      status: "scheduled",
+      allowStudentMic: false,
+      allowStudentCamera: false,
+      allowStudentChat: true,
+      allowScreenShare: true,
+      recordingEnabled: true,
+      resources: [
+        { id: "r-1", title: "Neural Network Slides", type: "pdf", url: "#", description: "Presentation slides" },
+        { id: "r-2", title: "Python Notebook", type: "code", url: "#", description: "Code examples" },
+      ],
+      createdAt: now - 5 * D,
+      updatedAt: now - 5 * D,
+    },
+    {
+      id: "lc-2",
+      title: "Building Your First Robot",
+      description: "Hands-on session building a simple robot with sensors and motors.",
+      courseId: "c-rob",
+      topicId: "t-rob-1",
+      instructorId: "u-maya",
+      scheduledAt: now + 4 * D,
+      duration: 90,
+      status: "scheduled",
+      allowStudentMic: true,
+      allowStudentCamera: true,
+      allowStudentChat: true,
+      allowScreenShare: true,
+      recordingEnabled: true,
+      resources: [
+        { id: "r-3", title: "Robot Assembly Guide", type: "document", url: "#", description: "Step-by-step guide" },
+      ],
+      createdAt: now - 3 * D,
+      updatedAt: now - 3 * D,
+    },
+    {
+      id: "lc-3",
+      title: "React Components Deep Dive",
+      description: "Live coding session on building reusable React components with TypeScript.",
+      courseId: "c-se",
+      topicId: "t-se-2",
+      instructorId: "u-maya",
+      scheduledAt: now - 1 * D, // Yesterday (completed)
+      duration: 75,
+      status: "completed",
+      allowStudentMic: false,
+      allowStudentCamera: false,
+      allowStudentChat: true,
+      allowScreenShare: true,
+      recordingEnabled: true,
+      resources: [
+        { id: "r-4", title: "React Code Examples", type: "code", url: "#", description: "GitHub repo" },
+      ],
+      createdAt: now - 7 * D,
+      updatedAt: now - 1 * D,
+    },
+    {
+      id: "lc-4",
+      title: "Business Model Canvas Workshop",
+      description: "Interactive workshop on creating business models for tech startups.",
+      courseId: "c-di",
+      topicId: "t-di-3",
+      instructorId: "u-maya",
+      scheduledAt: now + 1 * D, // Tomorrow
+      duration: 120,
+      status: "scheduled",
+      allowStudentMic: true,
+      allowStudentCamera: true,
+      allowStudentChat: true,
+      allowScreenShare: true,
+      recordingEnabled: false,
+      resources: [
+        { id: "r-5", title: "Canvas Template", type: "pdf", url: "#", description: "Printable template" },
+      ],
+      createdAt: now - 2 * D,
+      updatedAt: now - 2 * D,
+    },
+  ];
+
   const db: DB = {
     version: 1,
     users: DEMO_USERS,
@@ -539,6 +628,10 @@ export function buildSeedDB(): DB {
     skills: SKILLS,
     achievements: ACHIEVEMENTS,
     videos: VIDEOS,
+    liveClasses: LIVE_CLASSES,
+    classMessages: {},
+    classPolls: {},
+    classAttendance: {},
     students,
     notifications,
     log: log.sort((a, b) => b.at - a.at),

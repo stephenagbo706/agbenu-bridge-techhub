@@ -13,7 +13,7 @@ import type { Career } from "./data";
 export type RouteName =
   | "dashboard" | "courses" | "course" | "lesson" | "practice" | "activity"
   | "assessments" | "assessment" | "projects" | "project" | "skills" | "path"
-  | "careers" | "profile" | "admin" | "labs";
+  | "careers" | "profile" | "admin" | "labs" | "liveclasses" | "liveclass";
 
 export interface Route { name: RouteName; id?: string; tab?: string; }
 
@@ -50,6 +50,19 @@ function loadDB(): DB {
         // Migrate: ensure videos array exists
         if (!parsed.videos) {
           parsed.videos = [];
+        }
+        // Migrate: ensure live classes exist
+        if (!parsed.liveClasses) {
+          parsed.liveClasses = [];
+        }
+        if (!parsed.classMessages) {
+          parsed.classMessages = {};
+        }
+        if (!parsed.classPolls) {
+          parsed.classPolls = {};
+        }
+        if (!parsed.classAttendance) {
+          parsed.classAttendance = {};
         }
         return parsed;
       }
@@ -121,6 +134,18 @@ interface Ctx {
   updateVideoProgress: (videoId: string, position: number, duration: number) => void;
   completeVideo: (videoId: string) => void;
   getVideoProgress: (videoId: string) => { currentPosition: number; percentage: number; completed: boolean } | undefined;
+  getLiveClass: (classId: string) => import("./types").LiveClass | undefined;
+  getStudentLiveClasses: (userId?: string) => import("./types").LiveClass[];
+  getLiveClassesByStatus: (status: import("./types").ClassStatus) => import("./types").LiveClass[];
+  createLiveClass: (classData: Omit<import("./types").LiveClass, "id" | "createdAt" | "updatedAt">) => import("./types").LiveClass | null;
+  startLiveClass: (classId: string) => void;
+  endLiveClass: (classId: string) => void;
+  joinLiveClass: (classId: string) => void;
+  leaveLiveClass: (classId: string) => void;
+  sendClassMessage: (classId: string, text: string) => void;
+  createClassPoll: (classId: string, question: string, options: string[]) => void;
+  respondToPoll: (classId: string, pollId: string, optionIndex: string) => void;
+  closePoll: (classId: string, pollId: string) => void;
   beginReview: (userId: string, projectId: string) => void;
   reviewProject: (userId: string, projectId: string, verdict: "approved" | "revise", feedback: string) => void;
   markRead: (id: string) => void;
@@ -308,6 +333,190 @@ export function AppProvider({ children }: { children: ReactNode }) {
       percentage: p.percentage,
       completed: p.completed,
     };
+  };
+
+  // ── Live Class Functions ──
+
+  const getLiveClass = (classId: string) => {
+    return db.liveClasses.find((c) => c.id === classId);
+  };
+
+  const getStudentLiveClasses = (userId?: string) => {
+    const s = stateOf(userId);
+    if (!s?.activeCourseId) return [];
+    // Return only live classes for the student's active course
+    return db.liveClasses
+      .filter((c) => c.courseId === s.activeCourseId && c.status !== "cancelled")
+      .sort((a, b) => a.scheduledAt - b.scheduledAt);
+  };
+
+  const getLiveClassesByStatus = (status: import("./types").ClassStatus) => {
+    return db.liveClasses.filter((c) => c.status === status);
+  };
+
+  const createLiveClass = (classData: Omit<import("./types").LiveClass, "id" | "createdAt" | "updatedAt">) => {
+    if (!user || (user.role !== "instructor" && user.role !== "admin")) {
+      toast("Only instructors can create classes", "warn");
+      return null;
+    }
+    const newClass: import("./types").LiveClass = {
+      ...classData,
+      id: `lc-${Date.now()}`,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    mutate((d) => {
+      d.liveClasses.push(newClass);
+      d.classMessages[newClass.id] = [];
+      d.classPolls[newClass.id] = [];
+      d.classAttendance[newClass.id] = [];
+    });
+    toast("Live class created", "ok");
+    return newClass;
+  };
+
+  const startLiveClass = (classId: string) => {
+    if (!user || (user.role !== "instructor" && user.role !== "admin")) {
+      toast("Only instructors can start classes", "warn");
+      return;
+    }
+    mutate((d) => {
+      const cls = d.liveClasses.find((c) => c.id === classId);
+      if (cls) {
+        cls.status = "live";
+        cls.updatedAt = Date.now();
+      }
+    });
+    toast("Class is now live!", "ok");
+  };
+
+  const endLiveClass = (classId: string) => {
+    if (!user || (user.role !== "instructor" && user.role !== "admin")) {
+      toast("Only instructors can end classes", "warn");
+      return;
+    }
+    mutate((d) => {
+      const cls = d.liveClasses.find((c) => c.id === classId);
+      if (cls) {
+        cls.status = "completed";
+        cls.updatedAt = Date.now();
+      }
+    });
+    toast("Class ended", "ok");
+  };
+
+  const joinLiveClass = (classId: string) => {
+    const meId = user?.id;
+    if (!meId) return;
+    mutate((d) => {
+      if (!d.classAttendance[classId]) {
+        d.classAttendance[classId] = [];
+      }
+      const existing = d.classAttendance[classId].find((a) => a.userId === meId);
+      if (!existing) {
+        d.classAttendance[classId].push({
+          classId,
+          userId: meId,
+          joinedAt: Date.now(),
+          duration: 0,
+          status: "present",
+        });
+      }
+      if (!d.classMessages[classId]) {
+        d.classMessages[classId] = [];
+        d.classMessages[classId].push({
+          id: `msg-${Date.now()}`,
+          classId,
+          userId: "system",
+          text: `${user?.name} joined the class`,
+          timestamp: Date.now(),
+          isSystem: true,
+        });
+      }
+    });
+  };
+
+  const leaveLiveClass = (classId: string) => {
+    const meId = user?.id;
+    if (!meId) return;
+    mutate((d) => {
+      const attendance = d.classAttendance[classId]?.find((a) => a.userId === meId);
+      if (attendance) {
+        attendance.leftAt = Date.now();
+        attendance.duration = Math.floor((Date.now() - attendance.joinedAt) / 1000);
+      }
+      if (d.classMessages[classId]) {
+        d.classMessages[classId].push({
+          id: `msg-${Date.now()}`,
+          classId,
+          userId: "system",
+          text: `${user?.name} left the class`,
+          timestamp: Date.now(),
+          isSystem: true,
+        });
+      }
+    });
+  };
+
+  const sendClassMessage = (classId: string, text: string) => {
+    const meId = user?.id;
+    if (!meId || !text.trim()) return;
+    mutate((d) => {
+      if (!d.classMessages[classId]) {
+        d.classMessages[classId] = [];
+      }
+      d.classMessages[classId].push({
+        id: `msg-${Date.now()}-${Math.random()}`,
+        classId,
+        userId: meId,
+        text: text.trim(),
+        timestamp: Date.now(),
+      });
+    });
+  };
+
+  const createClassPoll = (classId: string, question: string, options: string[]) => {
+    if (!user || (user.role !== "instructor" && user.role !== "admin")) {
+      toast("Only instructors can create polls", "warn");
+      return;
+    }
+    const poll: import("./types").ClassPoll = {
+      id: `poll-${Date.now()}`,
+      classId,
+      question,
+      options,
+      responses: {},
+      isActive: true,
+      createdAt: Date.now(),
+    };
+    mutate((d) => {
+      if (!d.classPolls[classId]) {
+        d.classPolls[classId] = [];
+      }
+      d.classPolls[classId].push(poll);
+    });
+    toast("Poll created", "ok");
+  };
+
+  const respondToPoll = (classId: string, pollId: string, optionIndex: string) => {
+    const meId = user?.id;
+    if (!meId) return;
+    mutate((d) => {
+      const poll = d.classPolls[classId]?.find((p) => p.id === pollId);
+      if (poll && poll.isActive) {
+        poll.responses[meId] = optionIndex;
+      }
+    });
+  };
+
+  const closePoll = (classId: string, pollId: string) => {
+    if (!user || (user.role !== "instructor" && user.role !== "admin")) return;
+    mutate((d) => {
+      const poll = d.classPolls[classId]?.find((p) => p.id === pollId);
+      if (poll) {
+        poll.isActive = false;
+      }
+    });
   };
 
   // ── Actions ──
@@ -826,6 +1035,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     getProject: (id) => db.projects.find((p) => p.id === id),
     getVideo: (id) => db.videos.find((v) => v.id === id),
     getLessonVideos: (lessonId) => db.videos.filter((v) => v.lessonId === lessonId && v.published).sort((a, b) => a.sortOrder - b.sortOrder),
+    getLiveClass: (id) => db.liveClasses.find((c) => c.id === id),
+    getStudentLiveClasses,
+    getLiveClassesByStatus,
+    createLiveClass,
+    startLiveClass,
+    endLiveClass,
+    joinLiveClass,
+    leaveLiveClass,
+    sendClassMessage,
+    createClassPoll,
+    respondToPoll,
+    closePoll,
     courseLessons, topicLessons, coursePct, topicPct, overallPct, topicDone, courseDone,
     bestAttempt, nextUp, upNextQueue, pathStage, careerPct, unread, levelInfo, studentStats,
     activeCourse, hasActiveCourse, enrollInCourse,

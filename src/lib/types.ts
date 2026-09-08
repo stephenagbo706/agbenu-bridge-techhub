@@ -191,6 +191,76 @@ export interface Enrollment {
   completedAt?: number;
 }
 
+// ─── Live Virtual Learning System ────────────────────────────────────────────
+
+export type ClassStatus = "draft" | "scheduled" | "live" | "completed" | "cancelled";
+
+export interface LiveClass {
+  id: string;
+  title: string;
+  description: string;
+  courseId: string;
+  topicId?: string;
+  instructorId: string;
+  scheduledAt: number;
+  duration: number; // minutes
+  status: ClassStatus;
+  allowStudentMic: boolean;
+  allowStudentCamera: boolean;
+  allowStudentChat: boolean;
+  allowScreenShare: boolean;
+  recordingEnabled: boolean;
+  resources: ClassResource[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface ClassResource {
+  id: string;
+  title: string;
+  type: "pdf" | "image" | "link" | "document" | "code";
+  url: string;
+  description?: string;
+}
+
+export interface ClassParticipant {
+  userId: string;
+  joinedAt: number;
+  leftAt?: number;
+  hasRaisedHand: boolean;
+  isMuted: boolean;
+  isCameraOff: boolean;
+  attendanceStatus: "present" | "partial" | "absent";
+}
+
+export interface ClassMessage {
+  id: string;
+  classId: string;
+  userId: string;
+  text: string;
+  timestamp: number;
+  isSystem?: boolean;
+}
+
+export interface ClassPoll {
+  id: string;
+  classId: string;
+  question: string;
+  options: string[];
+  responses: Record<string, string>; // userId → optionIndex
+  isActive: boolean;
+  createdAt: number;
+}
+
+export interface ClassAttendance {
+  classId: string;
+  userId: string;
+  joinedAt: number;
+  leftAt?: number;
+  duration: number; // seconds
+  status: "present" | "partial" | "absent";
+}
+
 export interface StudentState {
   lessons: Record<string, number>; // lessonId → completedAt
   activities: Record<string, { at: number; text: string }>;
@@ -234,6 +304,10 @@ export interface DB {
   skills: Skill[];
   achievements: Achievement[];
   videos: Video[];
+  liveClasses: LiveClass[];
+  classMessages: Record<string, ClassMessage[]>; // classId → messages
+  classPolls: Record<string, ClassPoll[]>; // classId → polls
+  classAttendance: Record<string, ClassAttendance[]>; // classId → attendance
   students: Record<string, StudentState>;
   notifications: Record<string, AppNotification[]>;
   log: ActivityEvent[];

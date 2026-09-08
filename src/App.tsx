@@ -17,6 +17,7 @@ import { CareersView, PathView } from "./views/PathCareers";
 import Profile from "./views/Profile";
 import Admin from "./views/Admin";
 import { VirtualLabsView } from "./views/VirtualLabs";
+import { LiveClassesView, LiveClassroomView } from "./views/LiveClasses";
 import type { AppNotification } from "./lib/types";
 
 const STUDENT_NAV: { section: string; items: { route: RouteName; label: string; icon: IconName }[] }[] = [
@@ -24,6 +25,7 @@ const STUDENT_NAV: { section: string; items: { route: RouteName; label: string; 
     { route: "dashboard", label: "Dashboard", icon: "dashboard" },
     { route: "courses", label: "Courses", icon: "book" },
     { route: "labs", label: "Virtual Labs", icon: "spark" },
+    { route: "liveclasses", label: "Live Classes", icon: "video" },
     { route: "practice", label: "Practice", icon: "wrench" },
     { route: "assessments", label: "Assessments", icon: "clipboard" },
   ]},
@@ -39,12 +41,13 @@ const STUDENT_NAV: { section: string; items: { route: RouteName; label: string; 
 ];
 
 const ACTIVE_MAP: Record<string, RouteName> = {
-  course: "courses", lesson: "courses", activity: "practice", assessment: "assessments", project: "projects", lab: "labs",
+  course: "courses", lesson: "courses", activity: "practice", assessment: "assessments", project: "projects", lab: "labs", liveclass: "liveclasses",
 };
 
 const CRUMB: Record<string, string> = {
   dashboard: "Learn / Dashboard", courses: "Learn / Courses", course: "Learn / Course", lesson: "Learn / Lesson",
-  labs: "Learn / Virtual Labs", practice: "Learn / Practice", activity: "Learn / Activity", assessments: "Learn / Assessments", assessment: "Learn / Assessment",
+  labs: "Learn / Virtual Labs", liveclasses: "Learn / Live Classes", liveclass: "Learn / Live Class",
+  practice: "Learn / Practice", activity: "Learn / Activity", assessments: "Learn / Assessments", assessment: "Learn / Assessment",
   projects: "Build / Projects", project: "Build / Project", skills: "Build / Skills",
   path: "Explore / Learning Path", careers: "Explore / Careers", profile: "Me / Profile", admin: "Staff / Console",
 };
@@ -380,6 +383,8 @@ function View() {
       case "careers": node = <CareersView />; break;
       case "profile": node = <Profile />; break;
       case "labs": node = <VirtualLabsView courseId={route.id} />; break;
+      case "liveclasses": node = <LiveClassesView />; break;
+      case "liveclass": node = <LiveClassroomView classId={route.id ?? ""} />; break;
       case "admin": node = <NoAccess />; break;
       default: node = <Dashboard />;
     }
