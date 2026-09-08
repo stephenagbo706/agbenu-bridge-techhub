@@ -20,6 +20,39 @@ export function LiveClassesView() {
   const upcoming = db.liveClasses.filter((c) => c.status === "scheduled");
   const completed = db.liveClasses.filter((c) => c.status === "completed");
 
+  const handleStartTestClass = () => {
+    if (!isInstructor) return;
+    
+    // Get the first available course for testing
+    const testCourse = db.courses[0];
+    if (!testCourse) {
+      app.toast("No courses available", "warn");
+      return;
+    }
+
+    // Create an instant test live class
+    const testClass = app.createLiveClass({
+      title: "Test Live Class - " + new Date().toLocaleTimeString(),
+      description: "Development test session for live classroom functionality",
+      courseId: testCourse.id,
+      instructorId: user.id,
+      scheduledAt: Date.now(),
+      duration: 60,
+      status: "live", // Start immediately as live
+      allowStudentMic: true,
+      allowStudentCamera: true,
+      allowStudentChat: true,
+      allowScreenShare: true,
+      recordingEnabled: false,
+      resources: [],
+    });
+
+    if (testClass) {
+      // Navigate directly to the classroom
+      app.nav({ name: "liveclass", id: testClass.id });
+    }
+  };
+
   return (
     <div>
       <SectionHead
@@ -27,9 +60,18 @@ export function LiveClassesView() {
         title="Virtual Classroom"
         right={
           isInstructor ? (
-            <button className="btn btn-primary btn-sm" onClick={() => app.nav({ name: "liveclass", id: "new" })}>
-              <Icon name="plus" size={13} /> Create Class
-            </button>
+            <div className="flex gap-2">
+              <button 
+                className="btn btn-danger btn-sm" 
+                onClick={handleStartTestClass}
+                title="Start an instant test live class"
+              >
+                <Icon name="play" size={13} /> Start Live Class
+              </button>
+              <button className="btn btn-primary btn-sm" onClick={() => app.nav({ name: "liveclass", id: "new" })}>
+                <Icon name="plus" size={13} /> Create Class
+              </button>
+            </div>
           ) : null
         }
       />

@@ -713,14 +713,215 @@ function DiffChip({ level }: { level: string }) {
   return <Chip className={cls}>{level}</Chip>;
 }
 
+// ─── Instructor Dashboard ────────────────────────────────────────────────────
+
+function InstructorDashboard() {
+  const app = useApp();
+  const { db, user } = app;
+
+  if (!user) return null;
+
+  const handleStartTestClass = () => {
+    // Get the first available course for testing
+    const testCourse = db.courses[0];
+    if (!testCourse) {
+      app.toast("No courses available", "warn");
+      return;
+    }
+
+    // Create an instant test live class
+    const testClass = app.createLiveClass({
+      title: "Test Live Class - " + new Date().toLocaleTimeString(),
+      description: "Development test session for live classroom functionality",
+      courseId: testCourse.id,
+      instructorId: user.id,
+      scheduledAt: Date.now(),
+      duration: 60,
+      status: "live", // Start immediately as live
+      allowStudentMic: true,
+      allowStudentCamera: true,
+      allowStudentChat: true,
+      allowScreenShare: true,
+      recordingEnabled: false,
+      resources: [],
+    });
+
+    if (testClass) {
+      // Navigate directly to the classroom
+      app.nav({ name: "liveclass", id: testClass.id });
+    }
+  };
+
+  const liveNow = db.liveClasses.filter((c) => c.status === "live");
+  const upcoming = db.liveClasses.filter((c) => c.status === "scheduled").slice(0, 3);
+
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <Reveal>
+        <div>
+          <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-brand-deep/80">Instructor Console</div>
+          <h1 className="mt-1 font-display text-3xl font-bold tracking-tight sm:text-4xl">
+            {greet}, {user.name.split(" ")[0]}.
+          </h1>
+        </div>
+      </Reveal>
+
+      {/* Quick Actions */}
+      <Reveal delay={70}>
+        <div className="card-ink overflow-hidden bg-card">
+          <div className="h-1.5 w-full bg-danger" />
+          <div className="p-6 sm:p-7">
+            <div className="flex items-center gap-3">
+              <span className="flex h-12 w-12 items-center justify-center rounded-lg border-1.5 border-danger/40 bg-danger/10 text-danger">
+                <Icon name="video" size={24} />
+              </span>
+              <div className="flex-1">
+                <h2 className="font-display text-xl font-bold tracking-tight">Live Virtual Classroom</h2>
+                <p className="mt-1 text-sm text-mute">Start a live class to teach students in real-time with video, screen sharing, and interactive tools.</p>
+              </div>
+              <button onClick={handleStartTestClass} className="btn btn-danger">
+                <Icon name="play" size={15} /> Start Live Class
+              </button>
+            </div>
+          </div>
+        </div>
+      </Reveal>
+
+      {/* Live Now */}
+      {liveNow.length > 0 && (
+        <Reveal delay={120}>
+          <section className="card-ink overflow-hidden bg-card">
+            <div className="flex items-center gap-2 border-b-1.5 border-line bg-danger/5 px-5 py-3">
+              <span className="dot-live h-2 w-2 rounded-full bg-danger" />
+              <span className="font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-danger">Live Now</span>
+            </div>
+            <div className="space-y-2 p-4">
+              {liveNow.map((c) => {
+                const course = app.getCourse(c.courseId);
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => app.nav({ name: "liveclass", id: c.id })}
+                    className="flex w-full items-center gap-3 rounded-lg border-1.5 border-danger/30 bg-danger/5 px-4 py-3 text-left transition-colors hover:bg-danger/10"
+                  >
+                    <span className="flex items-center gap-1 rounded-full bg-danger px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-white">
+                      <span className="dot-live h-1.5 w-1.5 rounded-full bg-white" />
+                      Live
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold">{c.title}</span>
+                      {course && <span className="font-mono text-[10px] uppercase tracking-wider text-mute">{course.short}</span>}
+                    </span>
+                    <span className="btn btn-danger btn-sm shrink-0">Join</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        </Reveal>
+      )}
+
+      {/* Upcoming Classes */}
+      {upcoming.length > 0 && (
+        <Reveal delay={160}>
+          <section className="card-ink bg-card p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-display text-lg font-semibold tracking-tight">Upcoming Classes</h3>
+              <button className="btn btn-ghost btn-sm text-brand-deep" onClick={() => app.nav({ name: "liveclasses" })}>
+                View all <Icon name="arrowR" size={13} />
+              </button>
+            </div>
+            <div className="space-y-2">
+              {upcoming.map((c) => {
+                const course = app.getCourse(c.courseId);
+                const date = new Date(c.scheduledAt);
+                const isToday = date.toDateString() === new Date().toDateString();
+                const label = isToday ? "Today" : date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => app.nav({ name: "liveclass", id: c.id })}
+                    className="flex w-full items-center gap-3 rounded-lg border-1.5 border-line bg-paper/50 px-4 py-3 text-left transition-colors hover:bg-paper"
+                  >
+                    <Icon name="calendar" size={16} className="shrink-0 text-mute" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold">{c.title}</span>
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-mute">
+                        {label} · {date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                        {course && ` · ${course.short}`}
+                      </span>
+                    </span>
+                    <Icon name="arrowR" size={13} className="shrink-0 text-mute" />
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        </Reveal>
+      )}
+
+      {/* Quick Links */}
+      <Reveal delay={200}>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <button
+            onClick={() => app.nav({ name: "liveclasses" })}
+            className="card-ink card-ink-hover group bg-card p-5 text-left"
+          >
+            <Icon name="video" size={24} className="mb-2 text-brand" />
+            <h3 className="font-display text-sm font-bold">All Live Classes</h3>
+            <p className="mt-1 text-xs text-mute">View and manage all classes</p>
+          </button>
+          <button
+            onClick={() => app.nav({ name: "courses" })}
+            className="card-ink card-ink-hover group bg-card p-5 text-left"
+          >
+            <Icon name="book" size={24} className="mb-2 text-brand" />
+            <h3 className="font-display text-sm font-bold">Courses</h3>
+            <p className="mt-1 text-xs text-mute">Manage course content</p>
+          </button>
+          <button
+            onClick={() => app.nav({ name: "admin" })}
+            className="card-ink card-ink-hover group bg-card p-5 text-left"
+          >
+            <Icon name="shield" size={24} className="mb-2 text-brand" />
+            <h3 className="font-display text-sm font-bold">Admin Console</h3>
+            <p className="mt-1 text-xs text-mute">System administration</p>
+          </button>
+        </div>
+      </Reveal>
+    </div>
+  );
+}
+
 // ─── Main Dashboard ──────────────────────────────────────────────────────────
 
 export default function Dashboard() {
   const app = useApp();
   const { st, user } = app;
 
-  // Loading state while student data loads
-  if (!user || !st) {
+  // Loading state while data loads
+  if (!user) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand/30 border-t-brand" />
+          <p className="font-mono text-xs uppercase tracking-wider text-mute">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Instructor/Admin dashboard
+  if (user.role === "instructor" || user.role === "admin") {
+    return <InstructorDashboard />;
+  }
+
+  // Student loading state
+  if (!st) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="flex flex-col items-center gap-3">
