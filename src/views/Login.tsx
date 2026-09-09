@@ -140,12 +140,12 @@ export default function Login() {
       <div className="bg-sidebar-trace relative hidden overflow-hidden bg-ink text-paper lg:flex lg:flex-col lg:justify-between lg:p-10">
         <div>
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg border-1.5 border-brand bg-ink2 text-brand">
-              <Icon name="logo" size={22} />
+            <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border-1.5 border-brand bg-ink2 text-brand">
+              <img src="/abt-logo.png" alt="Agbenu Bridge TechHub logo" className="h-full w-full object-cover" />
             </span>
             <div>
-              <div className="font-display text-lg font-bold leading-none tracking-tight">TECHFOUNDRY</div>
-              <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.22em] text-paper/50">Technology Academy</div>
+              <div className="font-display text-lg font-bold leading-none tracking-tight">Agbenu Bridge TechHub</div>
+              <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.22em] text-paper/50">Learn Technology. Build the Future.</div>
             </div>
           </div>
 
@@ -204,12 +204,12 @@ export default function Login() {
       <div className="flex min-h-screen flex-col justify-center px-5 py-10 sm:px-10 lg:px-16">
         <div className="mx-auto w-full max-w-md">
           <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg border-1.5 border-ink bg-ink text-brand">
-              <Icon name="logo" size={22} />
+            <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border-1.5 border-ink bg-ink text-brand">
+              <img src="/abt-logo.png" alt="Agbenu Bridge TechHub logo" className="h-full w-full object-cover" />
             </span>
             <div>
-              <div className="font-display text-lg font-bold leading-none tracking-tight">TECHFOUNDRY</div>
-              <div className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.22em] text-mute">Technology Academy</div>
+              <div className="font-display text-lg font-bold leading-none tracking-tight">Agbenu Bridge TechHub</div>
+              <div className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.22em] text-mute">Learn Technology. Build the Future.</div>
             </div>
           </div>
 

@@ -754,7 +754,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const list = d.notifications[id] ?? (d.notifications[id] = []);
       list.unshift({
         id: `n-${newId()}`, at: Date.now(), read: false, kind: "system",
-        title: "Welcome to TechFoundry",
+        title: "Welcome to Agbenu Bridge TechHub",
         body: "Your workspace is ready. Four courses are open — most builders start with Artificial Intelligence, then follow the path.",
       });
       log(d, id, "system", "joined the platform");

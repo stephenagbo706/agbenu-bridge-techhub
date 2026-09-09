@@ -209,7 +209,7 @@ export default function Profile() {
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#9a6a08] bg-gold-soft text-[#8a5a08]">
                 <Icon name="logo" size={24} />
               </div>
-              <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.28em] text-mute">TechFoundry Academy</div>
+              <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.28em] text-mute">Agbenu Bridge TechHub Academy</div>
               <div className="mt-2 font-display text-2xl font-bold tracking-tight">Certificate of Completion</div>
               <p className="mt-4 text-sm text-mute">This records that</p>
               <div className="mt-1 font-display text-xl font-bold">{user.name}</div>

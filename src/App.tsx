@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { AppProvider, useApp } from "./lib/store";
 import type { RouteName } from "./lib/store";
 import { Avatar, Seg, Toasts, cn, timeAgo } from "./components/ui";
@@ -19,6 +20,135 @@ import Admin from "./views/Admin";
 import { VirtualLabsView } from "./views/VirtualLabs";
 import { LiveClassesView, LiveClassroomView } from "./views/LiveClasses";
 import type { AppNotification } from "./lib/types";
+
+const LOADING_MESSAGES = [
+  "[SYNCING] Neural Firmware & IoT Gateway...",
+  "[INITIALIZING] Autonomous Machine Learning Core...",
+  "[OPTIMIZING] Robotics Micro-Controllers...",
+  "[COMPILING] Software Engineering Cloud Stack...",
+  "[CALIBRATING] Innovation Sandbox & Venture Labs...",
+  "[READY] Agbenu Bridge Gateway Initialized.",
+];
+
+function LoadingScreen() {
+  const [progress, setProgress] = useState(24);
+  const [messageIndex, setMessageIndex] = useState(0);
+  const [latency, setLatency] = useState(14);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setProgress((current) => Math.min(current + 2, 99));
+      setMessageIndex((current) => (current + 1) % LOADING_MESSAGES.length);
+      setLatency((current) => 12 + Math.floor(Math.random() * 7));
+    }, 220);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const status = LOADING_MESSAGES[messageIndex];
+
+  return (
+    <div className="loading-shell">
+      <div className="loading-ambient loading-ambient-left" />
+      <div className="loading-ambient loading-ambient-center" />
+      <div className="loading-ambient loading-ambient-right" />
+
+      <header className="loading-header">
+        <div className="loading-status-left">
+          <span className="loading-status-blip">
+            <span className="loading-status-ping" />
+          </span>
+          <span className="loading-status-label">Core Gateway // Online</span>
+        </div>
+        <div className="loading-header-right">
+          <div className="loading-node-pill">
+            <span className="loading-node-icon"><Icon name="spark" size={14} /></span>
+            <span>NODE: ABT-WEST-01</span>
+          </div>
+          <div className="loading-node-pill">
+            <span className="loading-node-icon"><Icon name="gear" size={14} /></span>
+            <span>PING: {latency}ms</span>
+          </div>
+        </div>
+      </header>
+
+      <main className="loading-main">
+        <div className="loading-logo-wrap">
+          <div className="loading-logo-glow" />
+          <div className="loading-logo-ring" />
+          <div className="loading-badge">
+            <img src="/abt-logo.png" alt="Agbenu Bridge TechHub emblem" className="loading-badge-image" />
+          </div>
+        </div>
+
+        <div className="loading-title-wrap">
+          <div className="loading-mini-badge">
+            <span className="loading-mini-dot" />
+            <span>Autonomous Learning Network</span>
+          </div>
+          <h1 className="loading-title">Agbenu Bridge TechHub</h1>
+          <p className="loading-tagline">Learn Technology. Build the Future.</p>
+        </div>
+
+        <div className="loading-panel">
+          <div className="loading-panel-top">
+            <div className="loading-panel-label">
+              <span className="loading-settings-icon"><Icon name="gear" size={15} /></span>
+              <span>System Pipeline Sync</span>
+            </div>
+            <span className="loading-percent">{progress}%</span>
+          </div>
+
+          <div className="loading-meter">
+            <div className="loading-meter-fill" style={{ width: `${progress}%` }} />
+          </div>
+
+          <div className="loading-panel-bottom">
+            <div className="loading-status-stream">
+              <span className="loading-stream-dot" />
+              <p>{status}</p>
+            </div>
+            <span className="loading-hash">SEC-HASH: 0x88F2A</span>
+          </div>
+        </div>
+
+        <div className="loading-grid-row">
+          {[
+            { title: "AI Systems", tone: "cyan", iconName: "spark", label: "SYNAPSE ACTIVE" },
+            { title: "Robotics & IoT", tone: "emerald", iconName: "cube", label: "CALIBRATING" },
+            { title: "Software Eng.", tone: "blue", iconName: "code", label: "CORE MOUNTED" },
+            { title: "Innovation Lab", tone: "amber", iconName: "compass", label: "INCUBATING" },
+          ].map((item) => (
+            <div key={item.title} className={`loading-feature-card loading-feature-${item.tone}`}>
+              <div className={`loading-feature-icon loading-feature-icon-${item.tone}`}>
+                <Icon name={item.iconName as IconName} size={18} />
+              </div>
+              <div className="loading-feature-copy">
+                <div className="loading-feature-title">{item.title}</div>
+                <div className={`loading-feature-label loading-feature-label-${item.tone}`}>{item.label}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+
+      <footer className="loading-footer">
+        <div className="loading-footer-inner">
+          <div className="loading-system-status">
+            <span className="loading-system-dot" />
+            <span>ABT-OS v2.5 // Secure Bridge Connection Active // Gateway Ready</span>
+          </div>
+          <div className="loading-footer-links">
+            <span>Telemetry Diagnostics</span>
+            <span>Curriculum Roadmap</span>
+            <span>Neural Core Docs</span>
+            <span className="loading-footer-link-accent">Lab Access</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
 
 const STUDENT_NAV: { section: string; items: { route: RouteName; label: string; icon: IconName }[] }[] = [
   { section: "Learn", items: [
@@ -56,16 +186,27 @@ const NOTIF_ICON: Record<AppNotification["kind"], IconName> = {
   achievement: "award", course: "grad", project: "cube", content: "book", announcement: "send", system: "gear",
 };
 
-export default function App() {
+function App() {
   return (
     <AppProvider>
-      <Root />
+      <BootApp />
     </AppProvider>
   );
 }
 
-function Root() {
+function BootApp() {
   const { user } = useApp();
+  const [booting, setBooting] = useState(true);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setBooting(false), 3000);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  if (booting) {
+    return <LoadingScreen />;
+  }
+
   if (!user) {
     return (
       <div className="bg-blueprint min-h-screen">
@@ -74,6 +215,7 @@ function Root() {
       </div>
     );
   }
+
   return (
     <div className="bg-blueprint min-h-screen">
       <Sidebar />
@@ -95,12 +237,12 @@ function Root() {
 function Brand() {
   return (
     <div className="flex items-center gap-2.5 px-1">
-      <span className="flex h-9 w-9 items-center justify-center rounded-lg border-1.5 border-brand bg-ink2 text-brand">
-        <Icon name="logo" size={20} />
+      <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg border-1.5 border-brand bg-ink2 text-brand">
+        <img src="/abt-logo.png" alt="Agbenu Bridge TechHub logo" className="h-full w-full object-cover" />
       </span>
       <div>
-        <div className="font-display text-[15px] font-bold leading-none tracking-tight text-paper">TECHFOUNDRY</div>
-        <div className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.22em] text-paper/45">Technology Academy</div>
+        <div className="font-display text-[15px] font-bold leading-none tracking-tight text-paper">Agbenu Bridge TechHub</div>
+        <div className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.22em] text-paper/45">Learn Technology. Build the Future.</div>
       </div>
     </div>
   );
@@ -242,7 +384,7 @@ function Topbar() {
           <Icon name="menu" size={17} />
         </button>
         <div className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-mute">
-          {CRUMB[route.name] ?? "TechFoundry"}
+          {CRUMB[route.name] ?? "Agbenu Bridge TechHub"}
         </div>
         <div className="ml-auto flex items-center gap-2">
           {user.role === "student" && (
@@ -395,3 +537,5 @@ function View() {
     </div>
   );
 }
+
+export default App;

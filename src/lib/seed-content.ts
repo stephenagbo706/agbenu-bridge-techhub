@@ -39,7 +39,7 @@ export const COURSES: Course[] = [
     description:
       "Programming is the starting point; engineering is the discipline. This course moves you from fundamentals through web and mobile development into testing, databases, APIs, and version control — the full lifecycle of real software, with an emphasis on shipping working applications.",
     color: "#1b8a4c", level: "Foundation → Engineer", hours: 18, order: 3,
-    image_url: "https://image.qwenlm.ai/generated-images/d5a75c3e-1838-4183-88eb-8fdec52b5d9c/_result.png",
+    image_url: "https://articles.unesco.org/sites/default/files/2025-12/unsplash_arnold-francisca.jpg",
     objectives: [
       "Write clean programs using variables, logic, loops, and functions",
       "Explain how the web works and build interactive pages",
@@ -549,10 +549,8 @@ L({
   ],
   example: { title: "A submissions contract", body: "POST /projects/smart-farm/submissions with {text, link}. Server validates: text ≥ 50 chars, link is a URL, the requester owns the project. Responses tell the whole story: 201 + the created record; 400 + 'text must be at least 50 characters'; 403 + 'not your project'.", code: "POST /projects/smart-farm/submissions\nbody: { \"text\": \"Built the sensor node…\", \"link\": \"…\" }\n\n201 Created   → { id, status: \"submitted\" }\n400 Bad Request → { error: \"text must be ≥ 50 characters\" }\n403 Forbidden   → { error: \"project not assigned to you\" }" },
   terms: [["Endpoint", "A URL representing a resource: /projects, /courses/ai-101."], ["HTTP method", "The verb: GET reads, POST creates, PUT updates, DELETE removes."], ["Validation", "Server-side checking of every client input before use."]],
-  check: { prompt: "A client sends a submission for a project owned by another student. The correct server response is…", options: ["201 Created — the data looks valid", "403 Forbidden — authenticated, but not your resource", "404 Not Found — pretend the project doesn't exist", "500 — log the error and crash"], answer: 1, explain: "The user is authenticated (not 401) but lacks rights to this resource — exactly what 403 means. Never silently accept foreign data." },
+  check: { prompt: "A client sends a submission for a project owned by another student. The correct server response is…", options: ["201 Created — the data looks valid", "403 Forbidden — authenticated, but not your resource", "404 Not Found — pretend the project doesn't exist", "200 OK"], answer: "403 Forbidden — authenticated, but not your resource", explain: "The user is authenticated (not 401) but lacks rights to this resource — exactly what 403 means. Never silently accept foreign data." },
 });
-
-// ·· SOFTWARE ·· Topic 6 — Version Control
 L({
   id: "l-se-11", courseId: "c-se", topicId: "t-se-6", order: 1, title: "Git: Commits, Branches, History", minutes: 14,
   summary: "A time machine for your code: snapshots, parallel timelines, and honest history.",
@@ -595,7 +593,7 @@ L({
   check: { prompt: "In interviews, 30 students say they 'would definitely use' your app. What is this evidence worth?", options: ["It confirms demand — start building the full product", "Little — stated intent is unreliable; observed behavior (sign-ups, usage) is the real test", "It is legally binding demand", "It means you need 300 more interviews"], answer: 1, explain: "People are kind in interviews and busy in real life. Behavior — sign-ups, retention, payment — is the evidence that predicts use." },
 });
 L({
-  id: "l-di-2", courseId: "c-di", topicId: "t-di-2", order: 2, title: "Prototypes and MVPs", minutes: 14,
+  id: "l-di-2", courseId: "c-di", topicId: "t-di-1", order: 2, title: "Prototypes and MVPs", minutes: 14,
   summary: "The ladder from sketch to clickable prototype to minimum viable product — each rung answers a different question.",
   why: "Prototypes let you be wrong on paper, where being wrong is free. Skipping them means being wrong in production, where it is not.",
   objectives: ["Distinguish sketches, prototypes, and MVPs", "Match fidelity to the question being answered", "Define 'viable' for a minimum product"],
@@ -633,7 +631,7 @@ L({
   ],
   example: { title: "Scoping a lost-property fix", body: "Wild version: AI camera system campus-wide. Constrained reframe: how might we make reporting a found item take under a minute? Solution: a QR poster in each building → snap photo, auto-tagged location, list page updates instantly. Built in three weeks, used the first day. The scope made it real.", code: "problem: found items take a week to reunite\nHMW: make reporting a find take < 1 minute?\noptions: cameras ✗ cost · staff app ✗ adoption · QR posters ✓\nship:   QR → photo → tagged list · 3 weeks · used day one" },
   terms: [["Reframing", "Restating the problem so it fits constraints without losing the core pain."], ["How might we", "A question form that opens solution space before choosing."], ["Impact × feasibility", "The ranking grid for choosing what to build next."]],
-  check: { prompt: "Your team wants to 'fix school communication' in a semester. The best next move is…", options: ["Start coding a full communication platform immediately", "Reframe: pick one specific, frequent communication failure and scope a six-week solution", "Wait for a bigger team", "Survey every student about all communication topics"], answer: 1, explain: "'School communication' is unbuildable in a semester. One specific frequent failure, scoped to evidence you can produce, is buildable — and actually useful." },
+  check: { prompt: "Your team wants to 'fix school communication' in a semester. The best next move is…", options: ["Registering a company and printing business cards", "Running the cheapest experiment that tests their riskiest assumption", "Writing a 40-page business plan", "Building the complete product before telling anyone"], answer: 1, explain: "'School communication' is unbuildable in a semester. One specific frequent failure, scoped to evidence you can produce, is buildable — and actually useful." },
 });
 
 // ·· INNOVATION ·· Topic 3 — Startup Fundamentals
@@ -827,7 +825,7 @@ export const ASSESSMENTS: Assessment[] = [
   {
     id: "a-se-1", courseId: "c-se", title: "Programming & Web Quiz", kind: "Quiz", minutes: 12, passPct: 70,
     questions: [
-      { id: "q-se1-1", kind: "mcq", prompt: "userName = 'Amara', loginCount = 3. Which operation is a type bug?", options: ["loginCount + 1", "loginCount > 0", "loginCount + userName", "userName + ' is online'"], answer: "loginCount + userName", explain: "Adding a number to a string mixes types — the classic '3Amara' bug.", points: 2 },
+      { id: "q-se1-1", kind: "mcq", prompt: "userName = 'Amara', loginCount = 3. Which operation is a type bug?", options: ["loginCount + 1", "loginCount > 0", "loginCount + userName", "userName + ' logged in'"], answer: 2, explain: "Adding a number to a string mixes types — the classic '3Amara' bug.", points: 2 },
       { id: "q-se1-2", kind: "mcq", prompt: "HTTP status 500 means…", options: ["The user made a request mistake", "The server failed while handling the request", "The page was not found", "The browser is outdated"], answer: "The server failed while handling the request", explain: "5xx = server's fault. 4xx = client's fault. 404 is a specific 4xx.", points: 2 },
       { id: "q-se1-3", kind: "tf", prompt: "In component UIs, you manually update each label whenever data changes.", options: ["True", "False"], answer: "False", explain: "You change state; the framework re-renders what depends on it. The screen is a function of data.", points: 2 },
       { id: "q-se1-4", kind: "mcq", prompt: "You paste the same five lines twice. You have found…", options: ["A comment", "A function waiting to be born", "A security hole", "A loop"], answer: "A function waiting to be born", explain: "Duplication is the signal: extract, name, and call it instead.", points: 2 },
@@ -851,8 +849,8 @@ export const ASSESSMENTS: Assessment[] = [
       { id: "q-di1-1", kind: "mcq", prompt: "The strongest evidence that a problem is real is…", options: ["Founder enthusiasm", "People already paying with time or money in clumsy workarounds", "A big theoretical market", "Positive surveys"], answer: "People already paying with time or money in clumsy workarounds", explain: "Revealed behavior proves both the pain and the willingness to reduce it.", points: 2 },
       { id: "q-di1-2", kind: "mcq", prompt: "An MVP must be…", options: ["Feature-complete but buggy", "The smallest thing that still delivers the core value", "Free forever", "Built in one weekend no matter what"], answer: "The smallest thing that still delivers the core value", explain: "Minimum without viability is broken; viable without minimum is a project, not a test.", points: 2 },
       { id: "q-di1-3", kind: "tf", prompt: "'I would definitely use that' in an interview is strong evidence of demand.", options: ["True", "False"], answer: "False", explain: "Stated intent is cheap and kind; observed behavior — sign-ups, usage, payment — is evidence.", points: 2 },
-      { id: "q-di1-4", kind: "mcq", prompt: "Your demand test set '≥ 20 sign-ups to proceed' and got 6. The honest move is…", options: ["Build anyway", "Treat the framing as failing its test; study the 6, then reframe or pivot", "Rerun the identical test", "Lower the criterion after the fact"], answer: "Treat the framing as failing its test; study the 6, then reframe or pivot", explain: "Pre-committed criteria exist to override optimism. The 6 are data, not permission.", points: 2 },
-      { id: "q-di1-5", kind: "short", prompt: "What is a concierge pilot, and what does it teach that software cannot?", answer: "Delivering the promise fully manually; it teaches the true shape of the work — what users ask, where they stall, what they repeat.", accept: ["manual", "manually", "shape", "learn", "before building"], explain: "Manual delivery is the cheapest source of truth about the real workflow; automate only what is proven.", points: 3 },
+      { id: "q-di1-4", kind: "mcq", prompt: "Your demand test set '≥ 20 sign-ups to proceed' and got 6. The honest move is…", options: ["Build anyway", "Treat the framing as failing its test; examine who the 6 were and reframe or pivot", "Rerun the identical test", "Lower the criterion after the fact"], answer: "Treat the framing as failing its test; examine who the 6 were and reframe or pivot", explain: "Pre-committed criteria exist to override optimism. The 6 are data, not permission.", points: 2 },
+      { id: "q-di1-5", kind: "short", prompt: "What is a concierge pilot, and what does it teach that software cannot?", answer: "Delivering the promise fully manually; it teaches the true shape of the work — what users ask, where they get stuck, what they value enough to repeat.", accept: ["manual", "manually", "shape", "learn", "before building"], explain: "Manual delivery is the cheapest source of truth about the real workflow; automate only what is proven.", points: 3 },
       { id: "q-di1-6", kind: "mcq", prompt: "A canvas lists 'revenue: advertisements' for a 500-user campus app. The problem is…", options: ["Ads are illegal on campus", "Ad models need large sustained audiences; the box is likely fiction", "Ads require AI", "Students block all ads"], answer: "Ad models need large sustained audiences; the box is likely fiction", explain: "Revenue models must survive arithmetic. Small audiences cannot fund ad economics.", points: 2 },
     ],
   },
