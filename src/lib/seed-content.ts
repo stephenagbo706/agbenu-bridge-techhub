@@ -9,7 +9,7 @@ export const COURSES: Course[] = [
     description:
       "This course takes you from understanding what AI actually is, to using generative AI tools effectively, engineering strong prompts, grasping core machine-learning concepts, and applying AI responsibly. You finish by building an AI-assisted solution to a real problem.",
     color: "#2f5fe3", level: "Foundation → Applied", hours: 14, order: 1,
-    image_url: "https://image.qwenlm.ai/generated-images/1e835190-c27a-483e-8189-104384a8b9fd/_result.png",
+    image_url: "https://www.telefonica.com/en/wp-content/uploads/sites/5/2023/07/differences-robotis-ia.jpg?w=1200",
     objectives: [
       "Explain how AI systems learn from data and make predictions",
       "Use generative AI tools as a partner for real work",
