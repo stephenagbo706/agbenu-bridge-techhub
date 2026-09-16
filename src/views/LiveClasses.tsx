@@ -343,7 +343,11 @@ export function LiveClassroomView({ classId }: { classId: string }) {
         }
 
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user" },
+          video: {
+            facingMode: "user",
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
         });
         const [videoTrack] = stream.getVideoTracks();
 
@@ -418,6 +422,10 @@ export function LiveClassroomView({ classId }: { classId: string }) {
   const toggleScreenShare = async () => {
     if (!isInstructor || !liveClass.allowScreenShare) {
       app.toast("Screen sharing is available to the instructor only", "warn");
+      return;
+    }
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      app.toast("Screen sharing is not supported on this mobile browser. Use a desktop browser to present your screen.", "warn");
       return;
     }
     if (isScreenSharing) {
@@ -510,21 +518,21 @@ export function LiveClassroomView({ classId }: { classId: string }) {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-xl border-1.5 border-line bg-card shadow-sm">
+    <div className="flex min-h-[calc(100dvh-5rem)] flex-col overflow-hidden rounded-xl border-1.5 border-line bg-card shadow-sm lg:min-h-[calc(100vh-8rem)]">
       {/* Header */}
-      <div className="flex items-center justify-between border-b-1.5 border-line bg-card px-4 py-3">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 border-b-1.5 border-line bg-card px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
           {isLive && (
             <span className="flex items-center gap-1 rounded-full bg-danger px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-white">
               <span className="dot-live h-1.5 w-1.5 rounded-full bg-white" />
               Live
             </span>
           )}
-          <h2 className="font-display text-base font-bold tracking-tight">{liveClass.title}</h2>
+          <h2 className="min-w-0 flex-1 truncate font-display text-sm font-bold tracking-tight sm:text-base">{liveClass.title}</h2>
           {course && <CourseTag course={course} />}
         </div>
-        <div className="flex items-center gap-3">
-          <span className="hidden items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-mute sm:flex">
+        <div className="flex items-center justify-between gap-3 sm:justify-end">
+          <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-mute">
             <Icon name="users" size={13} /> {activeAttendees.length} in room
           </span>
           <button onClick={handleLeave} className="btn btn-ghost btn-sm">
@@ -533,21 +541,21 @@ export function LiveClassroomView({ classId }: { classId: string }) {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b-1.5 border-line bg-paper/60 px-4 py-2.5 text-[11px] text-mute">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b-1.5 border-line bg-paper/60 px-3 py-2.5 text-[11px] text-mute sm:px-4">
         <span className="flex items-center gap-2">
           <span className={cn("h-2 w-2 rounded-full", isLive ? "bg-se" : "bg-gold")} />
           {isInstructor ? "You are teaching this session" : `Live with ${instructor?.name || "your instructor"}`}
         </span>
-        <span className="font-mono uppercase tracking-wider">
+        <span className="font-mono uppercase tracking-wider sm:text-right">
           {isInstructor ? "Stage + screen share enabled" : "Watch the instructor stage and use chat to ask questions"}
         </span>
       </div>
 
       {/* Main content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
         {/* Video area */}
         <div className="flex min-w-0 flex-1 flex-col bg-ink">
-          <div className="relative flex-1">
+          <div className="relative min-h-[42dvh] flex-1 sm:min-h-[50dvh] lg:min-h-0">
             {/* Screen share */}
             {isScreenSharing && (
               <video
@@ -558,17 +566,17 @@ export function LiveClassroomView({ classId }: { classId: string }) {
               />
             )}
             {isScreenSharing && (
-              <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-ink/80 px-3 py-1.5 text-xs text-paper">
+              <div className="absolute left-3 top-3 flex items-center gap-2 rounded-full bg-ink/80 px-3 py-1.5 text-xs text-paper sm:left-4 sm:top-4">
                 <span className="h-2 w-2 rounded-full bg-brand" />
                 {isInstructor ? "You are presenting" : "Instructor is presenting"}
               </div>
             )}
             {/* Camera */}
             {!isScreenSharing && presenterEntry && presenterEntry.userId !== user.id && (
-              <div className="flex h-full items-center justify-center px-6 text-center text-paper/80">
+              <div className="flex min-h-[42dvh] items-center justify-center px-4 py-8 text-center text-paper/80 sm:min-h-[50dvh] sm:px-6 lg:min-h-full">
                 <div className="max-w-md">
                   <Icon name="screen" size={64} className="mx-auto opacity-60" />
-                  <h3 className="mt-4 font-display text-xl font-bold text-paper">{presenter?.name ?? "The instructor"} is presenting</h3>
+                  <h3 className="mt-4 font-display text-lg font-bold text-paper sm:text-xl">{presenter?.name ?? "The instructor"} is presenting</h3>
                   <p className="mt-2 text-sm leading-relaxed text-paper/70">
                     This classroom now shares presenter status with everyone. To show the actual live screen video across devices, connect a WebRTC media/signaling service.
                   </p>
@@ -576,7 +584,7 @@ export function LiveClassroomView({ classId }: { classId: string }) {
               </div>
             )}
             {!isScreenSharing && (!presenterEntry || presenterEntry.userId === user.id) && (
-              <div className="flex h-full items-center justify-center">
+              <div className="flex min-h-[42dvh] items-center justify-center sm:min-h-[50dvh] lg:min-h-full">
                 {isCameraOn ? (
                   <video
                     ref={videoRef}
@@ -604,15 +612,15 @@ export function LiveClassroomView({ classId }: { classId: string }) {
               </div>
             )}
             {!isScreenSharing && isInstructor && (
-              <div className="absolute bottom-4 left-4 max-w-xs rounded-lg border border-paper/15 bg-ink/80 px-3 py-2 text-xs text-paper/80">
+              <div className="absolute bottom-3 left-3 right-3 rounded-lg border border-paper/15 bg-ink/80 px-3 py-2 text-xs text-paper/80 sm:bottom-4 sm:left-4 sm:right-auto sm:max-w-xs">
                 <div className="font-semibold text-paper">Teaching stage</div>
                 <div className="mt-0.5">Turn on your camera or share your screen to start the lesson.</div>
               </div>
             )}
           </div>
 
-          <div className="border-t border-paper/10 bg-ink px-4 py-3">
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="border-t border-paper/10 bg-ink px-3 py-3 sm:px-4">
+            <div className="flex gap-2 overflow-x-auto pb-1 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 xl:grid-cols-4">
               {activeAttendees.length === 0 && (
                 <div className="rounded-lg border border-paper/10 bg-paper/5 px-3 py-3 text-xs text-paper/60">No one has joined yet.</div>
               )}
@@ -622,7 +630,7 @@ export function LiveClassroomView({ classId }: { classId: string }) {
                 const isSelf = entry.userId === user.id;
                 const isHost = entry.userId === liveClass.instructorId;
                 return (
-                  <div key={entry.userId} className="flex min-w-0 items-center gap-2 rounded-lg border border-paper/10 bg-paper/5 px-3 py-2 text-paper">
+                  <div key={entry.userId} className="flex min-w-[210px] items-center gap-2 rounded-lg border border-paper/10 bg-paper/5 px-3 py-2 text-paper sm:min-w-0">
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-brand/80 font-display text-sm font-bold">
                       {participant.name.slice(0, 1).toUpperCase()}
                     </span>
@@ -643,7 +651,7 @@ export function LiveClassroomView({ classId }: { classId: string }) {
           </div>
 
           {/* Controls */}
-          <div className="flex items-center justify-center gap-3 border-t-1.5 border-paper/10 bg-ink2 px-4 py-3">
+          <div className="flex flex-wrap items-center justify-center gap-2 border-t-1.5 border-paper/10 bg-ink2 px-3 py-3 sm:gap-3 sm:px-4">
             <button
               onClick={toggleMic}
               disabled={!canUseMic}
@@ -671,13 +679,13 @@ export function LiveClassroomView({ classId }: { classId: string }) {
                 onClick={toggleScreenShare}
                 disabled={!liveClass.allowScreenShare}
                 className={cn(
-                  "flex h-10 items-center gap-2 rounded-full px-4 transition-colors",
+                  "flex h-10 items-center gap-2 rounded-full px-3 transition-colors sm:px-4",
                   isScreenSharing ? "bg-brand text-white hover:bg-brand/90" : "bg-paper/10 text-paper hover:bg-paper/20"
                 )}
                 title={isScreenSharing ? "Stop sharing" : "Share screen"}
               >
                 <Icon name="screen" size={18} />
-                <span className="text-sm font-medium">{isScreenSharing ? "Sharing" : "Share Screen"}</span>
+                <span className="text-xs font-medium sm:text-sm">{isScreenSharing ? "Sharing" : "Share Screen"}</span>
               </button>
             )}
             <button
@@ -693,19 +701,19 @@ export function LiveClassroomView({ classId }: { classId: string }) {
             {isInstructor && isLive && (
               <button
                 onClick={() => app.endLiveClass(classId)}
-                className="flex h-10 items-center gap-2 rounded-full bg-danger px-4 text-white hover:bg-danger/90"
+                className="flex h-10 items-center gap-2 rounded-full bg-danger px-3 text-white hover:bg-danger/90 sm:px-4"
               >
                 <Icon name="stop" size={18} />
-                <span className="text-sm font-medium">End Class</span>
+                <span className="text-xs font-medium sm:text-sm">End Class</span>
               </button>
             )}
             {isInstructor && !isLive && (
               <button
                 onClick={() => app.startLiveClass(classId)}
-                className="flex h-10 items-center gap-2 rounded-full bg-se px-4 text-white hover:bg-se/90"
+                className="flex h-10 items-center gap-2 rounded-full bg-se px-3 text-white hover:bg-se/90 sm:px-4"
               >
                 <Icon name="play" size={18} />
-                <span className="text-sm font-medium">Start Class</span>
+                <span className="text-xs font-medium sm:text-sm">Start Class</span>
               </button>
             )}
           </div>
@@ -717,18 +725,18 @@ export function LiveClassroomView({ classId }: { classId: string }) {
         </div>
 
         {/* Chat sidebar */}
-        <div className="flex w-80 shrink-0 flex-col border-l-1.5 border-line bg-card">
-          <div className="border-b-1.5 border-line px-4 py-3">
+        <div className="flex max-h-[44dvh] w-full shrink-0 flex-col border-t-1.5 border-line bg-card lg:max-h-none lg:w-80 lg:border-l-1.5 lg:border-t-0">
+          <div className="border-b-1.5 border-line px-3 py-3 sm:px-4">
             <div className="flex items-center justify-between">
               <h3 className="font-display text-sm font-bold">Classroom</h3>
               <span className="font-mono text-[10px] uppercase tracking-wider text-mute">{activeAttendees.length} online</span>
             </div>
-            <div className="mt-3 space-y-2">
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-2 lg:overflow-visible lg:pb-0">
               {activeAttendees.slice(0, 4).map((entry) => {
                 const participant = app.getUser(entry.userId);
                 if (!participant) return null;
                 return (
-                  <div key={entry.userId} className="flex items-center gap-2 text-xs">
+                  <div key={entry.userId} className="flex min-w-[160px] items-center gap-2 text-xs lg:min-w-0">
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand/15 font-semibold text-brand">
                       {participant.name.slice(0, 1).toUpperCase()}
                     </span>
@@ -767,7 +775,7 @@ export function LiveClassroomView({ classId }: { classId: string }) {
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={(e) => e.key === "Enter" && sendMessage()}
                   placeholder="Type a message..."
-                  className="inp flex-1 text-sm"
+                  className="inp min-w-0 flex-1 text-sm"
                 />
                 <button onClick={sendMessage} className="btn btn-primary btn-sm">
                   <Icon name="send" size={14} />
