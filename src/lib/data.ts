@@ -272,6 +272,22 @@ export const VIDEOS: Video[] = [
     createdAt: Date.now() - 24 * 86400000,
     updatedAt: Date.now() - 24 * 86400000,
   },
+  {
+    id: "v-ai-5",
+    lessonId: "l-ai-11",
+    title: "Introduction to Natural Language Processing (NLP)",
+    description: "Learn what NLP is, how AI works with human language, and the key tasks involved such as classification, sentiment analysis, translation, and chatbots.",
+    videoUrl: "https://www.youtube.com/embed/5ctbvkAMQO4",
+    thumbnailUrl: "https://img.youtube.com/vi/5ctbvkAMQO4/maxresdefault.jpg",
+    provider: "youtube",
+    duration: 420, // 7:00
+    captionsUrl: undefined,
+    sortOrder: 1,
+    isRequired: true,
+    published: true,
+    createdAt: Date.now() - 23 * 86400000,
+    updatedAt: Date.now() - 23 * 86400000,
+  },
   // Robotics Course Videos
   {
     id: "v-rb-1",

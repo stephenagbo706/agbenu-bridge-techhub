@@ -230,6 +230,8 @@ export function LiveClassroomView({ classId }: { classId: string }) {
   const [isMicOn, setIsMicOn] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [hasRaisedHand, setHasRaisedHand] = useState(false);
+  const [cameraError, setCameraError] = useState("");
+  const [micError, setMicError] = useState("");
   const [messages, setMessages] = useState<ClassMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [activePoll, setActivePoll] = useState<ClassPoll | null>(null);
@@ -248,6 +250,31 @@ export function LiveClassroomView({ classId }: { classId: string }) {
     }
   }, [classId, liveClass, app.db.classMessages, app.db.classPolls]);
 
+  useEffect(() => {
+    return () => {
+      localStreamRef.current?.getTracks().forEach((track) => track.stop());
+      screenStreamRef.current?.getTracks().forEach((track) => track.stop());
+    };
+  }, [classId]);
+
+  useEffect(() => {
+    if (videoRef.current && localStreamRef.current && isCameraOn) {
+      videoRef.current.srcObject = localStreamRef.current;
+      videoRef.current.play().catch(() => {
+        // Autoplay may wait for the browser to finish granting access.
+      });
+    }
+  }, [isCameraOn]);
+
+  useEffect(() => {
+    if (screenRef.current && screenStreamRef.current && isScreenSharing) {
+      screenRef.current.srcObject = screenStreamRef.current;
+      screenRef.current.play().catch(() => {
+        // Screen-share playback starts once the browser has attached the stream.
+      });
+    }
+  }, [isScreenSharing]);
+
   if (!liveClass || !user) {
     return (
       <div className="card-ink mx-auto max-w-md bg-card p-8 text-center">
@@ -264,32 +291,71 @@ export function LiveClassroomView({ classId }: { classId: string }) {
   const course = app.getCourse(liveClass.courseId);
   const isInstructor = user.id === liveClass.instructorId || user.role === "admin";
   const isLive = liveClass.status === "live";
+  const instructor = app.getUser(liveClass.instructorId);
+  const attendance = app.db.classAttendance[classId] || [];
+  const activeAttendees = attendance.filter((entry) => !entry.leftAt);
 
   const toggleCamera = async () => {
     if (isCameraOn) {
-      localStreamRef.current?.getTracks().forEach((track) => track.stop());
-      localStreamRef.current = null;
+      localStreamRef.current?.getVideoTracks().forEach((track) => {
+        track.stop();
+        localStreamRef.current?.removeTrack(track);
+      });
       setIsCameraOn(false);
+      setCameraError("");
     } else {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        localStreamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+        if (!navigator.mediaDevices?.getUserMedia) {
+          setCameraError("Camera access needs a modern browser on HTTPS or localhost.");
+          app.toast("Camera access is not available in this browser", "warn");
+          return;
         }
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user" },
+        });
+        const [videoTrack] = stream.getVideoTracks();
+
+        if (localStreamRef.current && videoTrack) {
+          localStreamRef.current.getVideoTracks().forEach((track) => {
+            track.stop();
+            localStreamRef.current?.removeTrack(track);
+          });
+          localStreamRef.current.addTrack(videoTrack);
+          stream.getAudioTracks().forEach((track) => track.stop());
+        } else {
+          localStreamRef.current = stream;
+        }
+
         setIsCameraOn(true);
+        setCameraError("");
       } catch (err) {
-        app.toast("Camera permission denied", "warn");
+        const message =
+          err instanceof DOMException && err.name === "NotAllowedError"
+            ? "Camera permission was blocked. Allow camera access in your browser, then try again."
+            : "Camera could not start. Check that no other app is using it, then try again.";
+        setCameraError(message);
+        app.toast(message, "warn");
       }
     }
   };
 
   const toggleMic = async () => {
     if (isMicOn) {
-      localStreamRef.current?.getAudioTracks().forEach((track) => track.stop());
+      localStreamRef.current?.getAudioTracks().forEach((track) => {
+        track.stop();
+        localStreamRef.current?.removeTrack(track);
+      });
       setIsMicOn(false);
+      setMicError("");
     } else {
       try {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          setMicError("Microphone access needs a modern browser on HTTPS or localhost.");
+          app.toast("Microphone access is not available in this browser", "warn");
+          return;
+        }
+
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         if (localStreamRef.current) {
           stream.getAudioTracks().forEach((track) => localStreamRef.current!.addTrack(track));
@@ -297,8 +363,14 @@ export function LiveClassroomView({ classId }: { classId: string }) {
           localStreamRef.current = stream;
         }
         setIsMicOn(true);
+        setMicError("");
       } catch (err) {
-        app.toast("Microphone permission denied", "warn");
+        const message =
+          err instanceof DOMException && err.name === "NotAllowedError"
+            ? "Microphone permission was blocked. Allow microphone access in your browser, then try again."
+            : "Microphone could not start. Check that no other app is using it, then try again.";
+        setMicError(message);
+        app.toast(message, "warn");
       }
     }
   };
@@ -382,7 +454,7 @@ export function LiveClassroomView({ classId }: { classId: string }) {
   }
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] flex-col">
+    <div className="flex min-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-xl border-1.5 border-line bg-card shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between border-b-1.5 border-line bg-card px-4 py-3">
         <div className="flex items-center gap-3">
@@ -395,23 +467,45 @@ export function LiveClassroomView({ classId }: { classId: string }) {
           <h2 className="font-display text-base font-bold tracking-tight">{liveClass.title}</h2>
           {course && <CourseTag course={course} />}
         </div>
-        <button onClick={handleLeave} className="btn btn-ghost btn-sm">
-          <Icon name="logout" size={13} /> Leave
-        </button>
+        <div className="flex items-center gap-3">
+          <span className="hidden items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-mute sm:flex">
+            <Icon name="users" size={13} /> {activeAttendees.length} in room
+          </span>
+          <button onClick={handleLeave} className="btn btn-ghost btn-sm">
+            <Icon name="logout" size={13} /> Leave
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b-1.5 border-line bg-paper/60 px-4 py-2.5 text-[11px] text-mute">
+        <span className="flex items-center gap-2">
+          <span className={cn("h-2 w-2 rounded-full", isLive ? "bg-se" : "bg-gold")} />
+          {isInstructor ? "You are teaching this session" : `Live with ${instructor?.name || "your instructor"}`}
+        </span>
+        <span className="font-mono uppercase tracking-wider">
+          {isInstructor ? "Stage + screen share enabled" : "Watch the instructor stage and use chat to ask questions"}
+        </span>
       </div>
 
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Video area */}
-        <div className="flex flex-1 flex-col bg-ink">
+        <div className="flex min-w-0 flex-1 flex-col bg-ink">
           <div className="relative flex-1">
             {/* Screen share */}
             {isScreenSharing && (
               <video
                 ref={screenRef}
                 autoPlay
+                playsInline
                 className="h-full w-full object-contain"
               />
+            )}
+            {isScreenSharing && (
+              <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-ink/80 px-3 py-1.5 text-xs text-paper">
+                <span className="h-2 w-2 rounded-full bg-brand" />
+                {isInstructor ? "You are presenting" : "Instructor is presenting"}
+              </div>
             )}
             {/* Camera */}
             {!isScreenSharing && (
@@ -421,14 +515,24 @@ export function LiveClassroomView({ classId }: { classId: string }) {
                     ref={videoRef}
                     autoPlay
                     muted
-                    className="h-full w-full object-cover"
+                    playsInline
+                    className="h-full w-full scale-x-[-1] object-cover"
                   />
                 ) : (
                   <div className="text-center text-paper/60">
                     <Icon name="video" size={64} className="mx-auto opacity-40" />
                     <p className="mt-2 text-sm">Camera is off</p>
+                    {cameraError && (
+                      <p className="mx-auto mt-2 max-w-xs text-xs leading-relaxed text-paper/75">{cameraError}</p>
+                    )}
                   </div>
                 )}
+              </div>
+            )}
+            {!isScreenSharing && isInstructor && (
+              <div className="absolute bottom-4 left-4 max-w-xs rounded-lg border border-paper/15 bg-ink/80 px-3 py-2 text-xs text-paper/80">
+                <div className="font-semibold text-paper">Teaching stage</div>
+                <div className="mt-0.5">Turn on your camera or share your screen to start the lesson.</div>
               </div>
             )}
           </div>
@@ -497,11 +601,38 @@ export function LiveClassroomView({ classId }: { classId: string }) {
               </button>
             )}
           </div>
+          {(cameraError || micError) && (
+            <div className="border-t border-paper/10 bg-danger/10 px-4 py-2 text-center text-xs text-paper/85">
+              {cameraError || micError}
+            </div>
+          )}
         </div>
 
         {/* Chat sidebar */}
-        {liveClass.allowStudentChat && (
-          <div className="flex w-80 flex-col border-l-1.5 border-line bg-card">
+        <div className="flex w-80 shrink-0 flex-col border-l-1.5 border-line bg-card">
+          <div className="border-b-1.5 border-line px-4 py-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-display text-sm font-bold">Classroom</h3>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-mute">{activeAttendees.length} online</span>
+            </div>
+            <div className="mt-3 space-y-2">
+              {activeAttendees.slice(0, 4).map((entry) => {
+                const participant = app.getUser(entry.userId);
+                if (!participant) return null;
+                return (
+                  <div key={entry.userId} className="flex items-center gap-2 text-xs">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand/15 font-semibold text-brand">
+                      {participant.name.slice(0, 1).toUpperCase()}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">{participant.name}</span>
+                    {entry.userId === liveClass.instructorId && <span className="text-[10px] text-mute">HOST</span>}
+                  </div>
+                );
+              })}
+              {activeAttendees.length === 0 && <p className="text-xs text-mute">No one else has joined yet.</p>}
+            </div>
+          </div>
+          {liveClass.allowStudentChat && <>
             <div className="border-b-1.5 border-line px-4 py-3">
               <h3 className="font-display text-sm font-bold">Chat</h3>
             </div>
@@ -535,8 +666,8 @@ export function LiveClassroomView({ classId }: { classId: string }) {
                 </button>
               </div>
             </div>
-          </div>
-        )}
+          </>}
+        </div>
       </div>
     </div>
   );

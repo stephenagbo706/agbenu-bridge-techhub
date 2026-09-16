@@ -71,6 +71,7 @@ export const TOPICS: Topic[] = [
   { id: "t-ai-3", courseId: "c-ai", order: 3, title: "Prompt Engineering", summary: "The craft of instructing AI: structure, iteration, evaluation." },
   { id: "t-ai-4", courseId: "c-ai", order: 4, title: "Machine Learning Concepts", summary: "Supervised learning, training vs. testing, overfitting." },
   { id: "t-ai-5", courseId: "c-ai", order: 5, title: "Responsible AI", summary: "Bias, fairness, privacy, and honest use of AI systems." },
+  { id: "t-ai-6", courseId: "c-ai", order: 6, title: "Natural Language Processing", summary: "How AI works with human language: understanding, generation, and translation." },
 
   { id: "t-rb-1", courseId: "c-rob", order: 1, title: "Robotics Fundamentals", summary: "The sense–think–act loop and what makes a machine a robot." },
   { id: "t-rb-2", courseId: "c-rob", order: 2, title: "Electronics & Sensors", summary: "Circuits, current, and measuring the physical world." },
@@ -78,6 +79,7 @@ export const TOPICS: Topic[] = [
   { id: "t-rb-4", courseId: "c-rob", order: 4, title: "IoT Systems", summary: "Connected devices, networks, and sensor-to-cloud flows." },
   { id: "t-rb-5", courseId: "c-rob", order: 5, title: "Automation & Control", summary: "Rules, thresholds, feedback loops, and control patterns." },
   { id: "t-rb-6", courseId: "c-rob", order: 6, title: "Practical Robotics Projects", summary: "Planning builds, bill of materials, testing, and demoing." },
+  { id: "t-rb-7", courseId: "c-rob", order: 7, title: "AI in Robotics", summary: "How perception, decisions, language, and connected intelligence make robots autonomous." },
 
   { id: "t-se-1", courseId: "c-se", order: 1, title: "Programming Fundamentals", summary: "Variables, types, logic, loops, functions — thinking like a programmer." },
   { id: "t-se-2", courseId: "c-se", order: 2, title: "Web Development", summary: "HTTP, HTML, CSS, JavaScript, and modern UI frameworks." },
@@ -241,6 +243,41 @@ L({
   example: { title: "The 30-second checkpoint", body: "Before sending any text to a public assistant: (1) names, IDs, grades, health or financial details → remove; (2) confidential or unreleased material → do not send; (3) could this embarrass someone if leaked? → rewrite. Then send the sanitized version.", code: "✗ \"Summarize these 30 student records with grades…\"\n✓ \"Summarize this anonymized, aggregated grade distribution…\"\n✗ \"Write my essay about X\"\n✓ \"Give me 5 angles on X\" → you research, write, and own it" },
   terms: [["Anonymization", "Removing identifying details before processing data."], ["Disclosure", "Stating that AI assisted in producing the work."], ["Accountability", "The author — you — stands behind the output."]],
   check: { prompt: "You want AI feedback on an app containing real user sign-up data. What do you do?", options: ["Paste it — feedback is more useful with real data", "Replace real data with anonymized or synthetic samples first", "Paste it but ask the AI to keep it secret", "Only paste half the records to reduce risk"], answer: 1, explain: "Anonymized or synthetic data preserves the analytical value without exposing real people's information. Asking for secrecy is not a control." },
+});
+
+// ·· AI ·· Topic 6 — Natural Language Processing
+L({
+  id: "l-ai-11", courseId: "c-ai", topicId: "t-ai-6", order: 1, title: "What Is NLP? How AI Works with Human Language", minutes: 14,
+  summary: "Natural Language Processing helps computers understand, generate, and work with human language.",
+  why: "Language is how people communicate, reason, and express ideas. NLP gives AI a way to read text, interpret meaning, and respond in ways that feel natural.",
+  objectives: ["Define Natural Language Processing in plain terms", "Explain why human language is difficult for machines", "Recognize common NLP tasks in everyday AI tools"],
+  sections: [
+    { h: "What is NLP?", p: "Natural Language Processing, or NLP, is a branch of AI focused on understanding and generating human language. It helps systems process text and speech so they can classify messages, summarize documents, translate languages, answer questions, and generate helpful responses." },
+    { h: "Why language is hard for AI", p: "Human language is full of context, ambiguity, tone, slang, and meaning that changes by situation. The same sentence can mean different things depending on stress, culture, or recent conversation. NLP models learn patterns from large amounts of language data, but they still do not understand language the same way a human does." },
+    { h: "AI understanding vs. human understanding", p: "Humans use memory, intention, background knowledge, and context. AI models use patterns in text, probability, and learned representations to predict likely words or meanings. That is why AI can be highly useful for language tasks while still making mistakes, especially with sarcasm, hidden meaning, or factual accuracy." },
+  ],
+  example: { title: "NLP in everyday life", body: "Your phone auto-corrects text, your email app flags spam, a translator converts a sentence into another language, and a chatbot helps answer questions. All of these rely on NLP techniques to work with human language.", code: "input text:   \"I can't wait to see you!\"\nNLP tasks:    sentiment, tone detection, grammar, chatbot reply\nresult:       friendly, positive message understood and responded to" },
+  terms: [["Natural Language Processing (NLP)", "A field of AI that helps computers understand and generate human language."], ["Language model", "A model trained on large language data to predict and generate text."], ["Context", "The surrounding words, situation, or background that give meaning to language."]],
+  activityHint: "List 5 examples where AI is using human language in your daily life: messaging apps, search, chatbots, translation, and voice assistants.",
+  check: { prompt: "Which statement best describes NLP?", options: ["A way to design circuits for robots", "AI that helps computers understand and generate human language", "A method for storing databases", "A type of machine hardware"], answer: 1, explain: "NLP is the AI field for language understanding, generation, translation, and interaction." },
+});
+L({
+  id: "l-ai-12", courseId: "c-ai", topicId: "t-ai-6", order: 2, title: "Core NLP Tasks: Classification, Sentiment, Translation, and More", minutes: 16,
+  summary: "Major NLP tasks include text classification, sentiment analysis, chatbots, translation, speech recognition, text prediction, keyword extraction, and language modeling.",
+  why: "NLP systems solve many useful tasks. Learning the main types of language problems helps you understand how AI applications are built and where they are strongest.",
+  objectives: ["Explain the main NLP tasks", "Differentiate between classification, sentiment, and prediction", "Connect NLP tasks to real AI products and services"],
+  sections: [
+    { h: "Text classification", p: "Text classification is when an AI model assigns input text to a category or class. Examples include detecting spam emails, labeling a message as urgent or normal, or sorting support tickets into billing, technical, or account issues. The system learns patterns from many labeled examples and then predicts the class for new texts." },
+    { h: "Sentiment analysis", p: "Sentiment analysis helps detect whether a message is positive, negative, or neutral. Companies use it to study customer reviews, social media comments, or product feedback. A model may classify the text as happy, angry, disappointed, or satisfied based on the words and context used." },
+    { h: "Chatbots and dialogue systems", p: "Chatbots use NLP to understand user questions and generate helpful replies. A simple chatbot may answer a question, while more advanced systems can carry a conversation across several turns. These systems rely on language understanding, context, and response generation." },
+    { h: "Translation and speech recognition", p: "Machine translation turns one language into another, such as English to French or Swahili to English. Speech recognition turns spoken words into text, which then allows voice assistants, transcripts, and dictation tools to work. Many modern systems combine both: speech to text, language understanding, and generation back into spoken language." },
+    { h: "Text prediction and keyword extraction", p: "Text prediction is used in typing suggestions, search query completion, and email auto-complete. Keyword extraction identifies important terms or topics in a document, which helps with summaries, search, and content organization. These are practical NLP tasks that improve productivity and information retrieval." },
+    { h: "Language models and the bigger picture", p: "Language models are trained on huge amounts of text and learn to predict the next words in a sequence. They can answer questions, summarize text, generate stories, and write code. However, they are probabilistic systems — they predict likely language, not guaranteed truth — so outputs still need checking." },
+  ],
+  example: { title: "A real NLP pipeline", body: "A customer writes: 'I am unhappy with the delivery — it arrived late and the package was damaged.' An NLP system can classify the message as complaint, detect negative sentiment, extract keywords such as 'late' and 'damaged', and route it to the customer support team or chatbot for response.", code: "Message: \"I am unhappy with the delivery; it was late and damaged.\"\nTasks:  sentiment analysis → negative\n        text classification → complaint\n        keyword extraction → late, damaged, delivery\n        chatbot reply → apologize and offer support" },
+  terms: [["Text classification", "Assigning text to a category such as spam or not spam."], ["Sentiment analysis", "Identifying the emotional tone of a message."], ["Keyword extraction", "Finding the most important words or phrases in a text."], ["Speech recognition", "Turning spoken language into text."], ["Machine translation", "Converting text from one language to another."], ["Language model", "A model trained to understand and generate language by predicting likely words."]],
+  activityHint: "Choose one AI app or service you use daily and identify which NLP task it performs: classification, sentiment, translation, prediction, keyword extraction, or chatbot interaction.",
+  check: { prompt: "Which NLP task is most closely related to identifying whether a customer review is positive or negative?", options: ["Text prediction", "Sentiment analysis", "Speech recognition", "Keyword extraction"], answer: 1, explain: "Sentiment analysis detects emotional tone, such as positive, negative, or neutral language." },
 });
 
 // ·· ROBOTICS ·· Topic 1 — Robotics Fundamentals
@@ -410,6 +447,36 @@ L({
   example: { title: "The debugging order", body: "Robot does nothing when powered: (1) sensor sanity — cover/uncover the sensor, watch values change; (2) actuator sanity — command motors directly, watch them spin; (3) power — measure battery under load; (4) logic — print the decision each loop. Four checks, in order, find almost everything.", code: "1. SENSOR:   values change with distance?     yes → next\n2. ACTUATOR: motors spin when commanded?      yes → next\n3. POWER:    battery ≥ rated under load?      NO ← found it:\n             motors brown out the board → separate supply\n4. LOGIC:    (reached only if 1–3 pass)" },
   terms: [["Unit test", "Verifying one subsystem in isolation before integration."], ["Brownout", "Voltage collapse when motors draw current the supply cannot give."], ["Failure mode", "The known condition under which your build misbehaves — declare it."]],
   check: { prompt: "Your robot worked on USB power but acts strangely on batteries when motors run. Most likely cause?", options: ["The code changed itself", "Voltage drop under motor load starving the board — power issue", "The Wi-Fi is weaker on batteries", "You need a more expensive chassis"], answer: 1, explain: "Classic brownout: motors draw heavy current, battery voltage sags, the microcontroller resets or misreads. Separate or regulate the motor supply." },
+});
+
+// ·· ROBOTICS ·· Topic 7 — AI in Robotics
+L({
+  id: "l-rb-13", courseId: "c-rob", topicId: "t-rb-7", order: 1, title: "AI Perception and Robot Decisions", minutes: 15,
+  summary: "How sensors, object detection, and learned models help robots decide what to do next.",
+  why: "A robot becomes useful when it can interpret changing surroundings instead of replaying a fixed sequence. Perception supplies evidence; decision logic turns evidence into safe action.",
+  objectives: ["Explain how sensors support robot decisions", "Distinguish object detection from navigation", "Design a simple sense–decide–act policy"],
+  sections: [
+    { h: "From sensors to meaning", p: "A distance sensor reports a number; a camera can report detected objects; a microphone can report a spoken command. AI models turn these raw signals into useful labels such as 'person ahead' or 'turn left'. The robot should keep the evidence and confidence visible so a low-confidence prediction can trigger a safe pause instead of a confident mistake." },
+    { h: "A decision policy", p: "A robot policy connects perception to action: if an obstacle is close, stop and turn; if the destination is visible, move toward it; if no safe route exists, ask for help. Navigation is not only movement. It is repeated observation, decision, action, and verification." },
+  ],
+  example: { title: "Obstacle-aware navigator", body: "The robot reads distance, detects an obstacle, turns, and checks again. The important design is the loop: never assume a turn worked; observe the new state before continuing.", code: "while not at_destination:\n  readings = read_sensors()\n  if readings.obstacle_ahead:\n    turn_right()\n  else:\n    move_forward()\n  verify_position()" },
+  terms: [["Object detection", "Finding and labeling objects in sensor data, often with a camera model."], ["Policy", "A rule or learned mapping from observations to actions."], ["Autonomy", "The ability to sense, decide, and act without continuous human control."]],
+  activityHint: "Use the Robot Navigator lab. Write down which sensor evidence would justify each turn and what the robot should do when confidence is low.",
+  check: { prompt: "A camera model detects an obstacle with low confidence. What is the safest next decision?", options: ["Accelerate through it", "Ignore the result forever", "Slow or stop, gather another reading, and choose a safe action", "Delete the sensor reading"], answer: 2, explain: "Autonomous systems should make uncertainty actionable. A second reading or safe stop limits harm while the robot resolves the ambiguity." },
+});
+L({
+  id: "l-rb-14", courseId: "c-rob", topicId: "t-rb-7", order: 2, title: "Autonomous Robots in the Real World", minutes: 15,
+  summary: "Voice control, smart machines, AI + IoT, and the safeguards real-world robots need.",
+  why: "A lab robot has clean boundaries. Real robots share spaces with people, networks, weather, and incomplete data, so autonomy must include communication, limits, and recovery plans.",
+  objectives: ["Describe voice-controlled and connected robot workflows", "Explain how AI and IoT work together", "Name safety boundaries for real-world autonomous systems"],
+  sections: [
+    { h: "Connected and conversational machines", p: "A voice-controlled robot turns speech into an intent, checks whether the request is allowed, and maps it to an action. AI + IoT extends the loop: devices publish sensor readings, a model or service analyzes them, and the robot receives a command. Every network hop needs authentication, timeouts, and a fallback when the connection fails." },
+    { h: "Smart does not mean unsupervised", p: "A real-world robot needs boundaries: speed limits, emergency stop, obstacle rules, human override, and logs of important decisions. Test unusual lighting, noisy speech, lost connectivity, and blocked paths. The goal is useful autonomy that fails predictably, not a machine that acts mysteriously." },
+  ],
+  example: { title: "Voice command with a safety gate", body: "The robot hears 'go to the door', confirms the intent, checks its map and sensors, then navigates. If the door area is occupied or the network disappears, it pauses and reports the reason.", code: "intent = speech_to_intent(audio)\nif intent == \"go_to_door\" and path_is_safe():\n  navigate_to(door)\nelse:\n  stop_and_report()" },
+  terms: [["Voice control", "Converting spoken language into a validated robot intent."], ["AI + IoT", "Combining AI interpretation with connected sensors and devices."], ["Human override", "A direct control that can safely pause or stop an autonomous system."]],
+  activityHint: "Create a safety checklist for a voice-controlled delivery robot: include three sensor failures, one network failure, and the human override behavior.",
+  check: { prompt: "What should a connected smart machine do when its network connection drops during navigation?", options: ["Continue at full speed without sensors", "Stop or enter a defined local-safe mode and report the failure", "Erase its destination", "Wait forever with motors powered"], answer: 1, explain: "Real-world autonomy needs a local fallback. A defined safe mode prevents a network failure from becoming uncontrolled motion." },
 });
 
 // ·· SOFTWARE ·· Topic 1 — Programming Fundamentals

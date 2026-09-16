@@ -324,6 +324,72 @@ export function ClassificationSim() {
   );
 }
 
+// ─── NLP Text Classification Simulation ──────────────────────────────────────
+
+const NLP_EXAMPLES = [
+  "I love how clear and helpful this lesson is",
+  "The app is slow and frustrating to use",
+  "The new feature works exactly as expected",
+];
+
+export function NLPTextClassificationSim() {
+  const [text, setText] = useState(NLP_EXAMPLES[0]);
+  const tokens = text.trim() ? text.trim().split(/\s+/) : [];
+  const positiveWords = new Set(["love", "clear", "helpful", "great", "excellent", "works", "expected"]);
+  const negativeWords = new Set(["slow", "frustrating", "bad", "poor", "confusing", "broken"]);
+  const normalizedTokens = tokens.map((token) => token.toLowerCase().replace(/[^a-z']/g, ""));
+  const positive = normalizedTokens.filter((token) => positiveWords.has(token)).length;
+  const negative = normalizedTokens.filter((token) => negativeWords.has(token)).length;
+  let sentiment = "Neutral";
+  let sentimentColor = "#8a6a1b";
+  if (positive > negative) {
+    sentiment = "Positive";
+    sentimentColor = "#1b8a4c";
+  } else if (negative > positive) {
+    sentiment = "Negative";
+    sentimentColor = "#c2413b";
+  }
+
+  return (
+    <SimulationContainer title="NLP Text Classification Lab" subtitle="See how text becomes tokens and a simple sentiment prediction" badge="Interactive" accent="#7657c5">
+      <div className="space-y-4">
+        <div className="flex flex-wrap gap-2">
+          {NLP_EXAMPLES.map((example, index) => (
+            <button key={example} onClick={() => setText(example)} className="btn btn-sm">
+              Example {index + 1}
+            </button>
+          ))}
+        </div>
+        <label className="block">
+          <span className="lbl">Input text</span>
+          <textarea value={text} onChange={(event) => setText(event.target.value)} rows={3} className="mt-1 w-full rounded-lg border-1.5 border-line bg-paper/50 p-3 text-sm outline-none transition-colors focus:border-[#7657c5]" placeholder="Write a sentence to classify..." />
+        </label>
+        <div className="rounded-lg border-1.5 border-line bg-paper/30 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-mute">Tokenization</span>
+            <span className="font-mono text-[11px] text-mute">{tokens.length} tokens</span>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {tokens.length > 0 ? tokens.map((token, index) => (
+              <span key={`${token}-${index}`} className="rounded-md border-1.5 border-[#7657c5]/25 bg-[#7657c5]/10 px-2 py-1 font-mono text-xs text-[#5c419f]">
+                {token}
+              </span>
+            )) : <span className="text-sm text-mute">Enter text to create tokens.</span>}
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3"><span className="lbl">Positive signals</span><strong className="mt-1 block text-xl text-se">{positive}</strong></div>
+          <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3"><span className="lbl">Negative signals</span><strong className="mt-1 block text-xl text-[#c2413b]">{negative}</strong></div>
+          <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3"><span className="lbl">Prediction</span><strong className="mt-1 block text-xl" style={{ color: sentimentColor }}>{sentiment}</strong></div>
+        </div>
+        <div className="rounded-md border-l-4 px-4 py-3" style={{ borderColor: sentimentColor, backgroundColor: `${sentimentColor}12` }}>
+          <p className="text-[13px] leading-relaxed"><strong>What the model is doing:</strong> It converts the sentence into tokens, looks for learned word signals, and chooses the class with the strongest evidence. Real NLP models learn richer patterns than this teaching example.</p>
+        </div>
+      </div>
+    </SimulationContainer>
+  );
+}
+
 // ─── Prompt Engineering Simulation ───────────────────────────────────────────
 
 export function PromptEngineeringSim() {
@@ -532,6 +598,94 @@ export function RobotSimulator() {
             <strong>How robots move:</strong> Robots follow programmed instructions sequentially. FORWARD moves one step in the current direction. LEFT/RIGHT rotate the robot 90°. This is the foundation of robot programming — sequence, direction, and control flow.
           </p>
         </div>
+      </div>
+    </SimulationContainer>
+  );
+}
+
+// ─── AI Robot Navigator Game ────────────────────────────────────────────────
+
+export function RobotNavigatorSim() {
+  const GRID_SIZE = 6;
+  const [robot, setRobot] = useState({ x: 0, y: 0, dir: "right" as Direction });
+  const [commands, setCommands] = useState<RobotCommand[]>([]);
+  const [executing, setExecuting] = useState(false);
+  const [currentStep, setCurrentStep] = useState(-1);
+  const [reached, setReached] = useState(false);
+  const target = { x: 5, y: 5 };
+  const topics = [
+    "AI in Robots", "Sensors", "Robot Decisions", "Autonomous Systems", "Navigation",
+    "Object Detection", "Voice-Controlled Robots", "Smart Machines", "AI + IoT", "Real-world AI Robots",
+  ];
+  const dirToDelta: Record<Direction, { dx: number; dy: number }> = {
+    up: { dx: 0, dy: -1 }, down: { dx: 0, dy: 1 }, left: { dx: -1, dy: 0 }, right: { dx: 1, dy: 0 },
+  };
+  const turnLeft: Record<Direction, Direction> = { up: "left", left: "down", down: "right", right: "up" };
+  const turnRight: Record<Direction, Direction> = { up: "right", right: "down", down: "left", left: "up" };
+  const dirEmoji: Record<Direction, string> = { up: "↑", down: "↓", left: "←", right: "→" };
+
+  const addCommand = (command: RobotCommand) => setCommands((current) => [...current, command]);
+  const runProgram = async () => {
+    setExecuting(true);
+    setReached(false);
+    setCurrentStep(-1);
+    let position = { ...robot };
+    for (let index = 0; index < commands.length; index += 1) {
+      setCurrentStep(index);
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      const command = commands[index];
+      if (command === "FORWARD") {
+        const delta = dirToDelta[position.dir];
+        position = { ...position, x: Math.max(0, Math.min(GRID_SIZE - 1, position.x + delta.dx)), y: Math.max(0, Math.min(GRID_SIZE - 1, position.y + delta.dy)) };
+      } else if (command === "LEFT") {
+        position = { ...position, dir: turnLeft[position.dir] };
+      } else {
+        position = { ...position, dir: turnRight[position.dir] };
+      }
+      setRobot(position);
+      if (position.x === target.x && position.y === target.y) {
+        setReached(true);
+        break;
+      }
+    }
+    setExecuting(false);
+  };
+  const reset = () => {
+    setRobot({ x: 0, y: 0, dir: "right" });
+    setCommands([]);
+    setCurrentStep(-1);
+    setReached(false);
+    setExecuting(false);
+  };
+
+  return (
+    <SimulationContainer title="Robot Navigator" subtitle="Program instructions and guide the AI robot to its destination" badge="Game" accent="#d95f0e">
+      <div className="space-y-4">
+        <div className="flex flex-wrap gap-2">
+          {topics.map((topic) => <span key={topic} className="rounded-md bg-rob-soft px-2 py-1 text-[10px] font-medium text-rob">{topic}</span>)}
+        </div>
+        <div className="mx-auto grid w-fit gap-0" style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)` }}>
+          {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, index) => {
+            const x = index % GRID_SIZE;
+            const y = Math.floor(index / GRID_SIZE);
+            const isRobot = x === robot.x && y === robot.y;
+            const isTarget = x === target.x && y === target.y;
+            return <div key={`${x}-${y}`} className="flex h-10 w-10 items-center justify-center border border-line bg-paper/30 sm:h-12 sm:w-12">{isRobot && <span className="text-xl" title={`Facing ${robot.dir}`}>🤖</span>}{isTarget && !isRobot && <span className="text-lg">🎯</span>}</div>;
+          })}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button onClick={() => addCommand("FORWARD")} disabled={executing} className="btn btn-sm">FORWARD</button>
+          <button onClick={() => addCommand("LEFT")} disabled={executing} className="btn btn-sm">← LEFT</button>
+          <button onClick={() => addCommand("RIGHT")} disabled={executing} className="btn btn-sm">RIGHT →</button>
+          <button onClick={runProgram} disabled={executing || commands.length === 0} className="btn btn-sm btn-dark">{executing ? "Running..." : "▶ Run Program"}</button>
+          <button onClick={reset} className="btn btn-sm">Reset</button>
+        </div>
+        <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3">
+          <div className="lbl">Student program ({commands.length} instructions)</div>
+          <div className="mt-2 min-h-8 font-mono text-xs text-mute">{commands.length === 0 ? "Add instructions to create your program..." : commands.map((command, index) => <span key={`${command}-${index}`} className={cn("mr-1.5 inline-block rounded-md px-2 py-1", index === currentStep ? "bg-gold-soft text-[#8a5a06] ring-1 ring-gold" : index < currentStep ? "bg-se-soft text-se" : "bg-paper")}>{command}</span>)}</div>
+        </div>
+        <div className="flex flex-wrap gap-3 font-mono text-[11px]"><span className="rounded-md bg-paper px-2 py-1">Position: ({robot.x}, {robot.y})</span><span className="rounded-md bg-paper px-2 py-1">Facing: {dirEmoji[robot.dir]} {robot.dir}</span>{reached && <span className="rounded-md bg-se-soft px-2 py-1 font-bold text-se">✓ Destination reached!</span>}</div>
+        <div className="rounded-md border-l-4 border-rob bg-rob-soft/40 px-4 py-3"><p className="text-[13px] leading-relaxed"><strong>Challenge:</strong> Build a sequence of FORWARD, LEFT, and RIGHT instructions. The robot uses its decisions and sensors to follow the program, one step at a time, toward the destination.</p></div>
       </div>
     </SimulationContainer>
   );

@@ -5,7 +5,8 @@ import { Chip, Reveal, SectionHead, cn } from "../components/ui";
 import { Icon } from "../components/icons";
 import {
   NeuralNetworkSim, ClassificationSim, PromptEngineeringSim,
-  RobotSimulator, SensorSim, IoTSim, MicrocontrollerSim,
+  NLPTextClassificationSim,
+  RobotSimulator, RobotNavigatorSim, SensorSim, IoTSim, MicrocontrollerSim,
   APISim, DatabaseSim, BusinessModelSim, ProductDevSim,
   SimulationContainer, DiagramNode, DiagramArrow,
 } from "../components/simulations";
@@ -21,8 +22,10 @@ const LABS: LabDef[] = [
   { id: "lab-ai-nn", courseId: "c-ai", title: "Neural Network Explorer", desc: "Visualize how data flows through a neural network", icon: "🧠", minutes: 15 },
   { id: "lab-ai-cls", courseId: "c-ai", title: "Classification Lab", desc: "Train a simple classifier on visual data", icon: "📊", minutes: 12 },
   { id: "lab-ai-prompt", courseId: "c-ai", title: "Prompt Engineering Lab", desc: "Build structured prompts and see quality effects", icon: "✍️", minutes: 10 },
+  { id: "lab-ai-nlp", courseId: "c-ai", title: "NLP Text Classification Lab", desc: "Tokenize text and classify its sentiment", icon: "💬", minutes: 12 },
   // Robotics Labs
   { id: "lab-rob-move", courseId: "c-rob", title: "Robot Movement Simulator", desc: "Program a virtual robot to reach targets", icon: "🤖", minutes: 15 },
+  { id: "lab-rob-navigator", courseId: "c-rob", title: "Robot Navigator", desc: "Program an AI robot to navigate to its destination", icon: "🧭", minutes: 15 },
   { id: "lab-rob-sensor", courseId: "c-rob", title: "Sensor & Automation Lab", desc: "Connect sensors to automation rules", icon: "🌡️", minutes: 10 },
   { id: "lab-rob-iot", courseId: "c-rob", title: "IoT Data Flow", desc: "Trace data from sensor to cloud dashboard", icon: "🌐", minutes: 12 },
   { id: "lab-rob-mcu", courseId: "c-rob", title: "Microcontroller Lab", desc: "Wire inputs and outputs on a virtual MCU", icon: "🔧", minutes: 15 },
@@ -283,7 +286,9 @@ export function VirtualLabsView({ courseId }: { courseId?: string }) {
       case "lab-ai-nn": return <NeuralNetworkSim />;
       case "lab-ai-cls": return <ClassificationSim />;
       case "lab-ai-prompt": return <PromptEngineeringSim />;
+      case "lab-ai-nlp": return <NLPTextClassificationSim />;
       case "lab-rob-move": return <RobotSimulator />;
+      case "lab-rob-navigator": return <RobotNavigatorSim />;
       case "lab-rob-sensor": return <SensorSim />;
       case "lab-rob-iot": return <IoTSim />;
       case "lab-rob-mcu": return <MicrocontrollerSim />;

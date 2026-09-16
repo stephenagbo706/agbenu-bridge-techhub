@@ -508,7 +508,9 @@ function View() {
 
   let node: ReactNode;
   if (user.role !== "student") {
-    node = route.name === "admin" ? <Admin /> : <StaffGate />;
+    if (route.name === "admin") node = <Admin />;
+    else if (route.name === "liveclass") node = <LiveClassroomView classId={route.id ?? ""} />;
+    else node = <StaffGate />;
   } else {
     switch (route.name) {
       case "courses": node = <CoursesView />; break;

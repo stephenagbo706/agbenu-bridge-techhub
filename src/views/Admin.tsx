@@ -4,13 +4,14 @@ import { courseMeta } from "../lib/data";
 import { Avatar, Bar, Chip, CourseTag, Modal, Reveal, SectionHead, Seg, StatTile, StatusPill, cn, timeAgo } from "../components/ui";
 import { Icon } from "../components/icons";
 import type { IconName } from "../components/icons";
-import type { Project, User } from "../lib/types";
+import type { LiveClass, Project, User } from "../lib/types";
 import AdminContent from "./AdminContent";
 
 const TABS: { id: string; label: string; icon: IconName }[] = [
   { id: "overview", label: "Overview", icon: "dashboard" },
   { id: "review", label: "Review queue", icon: "clipboard" },
   { id: "content", label: "Content", icon: "book" },
+  { id: "liveclasses", label: "Live classes", icon: "video" },
   { id: "students", label: "Students", icon: "users" },
   { id: "announce", label: "Announce", icon: "send" },
 ];
@@ -49,8 +50,183 @@ export default function Admin() {
       {tab === "overview" && <Overview />}
       {tab === "review" && <Review />}
       {tab === "content" && <AdminContent />}
+      {tab === "liveclasses" && <LiveClassManagement />}
       {tab === "students" && <Students />}
       {tab === "announce" && <Announce />}
+    </div>
+  );
+}
+
+// ─── Live classes ──────────────────────────────────────────────────────────
+
+const localDateTimeValue = () => {
+  const date = new Date(Date.now() + 60 * 60 * 1000);
+  date.setSeconds(0, 0);
+  const offset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+};
+
+function LiveClassManagement() {
+  const app = useApp();
+  const { db, user } = app;
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [courseId, setCourseId] = useState(db.courses[0]?.id ?? "");
+  const [topicId, setTopicId] = useState("");
+  const [scheduledAt, setScheduledAt] = useState(localDateTimeValue);
+  const [duration, setDuration] = useState(60);
+  const [startNow, setStartNow] = useState(false);
+  const [allowStudentMic, setAllowStudentMic] = useState(true);
+  const [allowStudentCamera, setAllowStudentCamera] = useState(true);
+  const [allowStudentChat, setAllowStudentChat] = useState(true);
+  const [allowScreenShare, setAllowScreenShare] = useState(true);
+
+  const topics = db.topics.filter((topic) => topic.courseId === courseId).sort((a, b) => a.order - b.order);
+  const classes = db.liveClasses
+    .filter((liveClass) => liveClass.instructorId === user?.id)
+    .sort((a, b) => b.scheduledAt - a.scheduledAt);
+  const valid = title.trim().length >= 4 && description.trim().length >= 10 && !!courseId && duration >= 15;
+
+  const createClass = () => {
+    if (!user || !valid) return;
+    const liveClass = app.createLiveClass({
+      title: title.trim(),
+      description: description.trim(),
+      courseId,
+      topicId: topicId || undefined,
+      instructorId: user.id,
+      scheduledAt: startNow ? Date.now() : new Date(scheduledAt).getTime(),
+      duration,
+      status: startNow ? "live" : "scheduled",
+      allowStudentMic,
+      allowStudentCamera,
+      allowStudentChat,
+      allowScreenShare,
+      recordingEnabled: false,
+      resources: [],
+    });
+    if (liveClass) {
+      setTitle("");
+      setDescription("");
+      setTopicId("");
+      setStartNow(false);
+      app.nav({ name: "liveclass", id: liveClass.id });
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)]">
+        <Reveal>
+          <section className="card-ink bg-card p-5 sm:p-6">
+            <div className="mb-5 flex items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-1.5 border-danger/40 bg-danger/10 text-danger">
+                <Icon name="video" size={19} />
+              </span>
+              <div>
+                <h3 className="font-display text-lg font-semibold tracking-tight">Create a live class</h3>
+                <p className="mt-1 text-xs leading-relaxed text-mute">Set the lesson details, then open the classroom to enable your camera, microphone, and screen share.</p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="lbl" htmlFor="live-class-title">Class title</label>
+                <input id="live-class-title" className="inp" placeholder="e.g. Build a sensor dashboard" value={title} onChange={(e) => setTitle(e.target.value)} />
+              </div>
+              <div>
+                <label className="lbl" htmlFor="live-class-description">What will students learn?</label>
+                <textarea id="live-class-description" className="inp min-h-20" placeholder="Explain the topic and what students should bring to the session." value={description} onChange={(e) => setDescription(e.target.value)} />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="lbl" htmlFor="live-class-course">Course</label>
+                  <select id="live-class-course" className="inp" value={courseId} onChange={(e) => { setCourseId(e.target.value); setTopicId(""); }}>
+                    {db.courses.map((course) => <option key={course.id} value={course.id}>{course.title}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="lbl" htmlFor="live-class-topic">Topic (optional)</label>
+                  <select id="live-class-topic" className="inp" value={topicId} onChange={(e) => setTopicId(e.target.value)}>
+                    <option value="">Whole course</option>
+                    {topics.map((topic) => <option key={topic.id} value={topic.id}>{topic.title}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_120px]">
+                <div>
+                  <label className="lbl" htmlFor="live-class-start">Start time</label>
+                  <input id="live-class-start" className="inp" type="datetime-local" value={scheduledAt} disabled={startNow} onChange={(e) => setScheduledAt(e.target.value)} />
+                </div>
+                <div>
+                  <label className="lbl" htmlFor="live-class-duration">Minutes</label>
+                  <input id="live-class-duration" className="inp" type="number" min={15} step={15} value={duration} onChange={(e) => setDuration(Number(e.target.value) || 60)} />
+                </div>
+              </div>
+              <label className="flex cursor-pointer items-center gap-2 rounded-md border-1.5 border-line bg-paper/50 px-3 py-2.5 text-sm font-medium">
+                <input type="checkbox" checked={startNow} onChange={(e) => setStartNow(e.target.checked)} className="h-4 w-4 rounded border-line" />
+                Start immediately after creating
+              </label>
+              <button className="btn btn-primary w-full sm:w-auto" disabled={!valid} onClick={createClass}>
+                <Icon name={startNow ? "play" : "calendar"} size={14} /> {startNow ? "Create & open classroom" : "Schedule class"}
+              </button>
+            </div>
+          </section>
+        </Reveal>
+
+        <Reveal delay={80}>
+          <section className="card-ink bg-card p-5 sm:p-6">
+            <h3 className="font-display text-lg font-semibold tracking-tight">Room permissions</h3>
+            <p className="mt-1 text-xs leading-relaxed text-mute">These settings control what participants can use after they join. Your browser asks for camera and microphone access inside the classroom.</p>
+            <div className="mt-4 space-y-2">
+              {[
+                ["Student microphones", allowStudentMic, setAllowStudentMic, "Let students speak when needed."],
+                ["Student cameras", allowStudentCamera, setAllowStudentCamera, "Let students appear on camera."],
+                ["Class chat", allowStudentChat, setAllowStudentChat, "Allow questions and discussion."],
+                ["Instructor screen share", allowScreenShare, setAllowScreenShare, "Present code, slides, or demonstrations."],
+              ].map(([label, checked, setChecked, help]) => (
+                <label key={label as string} className="flex cursor-pointer items-start gap-3 rounded-md border-1.5 border-line bg-paper/50 p-3">
+                  <input type="checkbox" checked={checked as boolean} onChange={(e) => (setChecked as (value: boolean) => void)(e.target.checked)} className="mt-0.5 h-4 w-4 rounded border-line" />
+                  <span>
+                    <span className="block text-sm font-semibold">{label as string}</span>
+                    <span className="block text-xs text-mute">{help as string}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </section>
+        </Reveal>
+      </div>
+
+      <section className="card-ink bg-card p-5 sm:p-6">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h3 className="font-display text-lg font-semibold tracking-tight">Your live classes</h3>
+            <p className="mt-1 text-xs text-mute">Open a live room to teach, or review the schedule.</p>
+          </div>
+          <Chip className="bg-brand-soft text-brand-deep">{classes.length} total</Chip>
+        </div>
+        {classes.length === 0 ? <p className="rounded-md border-1.5 border-dashed border-line px-4 py-6 text-center text-sm text-mute">Your created classes will appear here.</p> : (
+          <div className="space-y-2">
+            {classes.slice(0, 8).map((liveClass) => <LiveClassRow key={liveClass.id} liveClass={liveClass} />)}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function LiveClassRow({ liveClass }: Readonly<{ liveClass: LiveClass }>) {
+  const app = useApp();
+  const course = app.getCourse(liveClass.courseId);
+  const statusColor = liveClass.status === "live" ? "bg-danger" : liveClass.status === "completed" ? "bg-mute" : "bg-gold";
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-md border-1.5 border-line bg-paper/50 px-3.5 py-3">
+      <span className={cn("h-2 w-2 rounded-full", statusColor)} />
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-sm font-semibold">{liveClass.title}</div>
+        <div className="font-mono text-[10px] uppercase tracking-wider text-mute">{course?.short} · {liveClass.status} · {new Date(liveClass.scheduledAt).toLocaleString()}</div>
+      </div>
+      {liveClass.status !== "completed" && <button className="btn btn-ghost btn-sm" onClick={() => app.nav({ name: "liveclass", id: liveClass.id })}><Icon name="video" size={13} /> Open room</button>}
     </div>
   );
 }
