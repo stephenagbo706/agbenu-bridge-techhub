@@ -484,110 +484,414 @@ export function PromptEngineeringSim() {
 
 // ─── AI Builder Lab ─────────────────────────────────────────────────────────
 
-const aiBuilderProjects = [
-  { id: "chatbot", title: "AI Chatbot", input: "User messages", task: "Dialogue + retrieval", output: "Helpful replies", icon: "💬" },
-  { id: "recommender", title: "Recommendation System", input: "Preferences", task: "Scoring + ranking", output: "Ranked suggestions", icon: "🎯" },
-  { id: "classifier", title: "Image Classifier", input: "Images", task: "Computer vision", output: "Image label", icon: "🖼️" },
-  { id: "sentiment", title: "Sentiment Detector", input: "Text", task: "NLP classification", output: "Positive / neutral / negative", icon: "😊" },
-  { id: "study", title: "AI Study Assistant", input: "Goals + weak areas", task: "Planning + generation", output: "Study plan", icon: "📚" },
-  { id: "prompt", title: "AI Prompt Generator", input: "Role + task + constraints", task: "Prompt assembly", output: "Structured prompt", icon: "✍️" },
-  { id: "career", title: "AI Career Assistant", input: "Skills + interests", task: "Matching + explanation", output: "Career paths", icon: "🧭" },
+type AIBuilderProjectId = "chatbot" | "recommendation" | "image" | "sentiment" | "study" | "prompt" | "career";
+type AIBuilderResult = { ok: boolean; score: number; title: string; body: string; explanation: string; warning?: string };
+type AIBuilderProgress = {
+  xp: number;
+  currentProjectId: AIBuilderProjectId;
+  completed: Record<string, { score: number; attempts: number; xp: number }>;
+  inventorComplete?: boolean;
+};
+
+const AI_BUILDER_PROGRESS_KEY = "techfoundry-ai-builder-progress-v1";
+
+const aiBuilderComponentInfo: Record<string, { label: string; icon: string; help: string }> = {
+  input: { label: "User Input", icon: "⌨️", help: "What the learner or user gives the AI." },
+  model: { label: "AI Model", icon: "🧠", help: "The simulated model or reasoning step." },
+  knowledge: { label: "Knowledge", icon: "📚", help: "Trusted information the system can use." },
+  instructions: { label: "Instructions", icon: "📝", help: "Rules that guide the AI response." },
+  response: { label: "Response", icon: "💬", help: "The final answer shown to the user." },
+  interests: { label: "Student Interests", icon: "🎯", help: "Signals used for personalization." },
+  rules: { label: "Match Rules", icon: "📏", help: "Logic that compares data to options." },
+  courses: { label: "Compare Courses", icon: "🏫", help: "Course choices to rank." },
+  score: { label: "Calculate Match", icon: "📊", help: "A confidence or fit score." },
+  recommendation: { label: "Recommendation", icon: "⭐", help: "The suggested result." },
+  dataset: { label: "Dataset", icon: "🗂️", help: "Training examples for the AI." },
+  labels: { label: "Labels", icon: "🏷️", help: "Correct answers attached to examples." },
+  train: { label: "Training", icon: "⚙️", help: "The simulated learning step." },
+  classifier: { label: "Classifier", icon: "🔍", help: "The AI that predicts a category." },
+  prediction: { label: "Prediction", icon: "🔮", help: "The AI's classification result." },
+  text: { label: "Text Input", icon: "✍️", help: "The sentence or message to analyze." },
+  sentiment: { label: "Sentiment Model", icon: "😊", help: "Classifies emotional tone." },
+  context: { label: "Context", icon: "🧩", help: "Subject, level, audience, and goal." },
+  features: { label: "Features", icon: "🧰", help: "Assistant abilities the learner enables." },
+  quiz: { label: "Quiz Generator", icon: "❓", help: "Creates a practice question." },
+  prompt: { label: "Prompt", icon: "💡", help: "The structured AI instruction." },
+  format: { label: "Output Format", icon: "📋", help: "The requested response shape." },
+  constraints: { label: "Constraints", icon: "🚧", help: "Limits and requirements." },
+  skills: { label: "Skills", icon: "🛠️", help: "What the learner can already do." },
+  careers: { label: "Career Matching", icon: "🧭", help: "Maps interests and skills to paths." },
+  roadmap: { label: "Skill Roadmap", icon: "🗺️", help: "Suggested next learning steps." },
+};
+
+const aiBuilderProjects: {
+  id: AIBuilderProjectId;
+  number: number;
+  title: string;
+  difficulty: "Beginner" | "Intermediate" | "Advanced";
+  mission: string;
+  reward: number;
+  required: string[];
+  note: string;
+}[] = [
+  { id: "chatbot", number: 1, title: "Build an AI Chatbot", difficulty: "Beginner", mission: "Build a simple chatbot that can answer questions using predefined knowledge and instructions.", reward: 100, required: ["input", "model", "knowledge", "instructions", "response"], note: "This chatbot uses predefined knowledge. Real chatbots need careful data, testing, and safety rules." },
+  { id: "recommendation", number: 2, title: "Build a Simple Recommendation System", difficulty: "Beginner", mission: "Build an AI that recommends a technology course based on a student's interests.", reward: 100, required: ["interests", "rules", "courses", "score", "recommendation"], note: "Recommendation systems personalize outputs, but they can miss context and should explain why an item was suggested." },
+  { id: "image", number: 3, title: "Build an Image Classifier", difficulty: "Intermediate", mission: "Train an AI to recognize different categories.", reward: 150, required: ["dataset", "labels", "train", "classifier", "prediction"], note: "Image classifiers depend on balanced, representative data. Bad data creates confident mistakes." },
+  { id: "sentiment", number: 4, title: "Build a Sentiment Detector", difficulty: "Beginner", mission: "Build an AI that identifies the emotion/sentiment of text.", reward: 100, required: ["text", "dataset", "labels", "sentiment", "prediction"], note: "Human language can be ambiguous. Sentiment tools should show uncertainty, especially with sarcasm or mixed wording." },
+  { id: "study", number: 5, title: "Build an AI Study Assistant", difficulty: "Intermediate", mission: "Build an AI assistant that helps students study.", reward: 150, required: ["input", "context", "features", "model", "quiz", "response"], note: "Educational AI should support learning, not replace thinking. Learners still need to verify answers." },
+  { id: "prompt", number: 6, title: "Build an AI Prompt Generator", difficulty: "Intermediate", mission: "Build a tool that converts a simple request into a better structured AI prompt.", reward: 150, required: ["input", "prompt", "context", "format", "constraints", "response"], note: "A strong prompt improves output quality, but it does not guarantee truth. Always verify important outputs." },
+  { id: "career", number: 7, title: "Build an AI Career Assistant", difficulty: "Advanced", mission: "Build an AI assistant that helps students explore technology career paths.", reward: 200, required: ["input", "interests", "skills", "careers", "roadmap", "response"], note: "Career recommendations are educational suggestions, not absolute decisions. Goals, opportunity, and experience matter too." },
 ];
 
-const aiBuilderComponents = [
-  { id: "input", label: "Input Data", help: "What the user gives the system." },
-  { id: "model", label: "AI Task", help: "The model, prompt, classifier, or ranking logic." },
-  { id: "output", label: "Output Format", help: "What the user receives." },
-  { id: "interface", label: "User Interface", help: "How someone uses the system." },
-  { id: "evaluation", label: "Test Cases", help: "Examples that prove the system works." },
-  { id: "limits", label: "Limits & Safety", help: "What the system should not claim or do." },
-];
+const defaultAIBuilderProgress: AIBuilderProgress = { xp: 0, currentProjectId: "chatbot", completed: {} };
+const loadAIBuilderProgress = (): AIBuilderProgress => {
+  try {
+    const raw = localStorage.getItem(AI_BUILDER_PROGRESS_KEY);
+    if (!raw) return defaultAIBuilderProgress;
+    return { ...defaultAIBuilderProgress, ...JSON.parse(raw) };
+  } catch {
+    return defaultAIBuilderProgress;
+  }
+};
+
+const projectIndex = (id: AIBuilderProjectId) => aiBuilderProjects.findIndex((project) => project.id === id);
 
 export function AIBuilderLabSim() {
-  const [projectId, setProjectId] = useState(aiBuilderProjects[0].id);
-  const [selected, setSelected] = useState<string[]>(["input", "model", "output"]);
-  const project = aiBuilderProjects.find((item) => item.id === projectId) ?? aiBuilderProjects[0];
-  const score = Math.round((selected.length / aiBuilderComponents.length) * 100);
-  const ready = selected.length === aiBuilderComponents.length;
+  const [progress, setProgress] = useState<AIBuilderProgress>(loadAIBuilderProgress);
+  const [projectId, setProjectId] = useState<AIBuilderProjectId>(progress.currentProjectId);
+  const [selected, setSelected] = useState<string[]>(["input", "model", "response"]);
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<AIBuilderResult | null>(null);
+  const [chatInput, setChatInput] = useState("What courses are available at TechHub?");
+  const [interests, setInterests] = useState<string[]>(["Coding", "Problem Solving"]);
+  const [dogExamples, setDogExamples] = useState(4);
+  const [catExamples, setCatExamples] = useState(4);
+  const [testAnimal, setTestAnimal] = useState<"dog" | "cat">("dog");
+  const [sentimentExamples, setSentimentExamples] = useState({ positive: 1, neutral: 1, negative: 1 });
+  const [sentimentText, setSentimentText] = useState("The new AI laboratory is amazing!");
+  const [studyFeatures, setStudyFeatures] = useState<string[]>(["Explain topics", "Generate quiz questions"]);
+  const [studySubject, setStudySubject] = useState("Computer Science");
+  const [studyLevel, setStudyLevel] = useState("Beginner");
+  const [studyStyle, setStudyStyle] = useState("Simple explanation");
+  const [quizAnswer, setQuizAnswer] = useState("");
+  const [promptRequest, setPromptRequest] = useState("I want AI to teach me Python.");
+  const [promptParts, setPromptParts] = useState(["Role", "Task", "Context", "Audience"]);
+  const [careerInterests, setCareerInterests] = useState<string[]>(["Coding", "Problem Solving"]);
+  const [careerSkills, setCareerSkills] = useState<string[]>(["HTML", "CSS", "JavaScript"]);
+  const [inventor, setInventor] = useState({ name: "", problem: "", input: "", processing: "", output: "" });
 
-  const toggle = (id: string) => {
+  const project = aiBuilderProjects.find((item) => item.id === projectId) ?? aiBuilderProjects[0];
+  const completedCount = Object.keys(progress.completed).length;
+  const isUnlocked = (id: AIBuilderProjectId) => projectIndex(id) <= completedCount;
+  const missing = project.required.filter((id) => !selected.includes(id));
+  const readiness = Math.round(((project.required.length - missing.length) / project.required.length) * 100);
+  const activeCompletion = progress.completed[project.id];
+
+  useEffect(() => {
+    localStorage.setItem(AI_BUILDER_PROGRESS_KEY, JSON.stringify(progress));
+  }, [progress]);
+
+  const chooseProject = (id: AIBuilderProjectId) => {
+    if (!isUnlocked(id)) return;
+    const next = aiBuilderProjects.find((item) => item.id === id) ?? aiBuilderProjects[0];
+    setProjectId(id);
+    setSelected(next.required.slice(0, Math.min(3, next.required.length)));
+    setResult(null);
+    setProgress((current) => ({ ...current, currentProjectId: id }));
+  };
+
+  const toggleSelected = (id: string) => {
     setSelected((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
   };
 
+  const completeProject = (simulation: AIBuilderResult) => {
+    const prior = progress.completed[project.id];
+    const earned = simulation.ok && !prior ? project.reward : 0;
+    const nextCompleted = {
+      ...progress.completed,
+      [project.id]: {
+        score: Math.max(prior?.score ?? 0, simulation.score),
+        attempts: (prior?.attempts ?? 0) + 1,
+        xp: prior?.xp ?? earned,
+      },
+    };
+    const nextIndex = Math.min(projectIndex(project.id) + 1, aiBuilderProjects.length - 1);
+    setProgress({
+      ...progress,
+      xp: progress.xp + earned,
+      completed: nextCompleted,
+      currentProjectId: simulation.ok ? aiBuilderProjects[nextIndex].id : project.id,
+    });
+  };
+
+  const runSimulation = () => {
+    setRunning(true);
+    window.setTimeout(() => {
+      const pipelineReady = missing.length === 0;
+      let simulation: AIBuilderResult;
+      if (!pipelineReady) {
+        simulation = { ok: false, score: readiness, title: "Pipeline incomplete", body: `Missing: ${missing.map((id) => aiBuilderComponentInfo[id]?.label ?? id).join(", ")}`, explanation: "Add all required components before testing this AI system." };
+      } else if (project.id === "chatbot") {
+        const knowsCourses = /course|available|techhub/i.test(chatInput);
+        simulation = { ok: knowsCourses, score: knowsCourses ? 96 : 72, title: knowsCourses ? "Chatbot response generated" : "Try a TechHub course question", body: knowsCourses ? "Agbenu Bridge TechHub offers practical technology education in Artificial Intelligence, Robotics & IoT, Software Engineering & Programming, and Digital Innovation & Entrepreneurship." : "I can answer TechHub course questions best. Try asking what courses are available.", explanation: "The chatbot matched keywords in the user input to predefined TechHub knowledge, then followed its response instructions." };
+      } else if (project.id === "recommendation") {
+        const scores = [
+          { course: "Software Engineering", score: 45 + (interests.includes("Coding") ? 22 : 0) + (interests.includes("Websites") ? 14 : 0) + (interests.includes("Mobile Apps") ? 10 : 0) },
+          { course: "Robotics & IoT", score: 42 + (interests.includes("Hardware") ? 24 : 0) + (interests.includes("Robotics") ? 18 : 0) },
+          { course: "Artificial Intelligence", score: 46 + (interests.includes("AI") ? 25 : 0) + (interests.includes("Problem Solving") ? 12 : 0) },
+          { course: "Digital Innovation", score: 40 + (interests.includes("Creativity") ? 20 : 0) + (interests.includes("Problem Solving") ? 8 : 0) },
+        ].sort((a, b) => b.score - a.score);
+        simulation = { ok: interests.length > 0, score: Math.min(99, scores[0].score), title: `Recommended Course: ${scores[0].course}`, body: `Match: ${Math.min(99, scores[0].score)}%`, explanation: `Your selected interests (${interests.join(", ")}) were compared with course tags and ranked by match strength.` };
+      } else if (project.id === "image") {
+        const total = dogExamples + catExamples;
+        const imbalance = Math.max(dogExamples, catExamples) / Math.max(1, Math.min(dogExamples, catExamples));
+        const confidence = testAnimal === "dog" ? Math.round((dogExamples / Math.max(1, total)) * 100) : Math.round((catExamples / Math.max(1, total)) * 100);
+        simulation = { ok: imbalance <= 2 && dogExamples >= 2 && catExamples >= 2, score: imbalance <= 2 ? 92 : 58, title: `AI Prediction: ${testAnimal === "dog" ? "Dog" : "Cat"} ${Math.max(55, confidence)}%`, body: `${testAnimal === "dog" ? "Cat" : "Dog"} ${Math.max(4, 100 - confidence)}%`, warning: imbalance > 2 ? "UNBALANCED DATA: Your model has significantly more training examples for one category. Try adding more examples." : undefined, explanation: "The classifier compares the test image against labeled examples. Balanced labels make the simulated prediction more reliable." };
+      } else if (project.id === "sentiment") {
+        const lower = sentimentText.toLowerCase();
+        const positive = /love|amazing|great|good|excellent|happy/.test(lower) || /isn't bad/.test(lower);
+        const negative = /hate|bad|awful|terrible|angry/.test(lower) && !/isn't bad/.test(lower);
+        const label = positive ? "😊 POSITIVE" : negative ? "😡 NEGATIVE" : "😐 NEUTRAL";
+        const trained = sentimentExamples.positive && sentimentExamples.neutral && sentimentExamples.negative;
+        simulation = { ok: !!trained, score: trained ? 91 : 62, title: label, body: `Confidence: ${trained ? 91 : 62}%`, warning: /isn't bad|not bad|could be worse/i.test(sentimentText) ? "Ambiguous language detected. Negation can make sentiment harder for AI." : undefined, explanation: "The detector used labeled examples and sentiment keywords to classify the emotional tone of the text." };
+      } else if (project.id === "study") {
+        const quizCorrect = quizAnswer === "B";
+        simulation = { ok: studyFeatures.length >= 2 && !!quizAnswer, score: quizCorrect ? 94 : 76, title: `${studySubject} Study Assistant`, body: `A computer is an electronic device that receives data, processes it, stores information, and produces useful results.\n\nQuiz feedback: ${quizCorrect ? "Correct: B is the best answer." : "Review the concept: the best answer is B, an electronic device."}`, explanation: `The assistant used subject (${studySubject}), level (${studyLevel}), response style (${studyStyle}), and selected features to personalize the output.` };
+      } else if (project.id === "prompt") {
+        const quality = Math.round((promptParts.length / 6) * 100);
+        simulation = { ok: quality >= 80, score: quality, title: `Prompt Quality: ${quality}%`, body: `You are a beginner-friendly Python teacher.\n\nTeach me Python programming.\n\nAssume I have no previous programming experience.\n\nExplain each concept simply and provide small practical examples.`, explanation: `Quality is based on selected structure parts: ${promptParts.join(", ")}. Strong prompts include role, task, context, audience, format, and constraints.` };
+      } else {
+        const hasData = careerInterests.length > 0 && careerSkills.length > 0;
+        const paths = careerInterests.includes("Hardware") ? ["Robotics Engineer", "IoT Developer", "Automation Engineer"] : careerInterests.includes("Business") ? ["Technology Entrepreneur", "Product Developer", "AI Product Builder"] : ["Web Development", "Software Engineering", "AI Development"];
+        simulation = { ok: hasData, score: hasData ? 93 : 50, title: "AI Career Assistant", body: `Possible career paths:\n${paths.map((path) => `→ ${path}`).join("\n")}\n\nSuggested next skills:\n→ JavaScript\n→ Git\n→ React\n→ Python`, explanation: "The assistant compared selected interests and skills against career patterns. This is an educational recommendation, not an absolute career decision." };
+      }
+      setResult(simulation);
+      if (simulation.ok) completeProject(simulation);
+      setRunning(false);
+    }, 900);
+  };
+
+  const resetLab = () => {
+    setProgress({ ...defaultAIBuilderProgress, completed: {} });
+    setProjectId("chatbot");
+    setSelected(["input", "model", "response"]);
+    setResult(null);
+    localStorage.removeItem(AI_BUILDER_PROGRESS_KEY);
+  };
+
+  const nextProject = () => {
+    const next = aiBuilderProjects[Math.min(projectIndex(project.id) + 1, aiBuilderProjects.length - 1)];
+    chooseProject(next.id);
+  };
+
+  const runInventorChallenge = () => {
+    const complete = Boolean(inventor.name.trim() && inventor.problem.trim() && inventor.input.trim() && inventor.processing.trim() && inventor.output.trim());
+    if (!complete) {
+      setResult({ ok: false, score: 40, title: "Inventor pipeline incomplete", body: "Add an AI name, problem, input, processing, and output.", explanation: "A complete AI invention needs a valid input, processing/model step, and output." });
+      return;
+    }
+    const earned = progress.inventorComplete ? 0 : 500;
+    setProgress({ ...progress, xp: progress.xp + earned, inventorComplete: true });
+    setResult({ ok: true, score: 100, title: "🎉 AI Inventor Complete", body: `AI Concepts ✓\nData ✓\nPrompting ✓\nPrediction ✓\nTesting ✓\nResponsible AI ✓\n\n+${earned} XP\n🏆 AI Inventor Badge`, explanation: `${inventor.name} solves "${inventor.problem}" with a complete input → processing → output pipeline.` });
+  };
+
+  const allDone = completedCount >= aiBuilderProjects.length;
+
   return (
-    <SimulationContainer title="AI Builder Lab" subtitle="Choose components and build a small AI system" badge="Game / Simulation" accent="#2f5fe3">
+    <SimulationContainer title="AI Builder Lab" subtitle="Assemble, test, fix, and complete seven simulated AI systems" badge="Game / Simulation" accent="#2f5fe3">
       <div className="space-y-4">
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          {aiBuilderProjects.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setProjectId(item.id)}
-              className={cn(
-                "rounded-lg border-1.5 px-3 py-3 text-left transition-all",
-                projectId === item.id ? "border-ai bg-ai-soft shadow-sm" : "border-line bg-paper/50 hover:border-ai/50",
-              )}
-            >
-              <span className="text-xl">{item.icon}</span>
-              <span className="mt-1 block text-sm font-semibold">{item.title}</span>
-              <span className="mt-0.5 block text-[11px] leading-relaxed text-mute">{item.output}</span>
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border-1.5 border-line bg-paper/50 p-3">
+          <div>
+            <div className="font-display text-base font-bold">Projects completed: {completedCount} / 7</div>
+            <div className="mt-1 font-mono text-[11px] uppercase tracking-wider text-mute">XP: {progress.xp}{progress.inventorComplete ? " · AI Inventor Badge earned" : ""}</div>
+          </div>
+          <button onClick={resetLab} className="btn btn-ghost btn-sm"><Icon name="refresh" size={13} /> Reset lab</button>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
-          <div className="rounded-lg border-1.5 border-line bg-paper/50 p-4">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div>
-                <div className="font-display text-base font-bold">{project.icon} {project.title}</div>
-                <p className="mt-1 text-[12px] text-mute">Select the system pieces needed to make this AI project usable.</p>
-              </div>
-              <span className={cn("rounded-md px-2 py-1 font-mono text-[10px] font-bold", ready ? "bg-se-soft text-se" : "bg-gold-soft text-[#8a5a06]")}>
-                {score}% ready
-              </span>
-            </div>
-
-            <div className="grid gap-2 sm:grid-cols-2">
-              {aiBuilderComponents.map((component) => {
-                const active = selected.includes(component.id);
-                return (
-                  <button
-                    key={component.id}
-                    onClick={() => toggle(component.id)}
-                    className={cn(
-                      "rounded-md border-1.5 px-3 py-3 text-left transition-all",
-                      active ? "border-ai bg-white shadow-sm" : "border-line bg-card/60 text-mute hover:border-ai/50",
-                    )}
-                  >
-                    <span className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-semibold">{component.label}</span>
-                      <span className={cn("flex h-5 w-5 items-center justify-center rounded-full border text-[10px]", active ? "border-ai bg-ai text-white" : "border-line")}>{active ? "✓" : "+"}</span>
-                    </span>
-                    <span className="mt-1 block text-[11px] leading-relaxed text-mute">{component.help}</span>
-                  </button>
-                );
-              })}
-            </div>
+        <div className="grid gap-4 lg:grid-cols-[230px_minmax(0,1fr)]">
+          <div className="space-y-2">
+            {aiBuilderProjects.map((item, index) => {
+              const locked = !isUnlocked(item.id);
+              const done = progress.completed[item.id];
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => chooseProject(item.id)}
+                  disabled={locked}
+                  className={cn("w-full rounded-lg border-1.5 px-3 py-3 text-left transition-all focus-ring", project.id === item.id ? "border-ai bg-ai-soft" : "border-line bg-paper/50 hover:border-ai/50", locked && "cursor-not-allowed opacity-55")}
+                  aria-label={`${item.title}${locked ? " locked" : done ? " completed" : " unlocked"}`}
+                >
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-semibold">Project {index + 1}</span>
+                    <span className="font-mono text-[10px]">{done ? "✅" : locked ? "🔒" : "🔓"}</span>
+                  </span>
+                  <span className="mt-1 block text-xs">{item.title}</span>
+                  <span className="mt-1 block font-mono text-[10px] uppercase tracking-wider text-mute">{item.difficulty} · +{item.reward} XP</span>
+                </button>
+              );
+            })}
           </div>
 
-          <div className="rounded-lg border-1.5 border-line bg-ink p-4 text-paper">
-            <div className="font-mono text-[10px] uppercase tracking-wider text-paper/50">System blueprint</div>
-            <div className="mt-3 space-y-2 text-sm">
-              <p><strong>Input:</strong> {project.input}</p>
-              <p><strong>AI task:</strong> {project.task}</p>
-              <p><strong>Output:</strong> {project.output}</p>
+          <div className="space-y-4">
+            <div className="rounded-lg border-1.5 border-line bg-card p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="font-mono text-[10px] uppercase tracking-wider text-ai">Mission</div>
+                  <h3 className="mt-1 font-display text-lg font-bold">{project.title}</h3>
+                  <p className="mt-1 text-sm text-mute">{project.mission}</p>
+                </div>
+                <span className={cn("rounded-md px-2 py-1 font-mono text-[10px] font-bold", activeCompletion ? "bg-se-soft text-se" : "bg-gold-soft text-[#8a5a06]")}>{activeCompletion ? `Best ${activeCompletion.score}%` : `${readiness}% ready`}</span>
+              </div>
             </div>
-            <div className="mt-4 h-2 overflow-hidden rounded-full bg-paper/10">
-              <div className="h-full rounded-full bg-ai transition-all" style={{ width: `${score}%` }} />
+
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]">
+              <div className="rounded-lg border-1.5 border-line bg-paper/50 p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <h4 className="font-display text-sm font-bold">Components</h4>
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-mute">{missing.length ? `${missing.length} missing` : "Pipeline complete"}</span>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {project.required.map((id) => {
+                    const info = aiBuilderComponentInfo[id];
+                    const active = selected.includes(id);
+                    return (
+                      <button key={id} onClick={() => toggleSelected(id)} className={cn("rounded-md border-1.5 px-3 py-3 text-left transition-all focus-ring", active ? "border-ai bg-white" : "border-line bg-card/60 hover:border-ai/50")}>
+                        <span className="flex items-center justify-between gap-2"><span className="text-sm font-semibold">{info.icon} {info.label}</span><span>{active ? "✓" : "+"}</span></span>
+                        <span className="mt-1 block text-[11px] leading-relaxed text-mute">{info.help}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="rounded-lg border-1.5 border-line bg-ink p-4 text-paper">
+                <div className="font-mono text-[10px] uppercase tracking-wider text-paper/50">Build area</div>
+                <div className="mt-3 space-y-2">
+                  {project.required.map((id, index) => (
+                    <div key={id} className={cn("flex items-center gap-2 rounded-md border px-3 py-2 text-sm", selected.includes(id) ? "border-ai/70 bg-ai/20" : "border-paper/10 bg-paper/5 text-paper/45")}>
+                      <span className="font-mono text-[10px] text-paper/45">{String(index + 1).padStart(2, "0")}</span>
+                      <span>{aiBuilderComponentInfo[id].icon}</span>
+                      <span>{aiBuilderComponentInfo[id].label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <p className="mt-3 text-[12px] leading-relaxed text-paper/70">
-              {ready
-                ? "Ready to build: your system has inputs, model logic, output, interface, testing, and safety notes."
-                : "Keep adding components. A real AI project needs more than a model: it needs an interface, tests, and known limits."}
-            </p>
+
+            <AITestPanel
+              projectId={project.id}
+              chatInput={chatInput}
+              setChatInput={setChatInput}
+              interests={interests}
+              setInterests={setInterests}
+              dogExamples={dogExamples}
+              setDogExamples={setDogExamples}
+              catExamples={catExamples}
+              setCatExamples={setCatExamples}
+              testAnimal={testAnimal}
+              setTestAnimal={setTestAnimal}
+              sentimentExamples={sentimentExamples}
+              setSentimentExamples={setSentimentExamples}
+              sentimentText={sentimentText}
+              setSentimentText={setSentimentText}
+              studyFeatures={studyFeatures}
+              setStudyFeatures={setStudyFeatures}
+              studySubject={studySubject}
+              setStudySubject={setStudySubject}
+              studyLevel={studyLevel}
+              setStudyLevel={setStudyLevel}
+              studyStyle={studyStyle}
+              setStudyStyle={setStudyStyle}
+              quizAnswer={quizAnswer}
+              setQuizAnswer={setQuizAnswer}
+              promptRequest={promptRequest}
+              setPromptRequest={setPromptRequest}
+              promptParts={promptParts}
+              setPromptParts={setPromptParts}
+              careerInterests={careerInterests}
+              setCareerInterests={setCareerInterests}
+              careerSkills={careerSkills}
+              setCareerSkills={setCareerSkills}
+            />
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button onClick={runSimulation} disabled={running} className="btn btn-primary">
+                {running ? <><span className="h-3 w-3 animate-spin rounded-full border-2 border-white/30 border-t-white" /> Testing...</> : <><Icon name="spark" size={14} /> Test my AI</>}
+              </button>
+              {activeCompletion && projectIndex(project.id) < aiBuilderProjects.length - 1 && <button onClick={nextProject} className="btn btn-dark btn-sm">Next project <Icon name="arrowR" size={13} /></button>}
+            </div>
+
+            {result && (
+              <div className={cn("rounded-lg border-1.5 p-4", result.ok ? "border-se bg-se-soft/70" : "border-gold bg-gold-soft/70")}>
+                <div className="font-display text-base font-bold">{result.title}</div>
+                <pre className="mt-2 whitespace-pre-wrap font-sans text-sm leading-relaxed">{result.body}</pre>
+                {result.warning && <p className="mt-2 rounded-md bg-card/70 px-3 py-2 text-sm font-semibold text-warn">⚠️ {result.warning}</p>}
+                <p className="mt-2 text-[13px] leading-relaxed text-mute">{result.explanation}</p>
+              </div>
+            )}
+
+            <div className="rounded-md border-l-4 border-ai bg-ai-soft/40 px-4 py-3">
+              <p className="text-[13px] leading-relaxed"><strong>AI note:</strong> {project.note}</p>
+            </div>
+
+            {allDone && (
+              <div className="rounded-lg border-1.5 border-gold bg-gold-soft/50 p-4">
+                <h4 className="font-display text-base font-bold">🏆 AI Inventor Challenge</h4>
+                <p className="mt-1 text-sm text-mute">Design an AI system that solves a problem for a student.</p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <input className="inp" placeholder="AI name" value={inventor.name} onChange={(e) => setInventor({ ...inventor, name: e.target.value })} />
+                  <input className="inp" placeholder="Problem" value={inventor.problem} onChange={(e) => setInventor({ ...inventor, problem: e.target.value })} />
+                  <input className="inp" placeholder="Input" value={inventor.input} onChange={(e) => setInventor({ ...inventor, input: e.target.value })} />
+                  <input className="inp" placeholder="AI processing" value={inventor.processing} onChange={(e) => setInventor({ ...inventor, processing: e.target.value })} />
+                  <input className="inp sm:col-span-2" placeholder="Output" value={inventor.output} onChange={(e) => setInventor({ ...inventor, output: e.target.value })} />
+                </div>
+                <button onClick={runInventorChallenge} className="btn btn-gold mt-3"><Icon name="award" size={14} /> Complete Inventor Challenge</button>
+              </div>
+            )}
           </div>
         </div>
       </div>
     </SimulationContainer>
+  );
+}
+
+function toggleListValue(list: string[], value: string) {
+  return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
+}
+
+function AITestPanel(props: {
+  projectId: AIBuilderProjectId;
+  chatInput: string; setChatInput: (value: string) => void;
+  interests: string[]; setInterests: (value: string[]) => void;
+  dogExamples: number; setDogExamples: (value: number) => void;
+  catExamples: number; setCatExamples: (value: number) => void;
+  testAnimal: "dog" | "cat"; setTestAnimal: (value: "dog" | "cat") => void;
+  sentimentExamples: { positive: number; neutral: number; negative: number }; setSentimentExamples: (value: { positive: number; neutral: number; negative: number }) => void;
+  sentimentText: string; setSentimentText: (value: string) => void;
+  studyFeatures: string[]; setStudyFeatures: (value: string[]) => void;
+  studySubject: string; setStudySubject: (value: string) => void;
+  studyLevel: string; setStudyLevel: (value: string) => void;
+  studyStyle: string; setStudyStyle: (value: string) => void;
+  quizAnswer: string; setQuizAnswer: (value: string) => void;
+  promptRequest: string; setPromptRequest: (value: string) => void;
+  promptParts: string[]; setPromptParts: (value: string[]) => void;
+  careerInterests: string[]; setCareerInterests: (value: string[]) => void;
+  careerSkills: string[]; setCareerSkills: (value: string[]) => void;
+}) {
+  const pill = (label: string, active: boolean, onClick: () => void) => (
+    <button type="button" onClick={onClick} className={cn("rounded-md border-1.5 px-2.5 py-1.5 text-xs font-semibold focus-ring", active ? "border-ai bg-ai-soft text-ai" : "border-line bg-card text-mute")}>{label}</button>
+  );
+  return (
+    <div className="rounded-lg border-1.5 border-line bg-card p-4">
+      <h4 className="font-display text-sm font-bold">Test interface</h4>
+      {props.projectId === "chatbot" && <textarea className="inp mt-3 min-h-20" value={props.chatInput} onChange={(e) => props.setChatInput(e.target.value)} aria-label="Chatbot test question" />}
+      {props.projectId === "recommendation" && <div className="mt-3 flex flex-wrap gap-2">{["Coding", "Problem Solving", "Hardware", "Creativity", "AI", "Websites", "Mobile Apps", "Robotics"].map((item) => pill(item, props.interests.includes(item), () => props.setInterests(toggleListValue(props.interests, item))))}</div>}
+      {props.projectId === "image" && <div className="mt-3 grid gap-3 sm:grid-cols-3"><label className="text-sm">DOG 🐶 examples<input className="inp mt-1" type="number" min={0} value={props.dogExamples} onChange={(e) => props.setDogExamples(Number(e.target.value))} /></label><label className="text-sm">CAT 🐱 examples<input className="inp mt-1" type="number" min={0} value={props.catExamples} onChange={(e) => props.setCatExamples(Number(e.target.value))} /></label><label className="text-sm">New image<select className="inp mt-1" value={props.testAnimal} onChange={(e) => props.setTestAnimal(e.target.value as "dog" | "cat")}><option value="dog">🐶 Dog</option><option value="cat">🐱 Cat</option></select></label></div>}
+      {props.projectId === "sentiment" && <div className="mt-3 space-y-3"><textarea className="inp min-h-20" value={props.sentimentText} onChange={(e) => props.setSentimentText(e.target.value)} aria-label="Sentiment test text" /><div className="grid gap-2 sm:grid-cols-3">{(["positive", "neutral", "negative"] as const).map((key) => <label key={key} className="text-sm capitalize">{key} examples<input className="inp mt-1" type="number" min={0} value={props.sentimentExamples[key]} onChange={(e) => props.setSentimentExamples({ ...props.sentimentExamples, [key]: Number(e.target.value) })} /></label>)}</div></div>}
+      {props.projectId === "study" && <div className="mt-3 space-y-3"><div className="flex flex-wrap gap-2">{["Explain topics", "Generate quiz questions", "Create summaries", "Give examples", "Create revision notes"].map((item) => pill(item, props.studyFeatures.includes(item), () => props.setStudyFeatures(toggleListValue(props.studyFeatures, item))))}</div><div className="grid gap-2 sm:grid-cols-3"><select className="inp" value={props.studySubject} onChange={(e) => props.setStudySubject(e.target.value)}>{["Computer Science", "Mathematics", "Physics", "English", "Biology"].map((item) => <option key={item}>{item}</option>)}</select><select className="inp" value={props.studyLevel} onChange={(e) => props.setStudyLevel(e.target.value)}>{["Beginner", "Intermediate", "Advanced"].map((item) => <option key={item}>{item}</option>)}</select><select className="inp" value={props.studyStyle} onChange={(e) => props.setStudyStyle(e.target.value)}>{["Simple explanation", "Detailed explanation", "Examples", "Step-by-step"].map((item) => <option key={item}>{item}</option>)}</select></div><div className="rounded-md border-1.5 border-line bg-paper/50 p-3"><div className="text-sm font-semibold">Quiz: What is a computer?</div><div className="mt-1 text-xs text-mute">A. A book · B. An electronic device · C. A chair · D. A fruit</div><div className="mt-3 flex flex-wrap gap-2">{["A", "B", "C", "D"].map((item) => pill(`Answer ${item}`, props.quizAnswer === item, () => props.setQuizAnswer(item)))}</div></div></div>}
+      {props.projectId === "prompt" && <div className="mt-3 space-y-3"><textarea className="inp min-h-20" value={props.promptRequest} onChange={(e) => props.setPromptRequest(e.target.value)} aria-label="Prompt generator request" /><div className="flex flex-wrap gap-2">{["Role", "Task", "Context", "Audience", "Format", "Constraints"].map((item) => pill(item, props.promptParts.includes(item), () => props.setPromptParts(toggleListValue(props.promptParts, item))))}</div></div>}
+      {props.projectId === "career" && <div className="mt-3 space-y-3"><div><div className="lbl">Interests</div><div className="flex flex-wrap gap-2">{["Coding", "Problem Solving", "Hardware", "Creativity", "Business", "Design"].map((item) => pill(item, props.careerInterests.includes(item), () => props.setCareerInterests(toggleListValue(props.careerInterests, item))))}</div></div><div><div className="lbl">Skills</div><div className="flex flex-wrap gap-2">{["HTML", "CSS", "JavaScript", "Python", "Programming", "Electronics", "Communication"].map((item) => pill(item, props.careerSkills.includes(item), () => props.setCareerSkills(toggleListValue(props.careerSkills, item))))}</div></div></div>}
+    </div>
   );
 }
 
