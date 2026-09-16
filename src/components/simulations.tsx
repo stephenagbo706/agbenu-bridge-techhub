@@ -521,6 +521,7 @@ export function AICodingToolsSim() {
   const [runningAI, setRunningAI] = useState(false);
   const [assistantOutput, setAssistantOutput] = useState("");
   const [assistantSource, setAssistantSource] = useState<"live" | "simulation">("simulation");
+  const [provider, setProvider] = useState<"openai" | "deepseek">("deepseek");
   const scenario = aiCodingScenarios.find((item) => item.id === scenarioId) ?? aiCodingScenarios[0];
   const missing = scenario.required.filter((step) => !selected.includes(step));
   const privacyRisk = includeSecret && !selected.includes("privacy");
@@ -554,6 +555,7 @@ export function AICodingToolsSim() {
           missingSteps: missing.map((id) => aiCodingSteps.find((step) => step.id === id)?.label ?? id),
           mode,
           privacyRisk,
+          provider,
         }),
       });
       if (!response.ok) throw new Error("Assistant route unavailable");
@@ -600,9 +602,15 @@ export function AICodingToolsSim() {
             <div className="rounded-lg border-1.5 border-line bg-paper/50 p-4">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <h4 className="font-display text-sm font-bold">Workflow steps</h4>
-                <select className="inp max-w-44" value={mode} onChange={(event) => setMode(event.target.value)} aria-label="Learner mode">
-                  {["Beginner", "Student project", "Team workflow"].map((item) => <option key={item}>{item}</option>)}
-                </select>
+                <div className="flex flex-wrap gap-2">
+                  <select className="inp max-w-44" value={provider} onChange={(event) => setProvider(event.target.value as "openai" | "deepseek")} aria-label="AI provider">
+                    <option value="deepseek">DeepSeek AI</option>
+                    <option value="openai">OpenAI</option>
+                  </select>
+                  <select className="inp max-w-44" value={mode} onChange={(event) => setMode(event.target.value)} aria-label="Learner mode">
+                    {["Beginner", "Student project", "Team workflow"].map((item) => <option key={item}>{item}</option>)}
+                  </select>
+                </div>
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
                 {aiCodingSteps.map((step) => {
@@ -623,7 +631,7 @@ export function AICodingToolsSim() {
                 <input type="checkbox" checked={includeSecret} onChange={(event) => setIncludeSecret(event.target.checked)} />
                 Include a fake secret in prompt context
               </label>
-              <p className="mt-2 text-[11px] leading-relaxed text-mute">Real API keys must stay in server environment variables such as OPENAI_API_KEY. Do not put sk keys in React code, prompts, or GitHub.</p>
+              <p className="mt-2 text-[11px] leading-relaxed text-mute">Real API keys must stay in server environment variables such as DEEPSEEK_API_KEY or OPENAI_API_KEY. Do not put secret keys in React code, prompts, or GitHub.</p>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -639,7 +647,7 @@ export function AICodingToolsSim() {
             {ran ? (
               <div className="mt-3 space-y-3">
                 <div className={cn("rounded-md border px-3 py-2 text-sm", missing.length || privacyRisk ? "border-gold/60 bg-gold/15" : "border-se/60 bg-se/15")}>
-                  {missing.length || privacyRisk ? "Workflow needs revision" : assistantSource === "live" ? "Live AI response" : "Workflow ready"}
+                  {missing.length || privacyRisk ? "Workflow needs revision" : assistantSource === "live" ? `Live ${provider === "deepseek" ? "DeepSeek" : "OpenAI"} response` : "Workflow ready"}
                 </div>
                 <p className="whitespace-pre-wrap text-sm leading-relaxed text-paper/85">{assistantOutput}</p>
                 {privacyRisk && <p className="rounded-md bg-warn/20 px-3 py-2 text-sm text-paper">Privacy warning: remove API keys, passwords, tokens, and real user data before sending context to an AI tool.</p>}
