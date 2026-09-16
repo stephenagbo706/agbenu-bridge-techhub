@@ -509,6 +509,7 @@ function View() {
   let node: ReactNode;
   if (user.role !== "student") {
     if (route.name === "admin") node = <Admin />;
+    else if (route.name === "liveclasses") node = <LiveClassesView />;
     else if (route.name === "liveclass") node = <LiveClassroomView classId={route.id ?? ""} />;
     else node = <StaffGate />;
   } else {

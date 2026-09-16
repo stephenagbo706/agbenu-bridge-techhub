@@ -721,37 +721,6 @@ function InstructorDashboard() {
 
   if (!user) return null;
 
-  const handleStartTestClass = () => {
-    // Get the first available course for testing
-    const testCourse = db.courses[0];
-    if (!testCourse) {
-      app.toast("No courses available", "warn");
-      return;
-    }
-
-    // Create an instant test live class
-    const testClass = app.createLiveClass({
-      title: "Test Live Class - " + new Date().toLocaleTimeString(),
-      description: "Development test session for live classroom functionality",
-      courseId: testCourse.id,
-      instructorId: user.id,
-      scheduledAt: Date.now(),
-      duration: 60,
-      status: "live", // Start immediately as live
-      allowStudentMic: true,
-      allowStudentCamera: true,
-      allowStudentChat: true,
-      allowScreenShare: true,
-      recordingEnabled: false,
-      resources: [],
-    });
-
-    if (testClass) {
-      // Navigate directly to the classroom
-      app.nav({ name: "liveclass", id: testClass.id });
-    }
-  };
-
   const liveNow = db.liveClasses.filter((c) => c.status === "live");
   const upcoming = db.liveClasses.filter((c) => c.status === "scheduled").slice(0, 3);
 
@@ -783,8 +752,8 @@ function InstructorDashboard() {
                 <h2 className="font-display text-xl font-bold tracking-tight">Live Virtual Classroom</h2>
                 <p className="mt-1 text-sm text-mute">Start a live class to teach students in real-time with video, screen sharing, and interactive tools.</p>
               </div>
-              <button onClick={handleStartTestClass} className="btn btn-danger">
-                <Icon name="play" size={15} /> Start Live Class
+              <button onClick={() => app.nav({ name: "admin", tab: "liveclasses" })} className="btn btn-danger">
+                <Icon name="play" size={15} /> Create Live Class
               </button>
             </div>
           </div>

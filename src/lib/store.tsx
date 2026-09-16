@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import confetti from "canvas-confetti";
 import type {
   Activity, AppNotification, Assessment, Attempt, Course, DB, Lesson, Project, Question,
-  StudentState, Topic, User, Video,
+  StudentState, Topic, User, Video, LiveClass,
 } from "./types";
 import { buildSeedDB, syncStudent, uid as newId } from "./data";
 import type { Career } from "./data";
@@ -354,24 +354,51 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return db.liveClasses.filter((c) => c.status === status);
   };
 
-  const createLiveClass = (classData: Omit<import("./types").LiveClass, "id" | "createdAt" | "updatedAt">) => {
+  const createLiveClass = (classData: Omit<LiveClass, "id" | "createdAt" | "updatedAt">) => {
     if (!user || (user.role !== "instructor" && user.role !== "admin")) {
       toast("Only instructors can create classes", "warn");
       return null;
     }
-    const newClass: import("./types").LiveClass = {
+    if (!db.courses.some((course) => course.id === classData.courseId)) {
+      toast("Choose a valid course before creating the class", "warn");
+      return null;
+    }
+    const now = Date.now();
+    const newClass: LiveClass = {
       ...classData,
-      id: `lc-${Date.now()}`,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      title: classData.title.trim(),
+      description: classData.description.trim(),
+      scheduledAt: Number.isFinite(classData.scheduledAt) ? classData.scheduledAt : now,
+      duration: Math.max(15, classData.duration),
+      id: `lc-${newId()}`,
+      createdAt: now,
+      updatedAt: now,
     };
     mutate((d) => {
       d.liveClasses.push(newClass);
-      d.classMessages[newClass.id] = [];
+      d.classMessages[newClass.id] = [{
+        id: `msg-${newId()}`,
+        classId: newClass.id,
+        userId: "system",
+        text: `${user.name} created the classroom`,
+        timestamp: now,
+        isSystem: true,
+      }];
       d.classPolls[newClass.id] = [];
       d.classAttendance[newClass.id] = [];
+      for (const student of d.users.filter((u) => u.role === "student")) {
+        const state = d.students[student.id];
+        const enrolled = state?.activeCourseId === newClass.courseId || state?.enrollments?.some((e) => e.courseId === newClass.courseId && e.status === "active");
+        if (enrolled) {
+          pushNotif(d, student.id, {
+            kind: "announcement",
+            title: newClass.status === "live" ? "Live class started" : "Live class scheduled",
+            body: `${newClass.title} is ${newClass.status === "live" ? "live now" : `scheduled for ${new Date(newClass.scheduledAt).toLocaleString()}`}.`,
+          });
+        }
+      }
     });
-    toast("Live class created", "ok");
+    toast(newClass.status === "live" ? "Live classroom opened" : "Live class scheduled", "ok");
     return newClass;
   };
 
@@ -385,6 +412,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (cls) {
         cls.status = "live";
         cls.updatedAt = Date.now();
+        d.classMessages[classId] ??= [];
+        d.classMessages[classId].push({
+          id: `msg-${newId()}`,
+          classId,
+          userId: "system",
+          text: "The instructor started the live class",
+          timestamp: Date.now(),
+          isSystem: true,
+        });
       }
     });
     toast("Class is now live!", "ok");
@@ -400,6 +436,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (cls) {
         cls.status = "completed";
         cls.updatedAt = Date.now();
+        const now = Date.now();
+        for (const entry of d.classAttendance[classId] ?? []) {
+          if (!entry.leftAt) {
+            entry.leftAt = now;
+            entry.duration = Math.floor((now - entry.joinedAt) / 1000);
+          }
+        }
+        d.classMessages[classId] ??= [];
+        d.classMessages[classId].push({
+          id: `msg-${newId()}`,
+          classId,
+          userId: "system",
+          text: "The instructor ended the live class",
+          timestamp: now,
+          isSystem: true,
+        });
       }
     });
     toast("Class ended", "ok");
@@ -409,11 +461,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const meId = user?.id;
     if (!meId) return;
     mutate((d) => {
+      const cls = d.liveClasses.find((c) => c.id === classId);
+      if (!cls || cls.status === "completed" || cls.status === "cancelled") return;
       if (!d.classAttendance[classId]) {
         d.classAttendance[classId] = [];
       }
       const existing = d.classAttendance[classId].find((a) => a.userId === meId);
-      if (!existing) {
+      if (existing) {
+        existing.leftAt = undefined;
+        existing.status = "present";
+      } else {
         d.classAttendance[classId].push({
           classId,
           userId: meId,
@@ -422,17 +479,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
           status: "present",
         });
       }
-      if (!d.classMessages[classId]) {
-        d.classMessages[classId] = [];
-        d.classMessages[classId].push({
-          id: `msg-${Date.now()}`,
-          classId,
-          userId: "system",
-          text: `${user?.name} joined the class`,
-          timestamp: Date.now(),
-          isSystem: true,
-        });
-      }
+      d.classMessages[classId] ??= [];
+      d.classMessages[classId].push({
+        id: `msg-${newId()}`,
+        classId,
+        userId: "system",
+        text: `${user?.name} joined the class`,
+        timestamp: Date.now(),
+        isSystem: true,
+      });
     });
   };
 
@@ -441,7 +496,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!meId) return;
     mutate((d) => {
       const attendance = d.classAttendance[classId]?.find((a) => a.userId === meId);
-      if (attendance) {
+      if (attendance && !attendance.leftAt) {
         attendance.leftAt = Date.now();
         attendance.duration = Math.floor((Date.now() - attendance.joinedAt) / 1000);
       }

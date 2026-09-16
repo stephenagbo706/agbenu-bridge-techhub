@@ -20,25 +20,23 @@ export function LiveClassesView() {
   const upcoming = db.liveClasses.filter((c) => c.status === "scheduled");
   const completed = db.liveClasses.filter((c) => c.status === "completed");
 
-  const handleStartTestClass = () => {
+  const handleStartInstantClass = () => {
     if (!isInstructor) return;
-    
-    // Get the first available course for testing
+
     const testCourse = db.courses[0];
     if (!testCourse) {
       app.toast("No courses available", "warn");
       return;
     }
 
-    // Create an instant test live class
-    const testClass = app.createLiveClass({
-      title: "Test Live Class - " + new Date().toLocaleTimeString(),
-      description: "Development test session for live classroom functionality",
+    const liveClass = app.createLiveClass({
+      title: "Live Class - " + new Date().toLocaleTimeString(),
+      description: "Instant live teaching session for students in this course.",
       courseId: testCourse.id,
       instructorId: user.id,
       scheduledAt: Date.now(),
       duration: 60,
-      status: "live", // Start immediately as live
+      status: "live",
       allowStudentMic: true,
       allowStudentCamera: true,
       allowStudentChat: true,
@@ -47,9 +45,8 @@ export function LiveClassesView() {
       resources: [],
     });
 
-    if (testClass) {
-      // Navigate directly to the classroom
-      app.nav({ name: "liveclass", id: testClass.id });
+    if (liveClass) {
+      app.nav({ name: "liveclass", id: liveClass.id });
     }
   };
 
@@ -63,12 +60,12 @@ export function LiveClassesView() {
             <div className="flex gap-2">
               <button 
                 className="btn btn-danger btn-sm" 
-                onClick={handleStartTestClass}
-                title="Start an instant test live class"
+                onClick={handleStartInstantClass}
+                title="Start an instant live class"
               >
                 <Icon name="play" size={13} /> Start Live Class
               </button>
-              <button className="btn btn-primary btn-sm" onClick={() => app.nav({ name: "liveclass", id: "new" })}>
+              <button className="btn btn-primary btn-sm" onClick={() => app.nav({ name: "admin", tab: "liveclasses" })}>
                 <Icon name="plus" size={13} /> Create Class
               </button>
             </div>
@@ -225,6 +222,7 @@ export function LiveClassroomView({ classId }: { classId: string }) {
   const app = useApp();
   const { user } = app;
   const liveClass = app.getLiveClass(classId);
+  const isInstructorForRoom = !!liveClass && !!user && (user.id === liveClass.instructorId || user.role === "admin");
   const [isJoined, setIsJoined] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isMicOn, setIsMicOn] = useState(false);
@@ -249,6 +247,13 @@ export function LiveClassroomView({ classId }: { classId: string }) {
       if (currentPoll) setActivePoll(currentPoll);
     }
   }, [classId, liveClass, app.db.classMessages, app.db.classPolls]);
+
+  useEffect(() => {
+    if (liveClass && isInstructorForRoom) {
+      app.joinLiveClass(classId);
+      setIsJoined(true);
+    }
+  }, [classId, liveClass?.id, isInstructorForRoom]);
 
   useEffect(() => {
     return () => {
@@ -289,13 +294,19 @@ export function LiveClassroomView({ classId }: { classId: string }) {
   }
 
   const course = app.getCourse(liveClass.courseId);
-  const isInstructor = user.id === liveClass.instructorId || user.role === "admin";
+  const isInstructor = isInstructorForRoom;
   const isLive = liveClass.status === "live";
   const instructor = app.getUser(liveClass.instructorId);
   const attendance = app.db.classAttendance[classId] || [];
   const activeAttendees = attendance.filter((entry) => !entry.leftAt);
+  const canUseCamera = isInstructor || liveClass.allowStudentCamera;
+  const canUseMic = isInstructor || liveClass.allowStudentMic;
 
   const toggleCamera = async () => {
+    if (!canUseCamera) {
+      app.toast("Student cameras are disabled for this class", "warn");
+      return;
+    }
     if (isCameraOn) {
       localStreamRef.current?.getVideoTracks().forEach((track) => {
         track.stop();
@@ -341,6 +352,10 @@ export function LiveClassroomView({ classId }: { classId: string }) {
   };
 
   const toggleMic = async () => {
+    if (!canUseMic) {
+      app.toast("Student microphones are disabled for this class", "warn");
+      return;
+    }
     if (isMicOn) {
       localStreamRef.current?.getAudioTracks().forEach((track) => {
         track.stop();
@@ -376,6 +391,10 @@ export function LiveClassroomView({ classId }: { classId: string }) {
   };
 
   const toggleScreenShare = async () => {
+    if (!isInstructor || !liveClass.allowScreenShare) {
+      app.toast("Screen sharing is available to the instructor only", "warn");
+      return;
+    }
     if (isScreenSharing) {
       screenStreamRef.current?.getTracks().forEach((track) => track.stop());
       screenStreamRef.current = null;
@@ -415,6 +434,9 @@ export function LiveClassroomView({ classId }: { classId: string }) {
     app.leaveLiveClass(classId);
     localStreamRef.current?.getTracks().forEach((track) => track.stop());
     screenStreamRef.current?.getTracks().forEach((track) => track.stop());
+    setIsCameraOn(false);
+    setIsMicOn(false);
+    setIsScreenSharing(false);
     app.nav({ name: "liveclasses" });
   };
 
@@ -541,27 +563,30 @@ export function LiveClassroomView({ classId }: { classId: string }) {
           <div className="flex items-center justify-center gap-3 border-t-1.5 border-paper/10 bg-ink2 px-4 py-3">
             <button
               onClick={toggleMic}
+              disabled={!canUseMic}
               className={cn(
                 "flex h-10 w-10 items-center justify-center rounded-full transition-colors",
                 isMicOn ? "bg-paper/10 text-paper hover:bg-paper/20" : "bg-danger text-white hover:bg-danger/90"
               )}
-              title={isMicOn ? "Mute" : "Unmute"}
+              title={!canUseMic ? "Microphone disabled by instructor" : isMicOn ? "Mute" : "Unmute"}
             >
               <Icon name={isMicOn ? "volume" : "volumeOff"} size={18} />
             </button>
             <button
               onClick={toggleCamera}
+              disabled={!canUseCamera}
               className={cn(
                 "flex h-10 w-10 items-center justify-center rounded-full transition-colors",
                 isCameraOn ? "bg-paper/10 text-paper hover:bg-paper/20" : "bg-danger text-white hover:bg-danger/90"
               )}
-              title={isCameraOn ? "Turn off camera" : "Turn on camera"}
+              title={!canUseCamera ? "Camera disabled by instructor" : isCameraOn ? "Turn off camera" : "Turn on camera"}
             >
               <Icon name={isCameraOn ? "video" : "videoOff"} size={18} />
             </button>
             {isInstructor && (
               <button
                 onClick={toggleScreenShare}
+                disabled={!liveClass.allowScreenShare}
                 className={cn(
                   "flex h-10 items-center gap-2 rounded-full px-4 transition-colors",
                   isScreenSharing ? "bg-brand text-white hover:bg-brand/90" : "bg-paper/10 text-paper hover:bg-paper/20"
