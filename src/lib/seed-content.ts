@@ -461,7 +461,7 @@ L({
   ],
   example: { title: "Obstacle-aware navigator", body: "The robot reads distance, detects an obstacle, turns, and checks again. The important design is the loop: never assume a turn worked; observe the new state before continuing.", code: "while not at_destination:\n  readings = read_sensors()\n  if readings.obstacle_ahead:\n    turn_right()\n  else:\n    move_forward()\n  verify_position()" },
   terms: [["Object detection", "Finding and labeling objects in sensor data, often with a camera model."], ["Policy", "A rule or learned mapping from observations to actions."], ["Autonomy", "The ability to sense, decide, and act without continuous human control."]],
-  activityHint: "Use the Robot Navigator lab. Write down which sensor evidence would justify each turn and what the robot should do when confidence is low.",
+  activityHint: "Use the Sensor & Automation Lab. Write down which sensor evidence would justify each automated decision and what the robot should do when confidence is low.",
   check: { prompt: "A camera model detects an obstacle with low confidence. What is the safest next decision?", options: ["Accelerate through it", "Ignore the result forever", "Slow or stop, gather another reading, and choose a safe action", "Delete the sensor reading"], answer: 2, explain: "Autonomous systems should make uncertainty actionable. A second reading or safe stop limits harm while the robot resolves the ambiguity." },
 });
 L({
