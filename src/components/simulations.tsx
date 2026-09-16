@@ -522,6 +522,7 @@ export function AICodingToolsSim() {
   const [assistantOutput, setAssistantOutput] = useState("");
   const [assistantSource, setAssistantSource] = useState<"live" | "simulation">("simulation");
   const [provider, setProvider] = useState<"openai" | "deepseek">("deepseek");
+  const [deepSeekPrompt, setDeepSeekPrompt] = useState("Explain how to use AI debugging safely in a student project.");
   const scenario = aiCodingScenarios.find((item) => item.id === scenarioId) ?? aiCodingScenarios[0];
   const missing = scenario.required.filter((step) => !selected.includes(step));
   const privacyRisk = includeSecret && !selected.includes("privacy");
@@ -570,9 +571,57 @@ export function AICodingToolsSim() {
     }
   };
 
+  const askDeepSeek = async () => {
+    setProvider("deepseek");
+    setRan(true);
+    setRunningAI(true);
+    setAssistantSource("simulation");
+    try {
+      const response = await fetch("/api/ai-coding-tools", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider: "deepseek",
+          scenario: "DeepSeek chat inside Agbenu Bridge TechHub",
+          request: deepSeekPrompt,
+          selectedSteps: ["Goal", "Prompt", "Review", "Privacy"],
+          missingSteps: [],
+          mode,
+          privacyRisk: false,
+        }),
+      });
+      if (!response.ok) throw new Error("DeepSeek route unavailable");
+      const data = await response.json();
+      setAssistantOutput(typeof data.output === "string" && data.output.trim() ? data.output : "DeepSeek did not return a response.");
+      setAssistantSource(data.source === "live" ? "live" : "simulation");
+    } catch {
+      setAssistantOutput("DeepSeek is not configured yet. Add DEEPSEEK_API_KEY in Vercel Environment Variables, then redeploy. The lab still works with the built-in workflow simulation.");
+      setAssistantSource("simulation");
+    } finally {
+      setRunningAI(false);
+    }
+  };
+
   return (
     <SimulationContainer title="AI Coding Tools Lab" subtitle="Practice completion, generation, debugging, review, testing, documentation, agents, and responsible coding" badge="Virtual Lab" accent="#2f5fe3">
       <div className="space-y-4">
+        <div className="rounded-lg border-1.5 border-ai bg-ai-soft/40 p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="font-mono text-[10px] uppercase tracking-wider text-ai">DeepSeek inside this software</div>
+              <h4 className="mt-1 font-display text-base font-bold">Ask DeepSeek AI</h4>
+              <p className="mt-1 text-sm text-mute">Students can ask DeepSeek from this TechHub interface. The official DeepSeek website is not embedded; the secure server route connects to DeepSeek behind the app.</p>
+            </div>
+            <a className="btn btn-ghost btn-sm" href="https://chat.deepseek.com/" target="_blank" rel="noreferrer">Open DeepSeek Chat <Icon name="arrowR" size={13} /></a>
+          </div>
+          <div className="mt-3 grid gap-2 lg:grid-cols-[minmax(0,1fr)_auto]">
+            <textarea className="inp min-h-20" value={deepSeekPrompt} onChange={(event) => setDeepSeekPrompt(event.target.value)} aria-label="Ask DeepSeek inside the software" />
+            <button onClick={askDeepSeek} disabled={runningAI || !deepSeekPrompt.trim()} className="btn btn-primary self-start">
+              {runningAI ? <><span className="h-3 w-3 animate-spin rounded-full border-2 border-white/30 border-t-white" /> Asking...</> : <><Icon name="spark" size={14} /> Ask DeepSeek</>}
+            </button>
+          </div>
+        </div>
+
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {aiCodingScenarios.map((item) => (
             <button
