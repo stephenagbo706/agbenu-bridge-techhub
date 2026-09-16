@@ -313,6 +313,9 @@ export function LiveClassroomView({ classId }: { classId: string }) {
   const instructor = app.getUser(liveClass.instructorId);
   const attendance = app.db.classAttendance[classId] || [];
   const activeAttendees = attendance.filter((entry) => !entry.leftAt);
+  const currentAttendance = activeAttendees.find((entry) => entry.userId === user.id);
+  const presenterEntry = activeAttendees.find((entry) => entry.isScreenSharing);
+  const presenter = presenterEntry ? app.getUser(presenterEntry.userId) : undefined;
   const canUseCamera = isInstructor || liveClass.allowStudentCamera;
   const canUseMic = isInstructor || liveClass.allowStudentMic;
 
@@ -328,6 +331,7 @@ export function LiveClassroomView({ classId }: { classId: string }) {
       });
       setIsCameraOn(false);
       setCameraError("");
+      app.updateClassPresence(classId, { isCameraOff: true });
     } else {
       try {
         if (!navigator.mediaDevices?.getUserMedia) {
@@ -356,6 +360,7 @@ export function LiveClassroomView({ classId }: { classId: string }) {
 
         setIsCameraOn(true);
         setCameraError("");
+        app.updateClassPresence(classId, { isCameraOff: false });
       } catch (err) {
         const message =
           err instanceof DOMException && err.name === "NotAllowedError"
@@ -380,6 +385,7 @@ export function LiveClassroomView({ classId }: { classId: string }) {
       });
       setIsMicOn(false);
       setMicError("");
+      app.updateClassPresence(classId, { isMuted: true });
     } else {
       try {
         if (!navigator.mediaDevices?.getUserMedia) {
@@ -397,6 +403,7 @@ export function LiveClassroomView({ classId }: { classId: string }) {
         }
         setIsMicOn(true);
         setMicError("");
+        app.updateClassPresence(classId, { isMuted: false });
       } catch (err) {
         const message =
           err instanceof DOMException && err.name === "NotAllowedError"
@@ -417,6 +424,7 @@ export function LiveClassroomView({ classId }: { classId: string }) {
       screenStreamRef.current?.getTracks().forEach((track) => track.stop());
       screenStreamRef.current = null;
       setIsScreenSharing(false);
+      app.updateClassPresence(classId, { isScreenSharing: false });
     } else {
       try {
         const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
@@ -425,9 +433,11 @@ export function LiveClassroomView({ classId }: { classId: string }) {
           screenRef.current.srcObject = stream;
         }
         setIsScreenSharing(true);
+        app.updateClassPresence(classId, { isScreenSharing: true });
         stream.getVideoTracks()[0].onended = () => {
           setIsScreenSharing(false);
           screenStreamRef.current = null;
+          app.updateClassPresence(classId, { isScreenSharing: false });
         };
       } catch (err) {
         app.toast("Screen sharing permission denied", "warn");
@@ -456,6 +466,12 @@ export function LiveClassroomView({ classId }: { classId: string }) {
     setIsMicOn(false);
     setIsScreenSharing(false);
     app.nav({ name: "liveclasses" });
+  };
+
+  const toggleRaisedHand = () => {
+    const next = !hasRaisedHand;
+    setHasRaisedHand(next);
+    app.updateClassPresence(classId, { hasRaisedHand: next });
   };
 
   // Waiting room
@@ -548,7 +564,18 @@ export function LiveClassroomView({ classId }: { classId: string }) {
               </div>
             )}
             {/* Camera */}
-            {!isScreenSharing && (
+            {!isScreenSharing && presenterEntry && presenterEntry.userId !== user.id && (
+              <div className="flex h-full items-center justify-center px-6 text-center text-paper/80">
+                <div className="max-w-md">
+                  <Icon name="screen" size={64} className="mx-auto opacity-60" />
+                  <h3 className="mt-4 font-display text-xl font-bold text-paper">{presenter?.name ?? "The instructor"} is presenting</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-paper/70">
+                    This classroom now shares presenter status with everyone. To show the actual live screen video across devices, connect a WebRTC media/signaling service.
+                  </p>
+                </div>
+              </div>
+            )}
+            {!isScreenSharing && (!presenterEntry || presenterEntry.userId === user.id) && (
               <div className="flex h-full items-center justify-center">
                 {isCameraOn ? (
                   <video
@@ -582,6 +609,37 @@ export function LiveClassroomView({ classId }: { classId: string }) {
                 <div className="mt-0.5">Turn on your camera or share your screen to start the lesson.</div>
               </div>
             )}
+          </div>
+
+          <div className="border-t border-paper/10 bg-ink px-4 py-3">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              {activeAttendees.length === 0 && (
+                <div className="rounded-lg border border-paper/10 bg-paper/5 px-3 py-3 text-xs text-paper/60">No one has joined yet.</div>
+              )}
+              {activeAttendees.map((entry) => {
+                const participant = app.getUser(entry.userId);
+                if (!participant) return null;
+                const isSelf = entry.userId === user.id;
+                const isHost = entry.userId === liveClass.instructorId;
+                return (
+                  <div key={entry.userId} className="flex min-w-0 items-center gap-2 rounded-lg border border-paper/10 bg-paper/5 px-3 py-2 text-paper">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-brand/80 font-display text-sm font-bold">
+                      {participant.name.slice(0, 1).toUpperCase()}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-xs font-semibold">{isSelf ? "You" : participant.name}</span>
+                      <span className="mt-0.5 flex flex-wrap gap-1 font-mono text-[9px] uppercase tracking-wider text-paper/55">
+                        {isHost && <span>Host</span>}
+                        <span>{entry.isCameraOff === false ? "Camera on" : "Camera off"}</span>
+                        <span>{entry.isMuted === false ? "Mic on" : "Muted"}</span>
+                        {entry.isScreenSharing && <span className="text-brand">Presenting</span>}
+                        {entry.hasRaisedHand && <span className="text-gold">Hand raised</span>}
+                      </span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Controls */}
@@ -623,10 +681,10 @@ export function LiveClassroomView({ classId }: { classId: string }) {
               </button>
             )}
             <button
-              onClick={() => setHasRaisedHand(!hasRaisedHand)}
+              onClick={toggleRaisedHand}
               className={cn(
                 "flex h-10 w-10 items-center justify-center rounded-full transition-colors",
-                hasRaisedHand ? "bg-gold text-ink hover:bg-gold/90" : "bg-paper/10 text-paper hover:bg-paper/20"
+                (currentAttendance?.hasRaisedHand ?? hasRaisedHand) ? "bg-gold text-ink hover:bg-gold/90" : "bg-paper/10 text-paper hover:bg-paper/20"
               )}
               title={hasRaisedHand ? "Lower hand" : "Raise hand"}
             >

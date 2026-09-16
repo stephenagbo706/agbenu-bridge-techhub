@@ -142,6 +142,7 @@ interface Ctx {
   endLiveClass: (classId: string) => void;
   joinLiveClass: (classId: string) => void;
   leaveLiveClass: (classId: string) => void;
+  updateClassPresence: (classId: string, updates: Partial<Pick<import("./types").ClassAttendance, "isMuted" | "isCameraOff" | "isScreenSharing" | "hasRaisedHand">>) => void;
   sendClassMessage: (classId: string, text: string) => void;
   createClassPoll: (classId: string, question: string, options: string[]) => void;
   respondToPoll: (classId: string, pollId: string, optionIndex: string) => void;
@@ -470,6 +471,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (existing) {
         existing.leftAt = undefined;
         existing.status = "present";
+        existing.isMuted ??= true;
+        existing.isCameraOff ??= true;
+        existing.isScreenSharing ??= false;
+        existing.hasRaisedHand ??= false;
       } else {
         d.classAttendance[classId].push({
           classId,
@@ -477,6 +482,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
           joinedAt: Date.now(),
           duration: 0,
           status: "present",
+          isMuted: true,
+          isCameraOff: true,
+          isScreenSharing: false,
+          hasRaisedHand: false,
         });
       }
       d.classMessages[classId] ??= [];
@@ -499,6 +508,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (attendance && !attendance.leftAt) {
         attendance.leftAt = Date.now();
         attendance.duration = Math.floor((Date.now() - attendance.joinedAt) / 1000);
+        attendance.isScreenSharing = false;
+        attendance.hasRaisedHand = false;
       }
       if (d.classMessages[classId]) {
         d.classMessages[classId].push({
@@ -509,6 +520,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
           timestamp: Date.now(),
           isSystem: true,
         });
+      }
+    });
+  };
+
+  const updateClassPresence = (classId: string, updates: Partial<Pick<import("./types").ClassAttendance, "isMuted" | "isCameraOff" | "isScreenSharing" | "hasRaisedHand">>) => {
+    const meId = user?.id;
+    if (!meId) return;
+    mutate((d) => {
+      const attendance = d.classAttendance[classId] ?? (d.classAttendance[classId] = []);
+      let entry = attendance.find((a) => a.userId === meId);
+      if (!entry) {
+        entry = {
+          classId,
+          userId: meId,
+          joinedAt: Date.now(),
+          duration: 0,
+          status: "present",
+          isMuted: true,
+          isCameraOff: true,
+          isScreenSharing: false,
+          hasRaisedHand: false,
+        };
+        attendance.push(entry);
+      }
+      Object.assign(entry, updates);
+      if (updates.isScreenSharing) {
+        for (const other of attendance) {
+          if (other.userId !== meId) other.isScreenSharing = false;
+        }
       }
     });
   };
@@ -1098,6 +1138,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     endLiveClass,
     joinLiveClass,
     leaveLiveClass,
+    updateClassPresence,
     sendClassMessage,
     createClassPoll,
     respondToPoll,

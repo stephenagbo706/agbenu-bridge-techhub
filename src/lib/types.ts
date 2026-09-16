@@ -259,6 +259,10 @@ export interface ClassAttendance {
   leftAt?: number;
   duration: number; // seconds
   status: "present" | "partial" | "absent";
+  isMuted?: boolean;
+  isCameraOff?: boolean;
+  isScreenSharing?: boolean;
+  hasRaisedHand?: boolean;
 }
 
 export interface StudentState {
