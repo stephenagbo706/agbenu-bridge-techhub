@@ -5,6 +5,19 @@ import { Chip, CourseTag, Reveal, SectionHead, cn } from "../components/ui";
 import { Icon } from "../components/icons";
 import type { LiveClass, ClassMessage, ClassPoll } from "../lib/types";
 
+const isLocalhost = () => ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+const secureCameraUrl = () => {
+  if (window.location.protocol !== "http:" || isLocalhost()) return "";
+  return `https://${window.location.host}${window.location.pathname}${window.location.search}${window.location.hash}`;
+};
+
+const mediaUnavailableMessage = (device: "Camera" | "Microphone") => {
+  if (!window.isSecureContext) {
+    return `${device} is blocked because this page is not using HTTPS. Open the secure HTTPS version of this site, or use localhost while developing.`;
+  }
+  return `${device} access is not available in this browser. Try Chrome, Edge, Safari, or Firefox with camera permissions enabled.`;
+};
+
 // ─── Live Classes List View ──────────────────────────────────────────────────
 
 export function LiveClassesView() {
@@ -230,6 +243,7 @@ export function LiveClassroomView({ classId }: { classId: string }) {
   const [hasRaisedHand, setHasRaisedHand] = useState(false);
   const [cameraError, setCameraError] = useState("");
   const [micError, setMicError] = useState("");
+  const [secureUrl, setSecureUrl] = useState("");
   const [messages, setMessages] = useState<ClassMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [activePoll, setActivePoll] = useState<ClassPoll | null>(null);
@@ -317,8 +331,10 @@ export function LiveClassroomView({ classId }: { classId: string }) {
     } else {
       try {
         if (!navigator.mediaDevices?.getUserMedia) {
-          setCameraError("Camera access needs a modern browser on HTTPS or localhost.");
-          app.toast("Camera access is not available in this browser", "warn");
+          const message = mediaUnavailableMessage("Camera");
+          setCameraError(message);
+          setSecureUrl(secureCameraUrl());
+          app.toast(message, "warn");
           return;
         }
 
@@ -346,6 +362,7 @@ export function LiveClassroomView({ classId }: { classId: string }) {
             ? "Camera permission was blocked. Allow camera access in your browser, then try again."
             : "Camera could not start. Check that no other app is using it, then try again.";
         setCameraError(message);
+        setSecureUrl(secureCameraUrl());
         app.toast(message, "warn");
       }
     }
@@ -366,8 +383,9 @@ export function LiveClassroomView({ classId }: { classId: string }) {
     } else {
       try {
         if (!navigator.mediaDevices?.getUserMedia) {
-          setMicError("Microphone access needs a modern browser on HTTPS or localhost.");
-          app.toast("Microphone access is not available in this browser", "warn");
+          const message = mediaUnavailableMessage("Microphone");
+          setMicError(message);
+          app.toast(message, "warn");
           return;
         }
 
@@ -545,7 +563,14 @@ export function LiveClassroomView({ classId }: { classId: string }) {
                     <Icon name="video" size={64} className="mx-auto opacity-40" />
                     <p className="mt-2 text-sm">Camera is off</p>
                     {cameraError && (
-                      <p className="mx-auto mt-2 max-w-xs text-xs leading-relaxed text-paper/75">{cameraError}</p>
+                      <div className="mx-auto mt-2 max-w-sm space-y-3">
+                        <p className="text-xs leading-relaxed text-paper/75">{cameraError}</p>
+                        {secureUrl && (
+                          <a className="btn btn-primary btn-sm" href={secureUrl}>
+                            <Icon name="key" size={13} /> Open secure site
+                          </a>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}
