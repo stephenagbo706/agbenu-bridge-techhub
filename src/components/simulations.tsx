@@ -518,6 +518,9 @@ export function AICodingToolsSim() {
   const [mode, setMode] = useState("Beginner");
   const [includeSecret, setIncludeSecret] = useState(false);
   const [ran, setRan] = useState(false);
+  const [runningAI, setRunningAI] = useState(false);
+  const [assistantOutput, setAssistantOutput] = useState("");
+  const [assistantSource, setAssistantSource] = useState<"live" | "simulation">("simulation");
   const scenario = aiCodingScenarios.find((item) => item.id === scenarioId) ?? aiCodingScenarios[0];
   const missing = scenario.required.filter((step) => !selected.includes(step));
   const privacyRisk = includeSecret && !selected.includes("privacy");
@@ -529,6 +532,40 @@ export function AICodingToolsSim() {
     setSelected(next.required.slice(0, Math.min(3, next.required.length)));
     setIncludeSecret(false);
     setRan(false);
+    setAssistantOutput("");
+    setAssistantSource("simulation");
+  };
+
+  const runWorkflow = async () => {
+    setRan(true);
+    setRunningAI(true);
+    setAssistantSource("simulation");
+    const fallback = missing.length
+      ? `Missing steps: ${missing.map((id) => aiCodingSteps.find((step) => step.id === id)?.label ?? id).join(", ")}`
+      : scenario.output;
+    try {
+      const response = await fetch("/api/ai-coding-tools", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scenario: scenario.title,
+          request: scenario.request,
+          selectedSteps: selected.map((id) => aiCodingSteps.find((step) => step.id === id)?.label ?? id),
+          missingSteps: missing.map((id) => aiCodingSteps.find((step) => step.id === id)?.label ?? id),
+          mode,
+          privacyRisk,
+        }),
+      });
+      if (!response.ok) throw new Error("Assistant route unavailable");
+      const data = await response.json();
+      setAssistantOutput(typeof data.output === "string" && data.output.trim() ? data.output : fallback);
+      setAssistantSource(data.source === "live" ? "live" : "simulation");
+    } catch {
+      setAssistantOutput(fallback);
+      setAssistantSource("simulation");
+    } finally {
+      setRunningAI(false);
+    }
   };
 
   return (
@@ -584,13 +621,16 @@ export function AICodingToolsSim() {
               </div>
               <label className="mt-3 flex items-center gap-2 rounded-md border-1.5 border-line bg-card px-3 py-2 text-sm">
                 <input type="checkbox" checked={includeSecret} onChange={(event) => setIncludeSecret(event.target.checked)} />
-                Include fake API key in prompt context
+                Include a fake secret in prompt context
               </label>
+              <p className="mt-2 text-[11px] leading-relaxed text-mute">Real API keys must stay in server environment variables such as OPENAI_API_KEY. Do not put sk keys in React code, prompts, or GitHub.</p>
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <button onClick={() => setRan(true)} className="btn btn-primary"><Icon name="spark" size={14} /> Run AI workflow</button>
-              <button onClick={() => { setSelected(["goal", "context", "review"]); setRan(false); setIncludeSecret(false); }} className="btn btn-ghost btn-sm"><Icon name="refresh" size={13} /> Reset</button>
+              <button onClick={runWorkflow} disabled={runningAI} className="btn btn-primary">
+                {runningAI ? <><span className="h-3 w-3 animate-spin rounded-full border-2 border-white/30 border-t-white" /> Running...</> : <><Icon name="spark" size={14} /> Run AI workflow</>}
+              </button>
+              <button onClick={() => { setSelected(["goal", "context", "review"]); setRan(false); setIncludeSecret(false); setAssistantOutput(""); setAssistantSource("simulation"); }} className="btn btn-ghost btn-sm"><Icon name="refresh" size={13} /> Reset</button>
             </div>
           </div>
 
@@ -599,9 +639,9 @@ export function AICodingToolsSim() {
             {ran ? (
               <div className="mt-3 space-y-3">
                 <div className={cn("rounded-md border px-3 py-2 text-sm", missing.length || privacyRisk ? "border-gold/60 bg-gold/15" : "border-se/60 bg-se/15")}>
-                  {missing.length || privacyRisk ? "Workflow needs revision" : "Workflow ready"}
+                  {missing.length || privacyRisk ? "Workflow needs revision" : assistantSource === "live" ? "Live AI response" : "Workflow ready"}
                 </div>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-paper/85">{missing.length ? `Missing steps: ${missing.map((id) => aiCodingSteps.find((step) => step.id === id)?.label ?? id).join(", ")}` : scenario.output}</p>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-paper/85">{assistantOutput}</p>
                 {privacyRisk && <p className="rounded-md bg-warn/20 px-3 py-2 text-sm text-paper">Privacy warning: remove API keys, passwords, tokens, and real user data before sending context to an AI tool.</p>}
                 <p className="text-[12px] leading-relaxed text-paper/60"><strong>Responsible use:</strong> {scenario.risk}</p>
                 <p className="text-[12px] leading-relaxed text-paper/60"><strong>Mode:</strong> {mode}. Keep the final code explainable at this level.</p>
