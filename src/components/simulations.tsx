@@ -482,6 +482,140 @@ export function PromptEngineeringSim() {
   );
 }
 
+// ─── AI Coding Tools Lab ────────────────────────────────────────────────────
+
+type AICodingScenarioId = "complete" | "generate" | "debug" | "review" | "test" | "agent";
+
+const aiCodingSteps = [
+  { id: "goal", label: "Goal", help: "State the exact coding outcome." },
+  { id: "context", label: "Context", help: "Share relevant files, framework, errors, and constraints." },
+  { id: "prompt", label: "Prompt", help: "Ask for a focused change or explanation." },
+  { id: "review", label: "Review", help: "Read the output before accepting it." },
+  { id: "run", label: "Run", help: "Build, test, or reproduce the behavior." },
+  { id: "document", label: "Document", help: "Explain the final change clearly." },
+  { id: "privacy", label: "Privacy", help: "Remove secrets, private data, and confidential code." },
+];
+
+const aiCodingScenarios: {
+  id: AICodingScenarioId;
+  title: string;
+  request: string;
+  required: string[];
+  output: string;
+  risk: string;
+}[] = [
+  { id: "complete", title: "AI Code Completion", request: "Finish a function that filters active students and sorts newest first.", required: ["goal", "context", "review", "run"], output: "Suggested completion: filter by active, sort by joinedAt descending, return the new list without mutating the original array.", risk: "Do not accept long completions without reading the sorting logic and checking empty-list behavior." },
+  { id: "generate", title: "AI Code Generation", request: "Generate a small TypeScript email validator with examples.", required: ["goal", "context", "prompt", "review", "run"], output: "Generated function includes empty, missing @, missing domain, and valid-address checks plus example test cases.", risk: "Generated validators can be too simple. Check real requirements before using them for production sign-up forms." },
+  { id: "debug", title: "AI Debugging", request: "Fix a Save button that throws: Cannot read properties of undefined (reading 'id').", required: ["goal", "context", "prompt", "review", "run"], output: "Likely cause: the selected project is undefined before save. Add a guard, show an error state, and verify the reproduction steps.", risk: "Avoid applying several fixes at once. Test one hypothesis and confirm the result." },
+  { id: "review", title: "AI Code Review", request: "Review a diff for bugs, security risks, accessibility issues, and missing tests.", required: ["goal", "context", "prompt", "review"], output: "Review report: one high-priority null-state bug, one missing keyboard label, and one missing regression test.", risk: "AI review is not final approval. A human must decide what matters for the product." },
+  { id: "test", title: "AI Testing", request: "Create tests for password validation rules.", required: ["goal", "context", "prompt", "review", "run"], output: "Test plan covers empty, too short, missing number, missing uppercase, valid password, and boundary length cases.", risk: "Generated tests may mirror implementation instead of requirements. Strengthen them with edge cases." },
+  { id: "agent", title: "Using AI Coding Agents", request: "Ask an agent to add saved filters to a project page without redesigning the app.", required: ["goal", "context", "prompt", "review", "run", "document", "privacy"], output: "Agent plan: inspect store patterns, add filter state, update UI controls, run build, summarize changed files.", risk: "Agents can edit many files. Review the diff, protect secrets, and run verification before shipping." },
+];
+
+export function AICodingToolsSim() {
+  const [scenarioId, setScenarioId] = useState<AICodingScenarioId>("complete");
+  const [selected, setSelected] = useState<string[]>(["goal", "context", "review"]);
+  const [mode, setMode] = useState("Beginner");
+  const [includeSecret, setIncludeSecret] = useState(false);
+  const [ran, setRan] = useState(false);
+  const scenario = aiCodingScenarios.find((item) => item.id === scenarioId) ?? aiCodingScenarios[0];
+  const missing = scenario.required.filter((step) => !selected.includes(step));
+  const privacyRisk = includeSecret && !selected.includes("privacy");
+  const score = Math.max(0, Math.round(((scenario.required.length - missing.length) / scenario.required.length) * 100) - (privacyRisk ? 25 : 0));
+
+  const chooseScenario = (id: AICodingScenarioId) => {
+    const next = aiCodingScenarios.find((item) => item.id === id) ?? aiCodingScenarios[0];
+    setScenarioId(id);
+    setSelected(next.required.slice(0, Math.min(3, next.required.length)));
+    setIncludeSecret(false);
+    setRan(false);
+  };
+
+  return (
+    <SimulationContainer title="AI Coding Tools Lab" subtitle="Practice completion, generation, debugging, review, testing, documentation, agents, and responsible coding" badge="Virtual Lab" accent="#2f5fe3">
+      <div className="space-y-4">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {aiCodingScenarios.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => chooseScenario(item.id)}
+              className={cn("rounded-lg border-1.5 px-3 py-3 text-left transition-all focus-ring", scenario.id === item.id ? "border-ai bg-ai-soft" : "border-line bg-paper/50 hover:border-ai/50")}
+            >
+              <span className="block text-sm font-semibold">{item.title}</span>
+              <span className="mt-1 block text-[11px] leading-relaxed text-mute">{item.request}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="space-y-4">
+            <div className="rounded-lg border-1.5 border-line bg-card p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="font-mono text-[10px] uppercase tracking-wider text-ai">Coding task</div>
+                  <h4 className="mt-1 font-display text-base font-bold">{scenario.title}</h4>
+                  <p className="mt-1 text-sm text-mute">{scenario.request}</p>
+                </div>
+                <span className={cn("rounded-md px-2 py-1 font-mono text-[10px] font-bold", score >= 90 ? "bg-se-soft text-se" : "bg-gold-soft text-[#8a5a06]")}>{score}% ready</span>
+              </div>
+            </div>
+
+            <div className="rounded-lg border-1.5 border-line bg-paper/50 p-4">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <h4 className="font-display text-sm font-bold">Workflow steps</h4>
+                <select className="inp max-w-44" value={mode} onChange={(event) => setMode(event.target.value)} aria-label="Learner mode">
+                  {["Beginner", "Student project", "Team workflow"].map((item) => <option key={item}>{item}</option>)}
+                </select>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {aiCodingSteps.map((step) => {
+                  const active = selected.includes(step.id);
+                  const required = scenario.required.includes(step.id);
+                  return (
+                    <button key={step.id} onClick={() => setSelected((current) => toggleListValue(current, step.id))} className={cn("rounded-md border-1.5 px-3 py-3 text-left transition-all focus-ring", active ? "border-ai bg-white" : "border-line bg-card/60 hover:border-ai/50")}>
+                      <span className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-semibold">{step.label}</span>
+                        <span className="font-mono text-[10px]">{active ? "Selected" : required ? "Needed" : "Optional"}</span>
+                      </span>
+                      <span className="mt-1 block text-[11px] leading-relaxed text-mute">{step.help}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <label className="mt-3 flex items-center gap-2 rounded-md border-1.5 border-line bg-card px-3 py-2 text-sm">
+                <input type="checkbox" checked={includeSecret} onChange={(event) => setIncludeSecret(event.target.checked)} />
+                Include fake API key in prompt context
+              </label>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button onClick={() => setRan(true)} className="btn btn-primary"><Icon name="spark" size={14} /> Run AI workflow</button>
+              <button onClick={() => { setSelected(["goal", "context", "review"]); setRan(false); setIncludeSecret(false); }} className="btn btn-ghost btn-sm"><Icon name="refresh" size={13} /> Reset</button>
+            </div>
+          </div>
+
+          <div className="rounded-lg border-1.5 border-line bg-ink p-4 text-paper">
+            <div className="font-mono text-[10px] uppercase tracking-wider text-paper/50">Assistant output</div>
+            {ran ? (
+              <div className="mt-3 space-y-3">
+                <div className={cn("rounded-md border px-3 py-2 text-sm", missing.length || privacyRisk ? "border-gold/60 bg-gold/15" : "border-se/60 bg-se/15")}>
+                  {missing.length || privacyRisk ? "Workflow needs revision" : "Workflow ready"}
+                </div>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-paper/85">{missing.length ? `Missing steps: ${missing.map((id) => aiCodingSteps.find((step) => step.id === id)?.label ?? id).join(", ")}` : scenario.output}</p>
+                {privacyRisk && <p className="rounded-md bg-warn/20 px-3 py-2 text-sm text-paper">Privacy warning: remove API keys, passwords, tokens, and real user data before sending context to an AI tool.</p>}
+                <p className="text-[12px] leading-relaxed text-paper/60"><strong>Responsible use:</strong> {scenario.risk}</p>
+                <p className="text-[12px] leading-relaxed text-paper/60"><strong>Mode:</strong> {mode}. Keep the final code explainable at this level.</p>
+              </div>
+            ) : (
+              <p className="mt-3 text-sm leading-relaxed text-paper/65">Choose the workflow pieces, then run the simulation to see whether your AI coding process is safe and complete.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </SimulationContainer>
+  );
+}
+
 // ─── AI Builder Lab ─────────────────────────────────────────────────────────
 
 type AIBuilderProjectId = "chatbot" | "recommendation" | "image" | "sentiment" | "study" | "prompt" | "career";

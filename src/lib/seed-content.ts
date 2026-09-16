@@ -8,7 +8,7 @@ export const COURSES: Course[] = [
     tagline: "Understand how intelligent systems work — and put them to work on real problems.",
     description:
       "This course takes you from understanding what AI actually is, to using generative AI tools effectively, engineering strong prompts, grasping core machine-learning concepts, and applying AI responsibly. You finish by building an AI-assisted solution to a real problem.",
-    color: "#2f5fe3", level: "Foundation → Applied", hours: 14, order: 1,
+    color: "#2f5fe3", level: "Foundation → Applied", hours: 18, order: 1,
     image_url: "https://www.telefonica.com/en/wp-content/uploads/sites/5/2023/07/differences-robotis-ia.jpg?w=1200",
     objectives: [
       "Explain how AI systems learn from data and make predictions",
@@ -16,6 +16,7 @@ export const COURSES: Course[] = [
       "Design, test, and refine effective prompts",
       "Distinguish supervised learning, training, and overfitting",
       "Apply responsible-AI checks: bias, privacy, honesty",
+      "Use AI coding tools responsibly for completion, debugging, testing, documentation, and project building",
     ],
   },
   {
@@ -73,6 +74,7 @@ export const TOPICS: Topic[] = [
   { id: "t-ai-5", courseId: "c-ai", order: 5, title: "Responsible AI", summary: "Bias, fairness, privacy, and honest use of AI systems." },
   { id: "t-ai-6", courseId: "c-ai", order: 6, title: "Natural Language Processing", summary: "How AI works with human language: understanding, generation, and translation." },
   { id: "t-ai-7", courseId: "c-ai", order: 7, title: "AI Project", summary: "Apply everything by designing and building a small AI system." },
+  { id: "t-ai-8", courseId: "c-ai", order: 8, title: "AI Coding Tools", summary: "Use AI coding assistants for completion, generation, explanation, debugging, review, testing, documentation, agents, and responsible software work." },
 
   { id: "t-rb-1", courseId: "c-rob", order: 1, title: "Robotics Fundamentals", summary: "The sense–think–act loop and what makes a machine a robot." },
   { id: "t-rb-2", courseId: "c-rob", order: 2, title: "Electronics & Sensors", summary: "Circuits, current, and measuring the physical world." },
@@ -296,6 +298,176 @@ L({
   terms: [["AI system", "A complete workflow that combines input, model logic, output, interface, and evaluation."], ["Prototype", "A small working version used to test an idea before building it fully."], ["Evaluation", "Testing outputs against examples, expectations, and known failure cases."]],
   activityHint: "Open the AI Builder Lab. Choose one project path, assemble the components, then write five test cases for your system.",
   check: { prompt: "Which item is most important for turning an AI demo into a real project?", options: ["A colorful logo", "A clear input, output, test cases, and known limitations", "Only using the biggest model", "Skipping user feedback"], answer: 1, explain: "A real AI project needs a defined workflow and evaluation. The model is only one part of the system." },
+});
+
+// ·· AI ·· Topic 8 — AI Coding Tools
+L({
+  id: "l-ai-14", courseId: "c-ai", topicId: "t-ai-8", order: 1, title: "What Are AI Coding Tools?", minutes: 12,
+  summary: "AI coding tools help developers plan, write, understand, test, and improve software with model-assisted suggestions.",
+  why: "AI coding tools are now part of real software work. Learners need to understand what they can do, what they cannot guarantee, and how to stay in control.",
+  objectives: ["Define AI coding tools", "Identify common coding assistant features", "Explain why developers must still verify output"],
+  sections: [
+    { h: "The new coding assistant", p: "AI coding tools are assistants inside or beside the editor. They can suggest code, explain files, generate functions, write tests, draft documentation, and propose fixes. They do not replace engineering judgment. They accelerate parts of the workflow while the developer remains responsible for correctness, security, and maintainability." },
+    { h: "A tool, not an authority", p: "A coding assistant predicts useful code from your prompt and project context. It may misunderstand requirements, invent APIs, miss edge cases, or create insecure code. The professional workflow is ask, inspect, run, test, and revise." },
+  ],
+  example: { title: "Assistant roles", body: "The same assistant can act as autocomplete, explainer, debugger, reviewer, test writer, and documentation helper depending on the task and context you give it.", code: "Ask → inspect output → run code → test behavior → revise prompt or code" },
+  terms: [["AI coding assistant", "A tool that uses AI to help with software development tasks."], ["Context", "The code, files, errors, and instructions the assistant can see."], ["Verification", "Checking AI output by reading, running, testing, and reviewing it."]],
+  activityHint: "List five coding tasks where an assistant could help, then mark which ones still require human review.",
+  check: { prompt: "What is the safest way to treat AI-generated code?", options: ["As finished production code", "As a draft that must be inspected, run, and tested", "As code that never contains bugs", "As private advice that cannot leak"], answer: 1, explain: "AI code is a draft. The developer remains responsible for correctness and safety." },
+});
+L({
+  id: "l-ai-15", courseId: "c-ai", topicId: "t-ai-8", order: 2, title: "AI Code Completion", minutes: 10,
+  summary: "Use inline suggestions to finish lines, functions, patterns, and small edits while you code.",
+  why: "Completion is the first AI coding feature most learners meet. Used well, it saves time without hiding how the program works.",
+  objectives: ["Explain inline code completion", "Accept, reject, or edit suggestions", "Use comments and nearby code to guide completions"],
+  sections: [
+    { h: "Ghost text and next edits", p: "Code completion appears while you type. It may finish the current line, suggest a whole function, or predict the next edit. The quality depends on nearby code, open files, naming, comments, and how clear your intent is." },
+    { h: "Review before accepting", p: "Fast acceptance can create slow bugs. Before accepting a suggestion, check variable names, logic, imports, error handling, and whether the code matches your project style." },
+  ],
+  example: { title: "Guided completion", body: "A clear function name and comment gives the assistant a better target.", code: "// Return active students sorted by newest first\nfunction getActiveStudents(students) {\n  // AI completion can infer filter + sort here\n}" },
+  terms: [["Inline suggestion", "Suggested code shown directly in the editor as you type."], ["Next edit", "A predicted follow-up change based on your recent edits."], ["Accept/reject", "The habit of choosing only suggestions you understand."]],
+  activityHint: "Write a comment for a small function, let an assistant complete it, then explain every line before accepting.",
+  check: { prompt: "What should you do before accepting a long completion?", options: ["Accept it if it looks professional", "Read it, check the logic, and run it", "Delete your own code", "Turn off tests"], answer: 1, explain: "Completions are useful drafts, not proof of correctness." },
+});
+L({
+  id: "l-ai-16", courseId: "c-ai", topicId: "t-ai-8", order: 3, title: "AI Code Generation", minutes: 13,
+  summary: "Generate functions, components, APIs, and small project pieces from clear requirements.",
+  why: "Generation is powerful when the request is specific. Vague prompts create vague software.",
+  objectives: ["Write code-generation prompts with requirements", "Ask for small testable units", "Identify generated code that needs redesign"],
+  sections: [
+    { h: "Prompt like a specification", p: "Good generation prompts include the language, framework, input, output, constraints, edge cases, and style. Ask for one small unit at a time when learning, then compose the pieces." },
+    { h: "Generate, then integrate", p: "Generated code must fit your existing project. Check imports, naming, state management, error behavior, accessibility, and how it interacts with real data." },
+  ],
+  example: { title: "Specific request", body: "A strong request names the exact behavior and constraints.", code: "Create a TypeScript function validateEmail(value: string): boolean.\nReturn false for empty strings, missing @, and missing domain.\nNo external libraries. Include 5 test cases." },
+  terms: [["Specification", "A clear description of what the code must do."], ["Constraint", "A limit the generated code must obey."], ["Integration", "Fitting generated code into the real app."]],
+  activityHint: "Generate one small function from a written spec, then add two edge cases the assistant missed.",
+  check: { prompt: "Which prompt is best for code generation?", options: ["Make code", "Build my app", "Create a TypeScript function with inputs, outputs, constraints, and test cases", "Do everything automatically"], answer: 2, explain: "Specific requirements produce better, easier-to-check code." },
+});
+L({
+  id: "l-ai-17", courseId: "c-ai", topicId: "t-ai-8", order: 4, title: "AI Code Explanation", minutes: 11,
+  summary: "Ask AI to explain unfamiliar code, data flow, errors, and design decisions in plain language.",
+  why: "Explanation helps learners understand code instead of copying it blindly.",
+  objectives: ["Ask for line-by-line explanations", "Trace data flow through code", "Spot when an explanation is incomplete"],
+  sections: [
+    { h: "From mystery to map", p: "AI can summarize what a file does, explain a function line by line, translate code into plain English, or trace how a value changes. This is especially useful when joining an existing project." },
+    { h: "Ask for evidence", p: "A good explanation points to the code that supports each claim. If the assistant says a function validates input, ask where that happens and what cases are not covered." },
+  ],
+  example: { title: "Explanation prompt", body: "Ask the assistant to explain behavior and risk together.", code: "Explain this function in beginner language.\nThen list its inputs, outputs, side effects, and two possible bugs." },
+  terms: [["Data flow", "How information moves through functions, state, APIs, and UI."], ["Side effect", "Something code changes outside its return value."], ["Trace", "Following execution step by step."]],
+  activityHint: "Paste a small function and ask for a plain-English explanation, then compare it to your own explanation.",
+  check: { prompt: "What makes an AI code explanation more reliable?", options: ["It is very long", "It cites the exact lines or logic it is explaining", "It uses complex words", "It avoids mentioning risks"], answer: 1, explain: "Grounded explanations connect claims to the actual code." },
+});
+L({
+  id: "l-ai-18", courseId: "c-ai", topicId: "t-ai-8", order: 5, title: "AI Debugging", minutes: 13,
+  summary: "Use AI to understand errors, form hypotheses, inspect state, and test fixes.",
+  why: "Debugging is not guessing. AI can help, but the developer must reproduce and verify the issue.",
+  objectives: ["Share useful debugging context", "Ask for likely root causes", "Verify fixes with tests or reproduction steps"],
+  sections: [
+    { h: "Give the assistant the right evidence", p: "Useful debugging prompts include the error message, relevant code, expected behavior, actual behavior, recent changes, and reproduction steps. Without evidence, the assistant may guess." },
+    { h: "Fix one hypothesis at a time", p: "Ask for possible causes, choose one, test it, and observe the result. Avoid applying five generated fixes at once because you will not know what worked." },
+  ],
+  example: { title: "Debugging prompt", body: "The best prompt includes symptoms and reproduction.", code: "Expected: clicking Save creates a project.\nActual: button does nothing.\nConsole error: Cannot read properties of undefined (reading 'id').\nRelevant code: ...\nWhat are the top 3 likely causes?" },
+  terms: [["Reproduction steps", "Exact steps that make the bug happen again."], ["Root cause", "The underlying reason the bug occurs."], ["Hypothesis", "A testable explanation for the failure."]],
+  activityHint: "Take one error message and ask for three possible causes. Test only the most likely one first.",
+  check: { prompt: "What context should you include in an AI debugging request?", options: ["Only 'it is broken'", "Error message, expected behavior, actual behavior, relevant code, and reproduction steps", "Your favorite color", "Only the file name"], answer: 1, explain: "Debugging needs evidence. The assistant cannot reason well without symptoms and code." },
+});
+L({
+  id: "l-ai-19", courseId: "c-ai", topicId: "t-ai-8", order: 6, title: "AI Refactoring", minutes: 12,
+  summary: "Use AI to improve code structure without changing behavior.",
+  why: "Refactoring makes code easier to read, test, and maintain, but behavior must stay the same.",
+  objectives: ["Define refactoring", "Ask AI for safe small refactors", "Use tests to confirm behavior did not change"],
+  sections: [
+    { h: "Improve the shape, preserve the result", p: "Refactoring means changing how code is organized while keeping what it does the same. AI can extract helpers, reduce duplication, improve naming, simplify conditionals, and separate responsibilities." },
+    { h: "Use guardrails", p: "Ask the assistant to keep public behavior unchanged, avoid unrelated rewrites, and list what changed. Run tests before and after. If no tests exist, create a few examples first." },
+  ],
+  example: { title: "Safe refactor prompt", body: "A precise refactor request limits risk.", code: "Refactor this function for readability only.\nDo not change behavior or public API.\nExplain each change and suggest tests to confirm it." },
+  terms: [["Refactoring", "Improving internal code structure without changing external behavior."], ["Public API", "How other code calls or depends on a module."], ["Regression", "A bug introduced into behavior that used to work."]],
+  activityHint: "Ask AI to refactor a duplicated block, then compare outputs with the original using the same inputs.",
+  check: { prompt: "What must stay the same during refactoring?", options: ["The file length", "The behavior users and other code depend on", "All variable names", "The comments"], answer: 1, explain: "Refactoring changes structure, not intended behavior." },
+});
+L({
+  id: "l-ai-20", courseId: "c-ai", topicId: "t-ai-8", order: 7, title: "AI Code Review", minutes: 13,
+  summary: "Use AI as an extra reviewer for bugs, risks, security issues, and missing tests.",
+  why: "Review protects users and teams. AI can help scan code, but humans own final judgment.",
+  objectives: ["Ask for review findings", "Separate serious issues from style opinions", "Turn review feedback into fixes"],
+  sections: [
+    { h: "Review for risk first", p: "A useful AI review asks for correctness bugs, security concerns, accessibility issues, data-loss risks, and missing tests before style suggestions. Findings should point to specific code and explain impact." },
+    { h: "Do not outsource approval", p: "AI can miss subtle product behavior and team conventions. Treat it as an extra reviewer, then decide what matters." },
+  ],
+  example: { title: "Review prompt", body: "Ask for actionable findings, not compliments.", code: "Review this diff for bugs, security risks, accessibility issues, and missing tests.\nPrioritize findings by severity and cite the relevant code." },
+  terms: [["Code review", "A structured check of code before it is shipped."], ["Severity", "How much harm an issue can cause."], ["Finding", "A specific review issue with evidence and impact."]],
+  activityHint: "Run an AI review on a small change and separate findings into must-fix, consider, and ignore.",
+  check: { prompt: "What should an AI code review prioritize first?", options: ["Compliments", "Bugs, risks, security, accessibility, and missing tests", "Renaming every variable", "Changing the color palette"], answer: 1, explain: "Review should protect behavior and users before style." },
+});
+L({
+  id: "l-ai-21", courseId: "c-ai", topicId: "t-ai-8", order: 8, title: "AI Testing", minutes: 13,
+  summary: "Use AI to generate test cases, edge cases, and test names, then run and improve them.",
+  why: "Tests make AI-assisted coding safer because they turn requirements into checks.",
+  objectives: ["Generate tests from requirements", "Identify edge cases", "Run tests to verify behavior"],
+  sections: [
+    { h: "Tests as executable expectations", p: "AI can suggest unit tests, integration tests, edge cases, and manual test plans. The best input is a clear description of expected behavior plus examples that should pass and fail." },
+    { h: "Improve generated tests", p: "Generated tests may check shallow behavior or mirror implementation details. Strengthen them by adding boundary cases, failure cases, and user workflows." },
+  ],
+  example: { title: "Testing request", body: "Ask for tests that prove behavior, not just code coverage.", code: "Write tests for validatePassword.\nRequirements: at least 8 chars, one number, one uppercase letter.\nInclude empty, too short, valid, and missing-number cases." },
+  terms: [["Unit test", "A test for one small function or module."], ["Edge case", "An unusual input that can reveal bugs."], ["Coverage", "How much code or behavior tests exercise."]],
+  activityHint: "Ask AI for tests for one function, then add one edge case the assistant forgot.",
+  check: { prompt: "Why are tests important when using AI-generated code?", options: ["They make the code longer", "They verify behavior and catch mistakes", "They replace reading the code", "They guarantee perfect security"], answer: 1, explain: "Tests provide evidence that behavior matches expectations." },
+});
+L({
+  id: "l-ai-22", courseId: "c-ai", topicId: "t-ai-8", order: 9, title: "AI Documentation", minutes: 10,
+  summary: "Use AI to draft README files, comments, API docs, release notes, and user guides.",
+  why: "Good documentation helps people use and maintain software. AI can draft it quickly, but accuracy matters.",
+  objectives: ["Generate useful documentation drafts", "Check docs against real behavior", "Avoid misleading comments"],
+  sections: [
+    { h: "Docs for users and developers", p: "AI can summarize setup steps, explain APIs, create examples, draft changelogs, and turn technical notes into user-friendly guides. Strong docs answer what it does, how to use it, and what can go wrong." },
+    { h: "Keep docs honest", p: "Documentation is harmful when it claims features that do not exist. Verify commands, screenshots, options, and examples against the actual app." },
+  ],
+  example: { title: "README prompt", body: "Ask for docs tied to the real project.", code: "Draft a README for this Vite React app.\nInclude setup, dev command, build command, environment variables, and common troubleshooting.\nDo not invent features." },
+  terms: [["README", "A project document explaining purpose, setup, and usage."], ["API docs", "Documentation for how code or services are called."], ["Changelog", "A list of meaningful changes between versions."]],
+  activityHint: "Generate setup docs for a small project, then run each command to verify it.",
+  check: { prompt: "What is the biggest risk of AI-generated documentation?", options: ["It can be too accurate", "It may invent features or commands that do not exist", "It always deletes code", "It cannot write headings"], answer: 1, explain: "Docs must be checked against the real software." },
+});
+L({
+  id: "l-ai-23", courseId: "c-ai", topicId: "t-ai-8", order: 10, title: "AI-Assisted Project Building", minutes: 14,
+  summary: "Plan, build, test, and ship a small project with AI support while keeping control of the architecture.",
+  why: "The goal is not just to generate code. The goal is to deliver working software through a disciplined workflow.",
+  objectives: ["Break a project into small tasks", "Use AI for planning and implementation support", "Validate the finished project"],
+  sections: [
+    { h: "Plan before building", p: "Start with the user goal, screens or endpoints, data model, states, and success criteria. Ask AI for a plan, review it, then build one small slice at a time." },
+    { h: "Ship with evidence", p: "A working AI-assisted project still needs manual testing, automated tests where useful, error states, mobile checks, accessibility checks, and a clear commit history." },
+  ],
+  example: { title: "Small project workflow", body: "Build a task tracker in slices.", code: "1. Define data model\n2. Build add-task form\n3. Build task list\n4. Add complete/delete\n5. Test empty, long text, mobile, refresh behavior" },
+  terms: [["Slice", "A small complete piece of functionality."], ["Acceptance criteria", "Conditions that prove a feature is done."], ["Architecture", "The structure and boundaries of the system."]],
+  activityHint: "Ask AI for a build plan for a tiny app, then reduce the first task until it can be completed in 30 minutes.",
+  check: { prompt: "What is the best way to build a project with AI help?", options: ["Ask AI to build everything at once", "Break it into small slices and verify each one", "Skip planning", "Avoid testing until launch"], answer: 1, explain: "Small verified slices are easier to understand, debug, and improve." },
+});
+L({
+  id: "l-ai-24", courseId: "c-ai", topicId: "t-ai-8", order: 11, title: "Using AI Coding Agents", minutes: 14,
+  summary: "Coding agents can inspect files, edit code, run commands, and iterate toward a goal.",
+  why: "Agents are more powerful than chat because they can act in a codebase. Learners need to guide them safely.",
+  objectives: ["Explain what a coding agent does", "Write clear agent tasks", "Review agent changes before accepting"],
+  sections: [
+    { h: "From assistant to agent", p: "A coding agent can read project files, understand patterns, make edits, run builds or tests, and revise after failures. This makes it useful for multi-file tasks, but also means instructions and review matter more." },
+    { h: "Guide the agent", p: "Good agent instructions include the goal, files or features involved, constraints, verification commands, and what not to change. Review the diff before shipping because agents can make broad edits." },
+  ],
+  example: { title: "Agent task", body: "A strong task gives the agent scope and verification.", code: "Add saved filters to the Projects page.\nUse existing store patterns.\nDo not redesign the page.\nRun npm run build and summarize changed files." },
+  terms: [["Coding agent", "An AI system that can work directly in a codebase."], ["Diff", "The exact code changes made."], ["Scope", "The boundaries of what should and should not change."]],
+  activityHint: "Write an agent task for a small bug fix, including goal, constraints, and verification.",
+  check: { prompt: "What should you do before accepting an agent's changes?", options: ["Trust the agent automatically", "Review the diff and run verification", "Delete tests", "Ignore changed files"], answer: 1, explain: "Agents can edit many files. Review and verification keep control with the developer." },
+});
+L({
+  id: "l-ai-25", courseId: "c-ai", topicId: "t-ai-8", order: 12, title: "Responsible Use of AI for Coding", minutes: 13,
+  summary: "Use AI coding tools with privacy, security, honesty, licensing, and learning integrity.",
+  why: "AI-assisted code can affect users, teams, and private data. Responsible habits protect everyone.",
+  objectives: ["Protect sensitive code and data", "Disclose AI assistance where required", "Check security, licensing, and learning risks"],
+  sections: [
+    { h: "Privacy and security first", p: "Do not paste secrets, private keys, real user data, or confidential code into tools that are not approved for that data. Check generated code for insecure patterns such as unsafe eval, weak authentication, missing validation, or exposed tokens." },
+    { h: "Learn, do not hide", p: "Students should use AI to understand and improve, not to submit work they cannot explain. Professional teams may require disclosure, review, or policy checks for AI-assisted work." },
+  ],
+  example: { title: "Responsible checklist", body: "Before shipping AI-assisted code, run the checklist.", code: "No secrets pasted\nNo private user data exposed\nGenerated code reviewed\nTests pass\nSecurity-sensitive logic checked\nAI use disclosed when required" },
+  terms: [["Secret", "A token, key, password, or credential that must not be exposed."], ["Disclosure", "Telling teachers, clients, or teammates when AI materially helped."], ["License risk", "The risk of using code without the right permission."]],
+  activityHint: "Create a personal AI coding checklist for privacy, testing, security, and disclosure.",
+  check: { prompt: "Which item should never be pasted into a public AI coding tool?", options: ["A fake example", "A public function name", "An API key or password", "A simple comment"], answer: 2, explain: "Secrets must be protected. Never paste real credentials into unapproved tools." },
 });
 
 // ·· ROBOTICS ·· Topic 1 — Robotics Fundamentals

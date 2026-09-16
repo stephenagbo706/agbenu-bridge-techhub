@@ -215,6 +215,7 @@ export const SKILLS: Skill[] = [
   { id: "sk-ai-ml",     domain: "Artificial Intelligence", name: "Machine Learning Concepts", via: { lessons: ["l-ai-7", "l-ai-8"] } },
   { id: "sk-ai-resp",   domain: "Artificial Intelligence", name: "Responsible AI Practice", via: { lessons: ["l-ai-9", "l-ai-10"] } },
   { id: "sk-ai-project", domain: "Artificial Intelligence", name: "AI Project Builder", via: { lessons: ["l-ai-13"], project: "p-ai-2" } },
+  { id: "sk-ai-code-tools", domain: "Artificial Intelligence", name: "AI Coding Tools Workflow", via: { lessons: ["l-ai-14", "l-ai-15", "l-ai-16", "l-ai-17", "l-ai-18", "l-ai-19", "l-ai-20", "l-ai-21", "l-ai-22", "l-ai-23", "l-ai-24", "l-ai-25"] } },
 
   { id: "sk-rb-loop",  domain: "Robotics & IoT", name: "Sense–Think–Act Design", via: { lessons: ["l-rb-1", "l-rb-2"] } },
   { id: "sk-rb-elec",  domain: "Robotics & IoT", name: "Electronics & Sensors", via: { lessons: ["l-rb-3", "l-rb-4"] } },
@@ -388,6 +389,22 @@ export const VIDEOS: Video[] = [
     published: true,
     createdAt: Date.now() - 12 * 86400000,
     updatedAt: Date.now() - 12 * 86400000,
+  },
+  {
+    id: "v-ai-7",
+    lessonId: "l-ai-14",
+    title: "Get Started with GitHub Copilot in VS Code",
+    description: "A practical introduction to AI coding assistance in VS Code, including Copilot basics, chat, slash commands, testing, edits, and responsible workflow habits.",
+    videoUrl: "https://learn-video.azurefd.net/vod/player?show=visual-studio-code&ep=get-started-with-github-copilot-in-vs-code",
+    thumbnailUrl: undefined,
+    provider: "external",
+    duration: 1284, // 21:24
+    captionsUrl: undefined,
+    sortOrder: 1,
+    isRequired: true,
+    published: true,
+    createdAt: Date.now() - 8 * 86400000,
+    updatedAt: Date.now() - 8 * 86400000,
   },
   // Robotics Course Videos
   {
