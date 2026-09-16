@@ -32,6 +32,28 @@ const LEVELS = [
   { xp: 650, name: "Innovator" },
 ];
 
+function appendMissingById<T extends { id: string }>(current: T[], seed: T[]): T[] {
+  const ids = new Set(current.map((item) => item.id));
+  const missing = seed.filter((item) => !ids.has(item.id));
+  return missing.length ? [...current, ...missing] : current;
+}
+
+function mergeSeedContent(parsed: DB): DB {
+  const seed = buildSeedDB();
+  return {
+    ...parsed,
+    courses: appendMissingById(parsed.courses ?? [], seed.courses),
+    topics: appendMissingById(parsed.topics ?? [], seed.topics),
+    lessons: appendMissingById(parsed.lessons ?? [], seed.lessons),
+    activities: appendMissingById(parsed.activities ?? [], seed.activities),
+    assessments: appendMissingById(parsed.assessments ?? [], seed.assessments),
+    projects: appendMissingById(parsed.projects ?? [], seed.projects),
+    skills: appendMissingById(parsed.skills ?? [], seed.skills),
+    achievements: appendMissingById(parsed.achievements ?? [], seed.achievements),
+    videos: appendMissingById(parsed.videos ?? [], seed.videos),
+  };
+}
+
 function loadDB(): DB {
   try {
     const raw = localStorage.getItem(LS_DB);
@@ -64,7 +86,7 @@ function loadDB(): DB {
         if (!parsed.classAttendance) {
           parsed.classAttendance = {};
         }
-        return parsed;
+        return mergeSeedContent(parsed);
       }
     }
   } catch { /* fall through to seed */ }
