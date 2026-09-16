@@ -5,7 +5,7 @@ import { Chip, Reveal, SectionHead, cn } from "../components/ui";
 import { Icon } from "../components/icons";
 import {
   NeuralNetworkSim, ClassificationSim, PromptEngineeringSim,
-  NLPTextClassificationSim,
+  NLPTextClassificationSim, AIBuilderLabSim,
   RobotSimulator, SensorSim, IoTSim, MicrocontrollerSim,
   APISim, DatabaseSim, BusinessModelSim, ProductDevSim,
   SimulationContainer, DiagramNode, DiagramArrow,
@@ -23,6 +23,7 @@ const LABS: LabDef[] = [
   { id: "lab-ai-cls", courseId: "c-ai", title: "Classification Lab", desc: "Train a simple classifier on visual data", icon: "📊", minutes: 12 },
   { id: "lab-ai-prompt", courseId: "c-ai", title: "Prompt Engineering Lab", desc: "Build structured prompts and see quality effects", icon: "✍️", minutes: 10 },
   { id: "lab-ai-nlp", courseId: "c-ai", title: "NLP Text Classification Lab", desc: "Tokenize text and classify its sentiment", icon: "💬", minutes: 12 },
+  { id: "lab-ai-builder", courseId: "c-ai", title: "AI Builder Lab", desc: "Choose components and build a small AI system", icon: "🎮", minutes: 15 },
   // Robotics Labs
   { id: "lab-rob-move", courseId: "c-rob", title: "Robot Movement Simulator", desc: "Program a virtual robot to reach targets", icon: "🤖", minutes: 15 },
   { id: "lab-rob-sensor", courseId: "c-rob", title: "Sensor & Automation Lab", desc: "Connect sensors to automation rules", icon: "🌡️", minutes: 10 },
@@ -286,6 +287,7 @@ export function VirtualLabsView({ courseId }: { courseId?: string }) {
       case "lab-ai-cls": return <ClassificationSim />;
       case "lab-ai-prompt": return <PromptEngineeringSim />;
       case "lab-ai-nlp": return <NLPTextClassificationSim />;
+      case "lab-ai-builder": return <AIBuilderLabSim />;
       case "lab-rob-move": return <RobotSimulator />;
       case "lab-rob-sensor": return <SensorSim />;
       case "lab-rob-iot": return <IoTSim />;

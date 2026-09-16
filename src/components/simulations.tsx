@@ -482,6 +482,115 @@ export function PromptEngineeringSim() {
   );
 }
 
+// ─── AI Builder Lab ─────────────────────────────────────────────────────────
+
+const aiBuilderProjects = [
+  { id: "chatbot", title: "AI Chatbot", input: "User messages", task: "Dialogue + retrieval", output: "Helpful replies", icon: "💬" },
+  { id: "recommender", title: "Recommendation System", input: "Preferences", task: "Scoring + ranking", output: "Ranked suggestions", icon: "🎯" },
+  { id: "classifier", title: "Image Classifier", input: "Images", task: "Computer vision", output: "Image label", icon: "🖼️" },
+  { id: "sentiment", title: "Sentiment Detector", input: "Text", task: "NLP classification", output: "Positive / neutral / negative", icon: "😊" },
+  { id: "study", title: "AI Study Assistant", input: "Goals + weak areas", task: "Planning + generation", output: "Study plan", icon: "📚" },
+  { id: "prompt", title: "AI Prompt Generator", input: "Role + task + constraints", task: "Prompt assembly", output: "Structured prompt", icon: "✍️" },
+  { id: "career", title: "AI Career Assistant", input: "Skills + interests", task: "Matching + explanation", output: "Career paths", icon: "🧭" },
+];
+
+const aiBuilderComponents = [
+  { id: "input", label: "Input Data", help: "What the user gives the system." },
+  { id: "model", label: "AI Task", help: "The model, prompt, classifier, or ranking logic." },
+  { id: "output", label: "Output Format", help: "What the user receives." },
+  { id: "interface", label: "User Interface", help: "How someone uses the system." },
+  { id: "evaluation", label: "Test Cases", help: "Examples that prove the system works." },
+  { id: "limits", label: "Limits & Safety", help: "What the system should not claim or do." },
+];
+
+export function AIBuilderLabSim() {
+  const [projectId, setProjectId] = useState(aiBuilderProjects[0].id);
+  const [selected, setSelected] = useState<string[]>(["input", "model", "output"]);
+  const project = aiBuilderProjects.find((item) => item.id === projectId) ?? aiBuilderProjects[0];
+  const score = Math.round((selected.length / aiBuilderComponents.length) * 100);
+  const ready = selected.length === aiBuilderComponents.length;
+
+  const toggle = (id: string) => {
+    setSelected((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  };
+
+  return (
+    <SimulationContainer title="AI Builder Lab" subtitle="Choose components and build a small AI system" badge="Game / Simulation" accent="#2f5fe3">
+      <div className="space-y-4">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {aiBuilderProjects.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setProjectId(item.id)}
+              className={cn(
+                "rounded-lg border-1.5 px-3 py-3 text-left transition-all",
+                projectId === item.id ? "border-ai bg-ai-soft shadow-sm" : "border-line bg-paper/50 hover:border-ai/50",
+              )}
+            >
+              <span className="text-xl">{item.icon}</span>
+              <span className="mt-1 block text-sm font-semibold">{item.title}</span>
+              <span className="mt-0.5 block text-[11px] leading-relaxed text-mute">{item.output}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
+          <div className="rounded-lg border-1.5 border-line bg-paper/50 p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <div className="font-display text-base font-bold">{project.icon} {project.title}</div>
+                <p className="mt-1 text-[12px] text-mute">Select the system pieces needed to make this AI project usable.</p>
+              </div>
+              <span className={cn("rounded-md px-2 py-1 font-mono text-[10px] font-bold", ready ? "bg-se-soft text-se" : "bg-gold-soft text-[#8a5a06]")}>
+                {score}% ready
+              </span>
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-2">
+              {aiBuilderComponents.map((component) => {
+                const active = selected.includes(component.id);
+                return (
+                  <button
+                    key={component.id}
+                    onClick={() => toggle(component.id)}
+                    className={cn(
+                      "rounded-md border-1.5 px-3 py-3 text-left transition-all",
+                      active ? "border-ai bg-white shadow-sm" : "border-line bg-card/60 text-mute hover:border-ai/50",
+                    )}
+                  >
+                    <span className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-semibold">{component.label}</span>
+                      <span className={cn("flex h-5 w-5 items-center justify-center rounded-full border text-[10px]", active ? "border-ai bg-ai text-white" : "border-line")}>{active ? "✓" : "+"}</span>
+                    </span>
+                    <span className="mt-1 block text-[11px] leading-relaxed text-mute">{component.help}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="rounded-lg border-1.5 border-line bg-ink p-4 text-paper">
+            <div className="font-mono text-[10px] uppercase tracking-wider text-paper/50">System blueprint</div>
+            <div className="mt-3 space-y-2 text-sm">
+              <p><strong>Input:</strong> {project.input}</p>
+              <p><strong>AI task:</strong> {project.task}</p>
+              <p><strong>Output:</strong> {project.output}</p>
+            </div>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-paper/10">
+              <div className="h-full rounded-full bg-ai transition-all" style={{ width: `${score}%` }} />
+            </div>
+            <p className="mt-3 text-[12px] leading-relaxed text-paper/70">
+              {ready
+                ? "Ready to build: your system has inputs, model logic, output, interface, testing, and safety notes."
+                : "Keep adding components. A real AI project needs more than a model: it needs an interface, tests, and known limits."}
+            </p>
+          </div>
+        </div>
+      </div>
+    </SimulationContainer>
+  );
+}
+
 // ─── Robot Movement Simulator ────────────────────────────────────────────────
 
 type Direction = "up" | "down" | "left" | "right";

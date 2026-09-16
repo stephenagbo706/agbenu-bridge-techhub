@@ -72,6 +72,7 @@ export const TOPICS: Topic[] = [
   { id: "t-ai-4", courseId: "c-ai", order: 4, title: "Machine Learning Concepts", summary: "Supervised learning, training vs. testing, overfitting." },
   { id: "t-ai-5", courseId: "c-ai", order: 5, title: "Responsible AI", summary: "Bias, fairness, privacy, and honest use of AI systems." },
   { id: "t-ai-6", courseId: "c-ai", order: 6, title: "Natural Language Processing", summary: "How AI works with human language: understanding, generation, and translation." },
+  { id: "t-ai-7", courseId: "c-ai", order: 7, title: "AI Project", summary: "Apply everything by designing and building a small AI system." },
 
   { id: "t-rb-1", courseId: "c-rob", order: 1, title: "Robotics Fundamentals", summary: "The sense–think–act loop and what makes a machine a robot." },
   { id: "t-rb-2", courseId: "c-rob", order: 2, title: "Electronics & Sensors", summary: "Circuits, current, and measuring the physical world." },
@@ -278,6 +279,23 @@ L({
   terms: [["Text classification", "Assigning text to a category such as spam or not spam."], ["Sentiment analysis", "Identifying the emotional tone of a message."], ["Keyword extraction", "Finding the most important words or phrases in a text."], ["Speech recognition", "Turning spoken language into text."], ["Machine translation", "Converting text from one language to another."], ["Language model", "A model trained to understand and generate language by predicting likely words."]],
   activityHint: "Choose one AI app or service you use daily and identify which NLP task it performs: classification, sentiment, translation, prediction, keyword extraction, or chatbot interaction.",
   check: { prompt: "Which NLP task is most closely related to identifying whether a customer review is positive or negative?", options: ["Text prediction", "Sentiment analysis", "Speech recognition", "Keyword extraction"], answer: 1, explain: "Sentiment analysis detects emotional tone, such as positive, negative, or neutral language." },
+});
+
+// ·· AI ·· Topic 7 — AI Project
+L({
+  id: "l-ai-13", courseId: "c-ai", topicId: "t-ai-7", order: 1, title: "AI Project: Build a Working AI System", minutes: 18,
+  summary: "Choose an AI project, identify the inputs and outputs, assemble the right model components, test the behavior, and explain the limits.",
+  why: "A learner does not truly understand AI until they can turn a problem into a small working system. This topic moves from concepts to proof: a demo, a test plan, and a clear explanation of what the system can and cannot do.",
+  objectives: ["Choose an AI project that matches a real use case", "Map inputs, model task, output, interface, and evaluation", "Build or prototype one small AI system", "Explain limitations, risks, and next improvements"],
+  sections: [
+    { h: "From idea to system", p: "Every AI project has the same basic shape: input data enters, a model or prompt transforms it, an output is produced, and a user takes action. A chatbot uses messages as input. A recommendation system uses preferences. An image classifier uses pictures. A sentiment detector uses text. The project work is choosing the right pieces and proving they work together." },
+    { h: "Seven project paths", p: "You can build an AI chatbot, a simple recommendation system, an image classifier, a sentiment detector, an AI study assistant, an AI prompt generator, or an AI career assistant. Each project should include a clear user, sample inputs, expected outputs, and a test set that shows when the system performs well and when it fails." },
+    { h: "The builder checklist", p: "A strong AI project includes: the user problem, the input type, the model/task type, the output format, a simple interface, five test cases, and a note on limits. Do not stop at a demo that works once. A real builder tests normal examples, edge cases, and bad inputs." },
+  ],
+  example: { title: "Choosing a project path", body: "A student wants help studying. The project can become an AI Study Assistant: input is a lesson topic and weak areas; the model generates a plan and practice questions; output is a weekly study schedule. The test cases check whether the plan is realistic, topic-specific, and easy to follow.", code: "user problem: I need a study plan for AI basics\ninput: topic, exam date, weak areas, time/day\nAI task: generate plan + practice questions\noutput: weekly schedule + quiz\nchecks: accurate? realistic? personalized? safe?" },
+  terms: [["AI system", "A complete workflow that combines input, model logic, output, interface, and evaluation."], ["Prototype", "A small working version used to test an idea before building it fully."], ["Evaluation", "Testing outputs against examples, expectations, and known failure cases."]],
+  activityHint: "Open the AI Builder Lab. Choose one project path, assemble the components, then write five test cases for your system.",
+  check: { prompt: "Which item is most important for turning an AI demo into a real project?", options: ["A colorful logo", "A clear input, output, test cases, and known limitations", "Only using the biggest model", "Skipping user feedback"], answer: 1, explain: "A real AI project needs a defined workflow and evaluation. The model is only one part of the system." },
 });
 
 // ·· ROBOTICS ·· Topic 1 — Robotics Fundamentals

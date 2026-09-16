@@ -39,6 +39,90 @@ export const PROJECTS: Project[] = [
     ],
   },
   {
+    id: "p-ai-2", code: "PRJ-AI-02", title: "Build an AI Chatbot",
+    brief: "Design a small chatbot for a real support, study, or service task. Define the user, write sample questions, design the response style, and test the bot with normal and difficult prompts.",
+    objectives: ["Define chatbot purpose and user", "Create intents and sample questions", "Design helpful, safe response rules", "Test the bot with at least five conversations"],
+    courseIds: ["c-ai"], difficulty: "Guided", hours: 4,
+    milestones: [
+      { id: "p-ai-2-m1", title: "User problem and chatbot purpose" },
+      { id: "p-ai-2-m2", title: "Intent list with sample user questions" },
+      { id: "p-ai-2-m3", title: "Response style, safety rules, and fallback behavior" },
+      { id: "p-ai-2-m4", title: "Five tested conversations with improvements" },
+    ],
+  },
+  {
+    id: "p-ai-3", code: "PRJ-AI-03", title: "Build a Simple Recommendation System",
+    brief: "Create a recommendation logic for books, courses, songs, videos, or careers. Use user preferences as inputs and explain why each recommendation is produced.",
+    objectives: ["Collect preference inputs", "Create matching or scoring rules", "Return ranked recommendations", "Explain and test recommendation quality"],
+    courseIds: ["c-ai"], difficulty: "Guided", hours: 4,
+    milestones: [
+      { id: "p-ai-3-m1", title: "Recommendation domain and user preference fields" },
+      { id: "p-ai-3-m2", title: "Item list with tags or features" },
+      { id: "p-ai-3-m3", title: "Scoring logic and ranked output" },
+      { id: "p-ai-3-m4", title: "Three user profiles tested and explained" },
+    ],
+  },
+  {
+    id: "p-ai-4", code: "PRJ-AI-04", title: "Build an Image Classifier",
+    brief: "Prototype an image classifier that separates a small set of categories. Document the classes, example images, expected labels, and how the classifier should respond when uncertain.",
+    objectives: ["Choose image classes", "Prepare example inputs", "Design classification output", "Test correct, incorrect, and uncertain examples"],
+    courseIds: ["c-ai"], difficulty: "Independent", hours: 5,
+    milestones: [
+      { id: "p-ai-4-m1", title: "Class list and example image plan" },
+      { id: "p-ai-4-m2", title: "Input and output interface sketch" },
+      { id: "p-ai-4-m3", title: "Classifier prototype or workflow" },
+      { id: "p-ai-4-m4", title: "Test results with uncertainty notes" },
+    ],
+  },
+  {
+    id: "p-ai-5", code: "PRJ-AI-05", title: "Build a Sentiment Detector",
+    brief: "Build a text sentiment detector for reviews, comments, or messages. It should classify text as positive, neutral, or negative and explain the evidence.",
+    objectives: ["Define sentiment labels", "Create a sample text dataset", "Classify and explain sentiment", "Test edge cases such as sarcasm or mixed feedback"],
+    courseIds: ["c-ai"], difficulty: "Guided", hours: 3,
+    milestones: [
+      { id: "p-ai-5-m1", title: "Sentiment labels and example texts" },
+      { id: "p-ai-5-m2", title: "Classification rules or prompt" },
+      { id: "p-ai-5-m3", title: "Output format with evidence words" },
+      { id: "p-ai-5-m4", title: "Edge-case testing notes" },
+    ],
+  },
+  {
+    id: "p-ai-6", code: "PRJ-AI-06", title: "Build an AI Study Assistant",
+    brief: "Design an assistant that turns a learner's topic, goals, weak areas, and time available into a study plan with practice questions.",
+    objectives: ["Gather learner context", "Generate a structured study plan", "Create practice questions", "Verify the plan is realistic and topic-specific"],
+    courseIds: ["c-ai"], difficulty: "Guided", hours: 4,
+    milestones: [
+      { id: "p-ai-6-m1", title: "Learner input form and constraints" },
+      { id: "p-ai-6-m2", title: "Study-plan prompt or workflow" },
+      { id: "p-ai-6-m3", title: "Practice question generator" },
+      { id: "p-ai-6-m4", title: "Verification notes from two study scenarios" },
+    ],
+  },
+  {
+    id: "p-ai-7", code: "PRJ-AI-07", title: "Build an AI Prompt Generator",
+    brief: "Create a tool that helps users build strong prompts by collecting role, context, task, output format, and constraints, then assembling a reusable prompt.",
+    objectives: ["Use the five-part prompt structure", "Collect user constraints", "Generate a clean final prompt", "Test prompt quality across different tasks"],
+    courseIds: ["c-ai"], difficulty: "Guided", hours: 3,
+    milestones: [
+      { id: "p-ai-7-m1", title: "Prompt generator input fields" },
+      { id: "p-ai-7-m2", title: "Prompt assembly template" },
+      { id: "p-ai-7-m3", title: "Three generated prompts for different use cases" },
+      { id: "p-ai-7-m4", title: "Quality review and refinement notes" },
+    ],
+  },
+  {
+    id: "p-ai-8", code: "PRJ-AI-08", title: "Build an AI Career Assistant",
+    brief: "Build a career assistant that maps a learner's interests, strengths, skills, and goals to possible technology careers with a next-step learning plan.",
+    objectives: ["Collect learner profile data", "Match profile to career paths", "Explain recommendations", "Generate next learning steps"],
+    courseIds: ["c-ai"], difficulty: "Independent", hours: 5,
+    milestones: [
+      { id: "p-ai-8-m1", title: "Learner profile fields and career list" },
+      { id: "p-ai-8-m2", title: "Matching logic or prompt" },
+      { id: "p-ai-8-m3", title: "Recommendation output with explanations" },
+      { id: "p-ai-8-m4", title: "Next-step learning plan and test profiles" },
+    ],
+  },
+  {
     id: "p-rb-1", code: "PRJ-RB-01", title: "Smart Plant Monitor",
     brief:
       "Design (and prototype where hardware allows) a sensor-based automation that keeps a plant healthy: measure soil moisture and light, apply control rules with hysteresis to a water pump or alert, and document the full sense–think–act loop with requirements, a bill of materials, and a test plan.",
@@ -130,6 +214,7 @@ export const SKILLS: Skill[] = [
   { id: "sk-ai-prompt", domain: "Artificial Intelligence", name: "Prompt Engineering", via: { lessons: ["l-ai-5", "l-ai-6"] } },
   { id: "sk-ai-ml",     domain: "Artificial Intelligence", name: "Machine Learning Concepts", via: { lessons: ["l-ai-7", "l-ai-8"] } },
   { id: "sk-ai-resp",   domain: "Artificial Intelligence", name: "Responsible AI Practice", via: { lessons: ["l-ai-9", "l-ai-10"] } },
+  { id: "sk-ai-project", domain: "Artificial Intelligence", name: "AI Project Builder", via: { lessons: ["l-ai-13"], project: "p-ai-2" } },
 
   { id: "sk-rb-loop",  domain: "Robotics & IoT", name: "Sense–Think–Act Design", via: { lessons: ["l-rb-1", "l-rb-2"] } },
   { id: "sk-rb-elec",  domain: "Robotics & IoT", name: "Electronics & Sensors", via: { lessons: ["l-rb-3", "l-rb-4"] } },
@@ -287,6 +372,22 @@ export const VIDEOS: Video[] = [
     published: true,
     createdAt: Date.now() - 23 * 86400000,
     updatedAt: Date.now() - 23 * 86400000,
+  },
+  {
+    id: "v-ai-6",
+    lessonId: "l-ai-13",
+    title: "3 Python AI Projects for Beginners",
+    description: "A beginner-friendly AI project walkthrough covering practical AI builds, including an AI agent and image classifier ideas that connect to the AI Project topic.",
+    videoUrl: "https://www.youtube.com/embed/XZdY15sHUa8",
+    thumbnailUrl: "https://img.youtube.com/vi/XZdY15sHUa8/maxresdefault.jpg",
+    provider: "youtube",
+    duration: 4100, // ~1:08:20
+    captionsUrl: undefined,
+    sortOrder: 1,
+    isRequired: false,
+    published: true,
+    createdAt: Date.now() - 12 * 86400000,
+    updatedAt: Date.now() - 12 * 86400000,
   },
   // Robotics Course Videos
   {
