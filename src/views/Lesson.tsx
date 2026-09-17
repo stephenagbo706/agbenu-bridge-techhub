@@ -8,6 +8,29 @@ import { VideoPlayer } from "../components/VideoPlayer";
 
 // ─── Inline lesson diagrams ─────────────────────────────────────────────────
 
+const DI_IMAGE_GUIDES = [
+  {
+    title: "Discover Problem",
+    sub: "Find real pain",
+    img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQnva-NNPNPRBCceYon4scDHE4PyhWDdD7GTzWYUXEmTw&s=10",
+  },
+  {
+    title: "Design Solution",
+    sub: "Hypothesize fix",
+    img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRK6JKYhf5feE9GsaOP8sA-er6PT16PwRexScm5FnsJXQ&s=10",
+  },
+  {
+    title: "Build Prototype",
+    sub: "Make it tangible",
+    img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRNGk6-J-ynuB1SlECVI2Y6lRk8f_FBnOx9otl0OVnGtg&s=10",
+  },
+  {
+    title: "Test & Learn",
+    sub: "Validate with users",
+    img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQnva-NNPNPRBCceYon4scDHE4PyhWDdD7GTzWYUXEmTw&s=10",
+  },
+];
+
 function LessonDiagram({ courseId, topicOrder, accent }: { courseId: string; topicOrder: number; accent: string }) {
   const [active, setActive] = useState<string | null>(null);
 
@@ -51,6 +74,35 @@ function LessonDiagram({ courseId, topicOrder, accent }: { courseId: string; top
   };
 
   const diagram = diagrams[courseId] ?? diagrams["c-ai"];
+
+  if (courseId === "c-di") {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Icon name="spark" size={14} className="text-mute" />
+          <span className="font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-mute">Digital innovation image board</span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {DI_IMAGE_GUIDES.map((item) => (
+            <article key={item.title} className="overflow-hidden rounded-lg border-1.5 border-line bg-paper/50">
+              <div className="relative aspect-[4/3] bg-paper">
+                <img src={item.img} alt={`${item.title} visual guide`} className="h-full w-full object-cover" loading="lazy" referrerPolicy="no-referrer" />
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/80 to-transparent px-3 pb-3 pt-8">
+                  <h3 className="font-display text-sm font-bold text-white">{item.title}</h3>
+                  <p className="text-[11px] font-semibold text-white/80">{item.sub}</p>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className="rounded-md border-l-4 bg-paper/50 px-4 py-2.5" style={{ borderColor: accent }}>
+          <p className="text-[12px] leading-relaxed">
+            Use the images as visual prompts for the Digital Innovation process. Open the full Virtual Lab when you are ready to build, test, and improve the idea hands-on.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
@@ -104,6 +156,7 @@ export default function LessonView({ id }: { id: string }) {
   const checkSettled = correct || tries >= 2;
   const topicLessons = app.topicLessons(topic.id);
   const activity = db.activities.find((a) => a.topicId === lesson.topicId);
+  const isDigitalInnovation = course.id === "c-di";
 
   const answer = (i: number) => {
     if (checkSettled) return;
@@ -224,7 +277,7 @@ export default function LessonView({ id }: { id: string }) {
             );
           })()}
 
-          {/* Interactive Diagram Section */}
+          {/* Visual Guide / Interactive Diagram Section */}
           <Reveal delay={190}>
             <section className="card-ink overflow-hidden bg-card">
               <button
@@ -235,8 +288,8 @@ export default function LessonView({ id }: { id: string }) {
                   <Icon name="spark" size={14} className={m.text} />
                 </span>
                 <div className="flex-1">
-                  <span className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-mute">Interactive diagrams & simulations</span>
-                  <p className="text-[12px] text-mute">Visualize concepts, run simulations, and experiment in the virtual lab</p>
+                  <span className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-mute">{isDigitalInnovation ? "Image guides & virtual lab" : "Interactive diagrams & simulations"}</span>
+                  <p className="text-[12px] text-mute">{isDigitalInnovation ? "Study visual prompts for each innovation step, then build in the virtual lab" : "Visualize concepts, run simulations, and experiment in the virtual lab"}</p>
                 </div>
                 <span className="flex items-center gap-1 font-mono text-[10px] font-medium uppercase tracking-wider transition-transform group-hover:translate-x-0.5" style={{ color: m.hex }}>
                   Open lab <Icon name="arrowR" size={11} />

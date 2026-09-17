@@ -259,7 +259,7 @@ export function CourseView({ id }: { id: string }) {
           </span>
           <div className="min-w-0 flex-1">
             <h3 className="font-display text-base font-bold tracking-tight">Virtual Labs & Simulations</h3>
-            <p className="text-[13px] text-mute">Interactive diagrams, simulations, and hands-on experiments for this course</p>
+            <p className="text-[13px] text-mute">{course.id === "c-di" ? "Image guides, design prompts, and hands-on innovation labs for this course" : "Interactive diagrams, simulations, and hands-on experiments for this course"}</p>
           </div>
           <span className="flex items-center gap-1 font-mono text-[11px] font-medium uppercase tracking-wider transition-transform group-hover:translate-x-0.5" style={{ color: m.hex }}>
             Open labs <Icon name="arrowR" size={13} />
