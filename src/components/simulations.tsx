@@ -1150,7 +1150,10 @@ const GD_CANVA_PORTFOLIO_KEY = `${GD_KEY}-canva-portfolio`;
 const DESIGN_TOOL_LINKS = {
   canva: "https://www.canva.com/",
 };
-const GD_REFERENCE_IMAGE = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSYfd1WIXMOaiAA_HMNXkJty64vkOuCPzup8e8Au4sP7Q&s=10";
+const GD_REFERENCE_IMAGES = [
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSYfd1WIXMOaiAA_HMNXkJty64vkOuCPzup8e8Au4sP7Q&s=10",
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTZeS5AvLgR9LroUHUTY2RTJpjxiKBXgiNhen08Ppzrkw&s=10",
+];
 const gdProjectBriefs: GDProjectBrief[] = [
   { id: "first", title: "My First Graphic", level: "Beginner", xp: 50, format: "Square post", req: ["Title", "Message", "Image", "Background"], skills: ["Basic layout", "Visual hierarchy"], brief: "Create a motivational graphic with a title, short message, image area, background, and readable type." },
   { id: "principles", title: "Redesign the Bad Poster", level: "Beginner", xp: 60, format: "Poster", req: ["Clear heading", "Alignment", "Contrast", "Spacing"], skills: ["Contrast", "Alignment", "Balance"], brief: "Improve a crowded poster by using contrast, alignment, spacing, and a cleaner reading order." },
@@ -1315,8 +1318,12 @@ export function GraphicDesignStudioSim() {
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)]">
           <div className="rounded-lg border-1.5 border-line bg-card p-4">
             <div className="flex flex-wrap items-start gap-3">
-              <div className="w-full overflow-hidden rounded-md border border-line bg-paper sm:w-44">
-                <img src={GD_REFERENCE_IMAGE} alt="Graphic design reference example" className="aspect-[4/3] w-full object-cover" loading="lazy" referrerPolicy="no-referrer" />
+              <div className="w-full overflow-hidden rounded-md border border-line bg-paper sm:w-56">
+                <div className="grid grid-cols-2 gap-px bg-line">
+                  {GD_REFERENCE_IMAGES.map((src, index) => (
+                    <img key={src} src={src} alt={`Graphic design reference example ${index + 1}`} className="aspect-[4/3] w-full bg-paper object-cover" loading="lazy" referrerPolicy="no-referrer" />
+                  ))}
+                </div>
                 <div className="border-t border-line px-3 py-2 text-[11px] font-semibold text-mute">Design reference</div>
               </div>
               <div className="min-w-0 flex-1">
