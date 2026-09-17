@@ -1150,10 +1150,6 @@ const GD_CANVA_PORTFOLIO_KEY = `${GD_KEY}-canva-portfolio`;
 const DESIGN_TOOL_LINKS = {
   canva: "https://www.canva.com/",
 };
-const GD_REFERENCE_IMAGES = [
-  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSYfd1WIXMOaiAA_HMNXkJty64vkOuCPzup8e8Au4sP7Q&s=10",
-  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTZeS5AvLgR9LroUHUTY2RTJpjxiKBXgiNhen08Ppzrkw&s=10",
-];
 const gdProjectBriefs: GDProjectBrief[] = [
   { id: "first", title: "My First Graphic", level: "Beginner", xp: 50, format: "Square post", req: ["Title", "Message", "Image", "Background"], skills: ["Basic layout", "Visual hierarchy"], brief: "Create a motivational graphic with a title, short message, image area, background, and readable type." },
   { id: "principles", title: "Redesign the Bad Poster", level: "Beginner", xp: 60, format: "Poster", req: ["Clear heading", "Alignment", "Contrast", "Spacing"], skills: ["Contrast", "Alignment", "Balance"], brief: "Improve a crowded poster by using contrast, alignment, spacing, and a cleaner reading order." },
@@ -1168,6 +1164,66 @@ const gdProjectBriefs: GDProjectBrief[] = [
   { id: "ai", title: "AI-Assisted Promo Graphic", level: "Advanced", xp: 160, format: "Promo graphic", req: ["AI idea note", "Edited final design", "Readable text", "Brand colors"], skills: ["AI-assisted design", "Creative direction"], brief: "Use an AI idea or generated concept as inspiration, then refine it into a clear promotional graphic." },
   { id: "final", title: "Complete Brand Package", level: "Capstone", xp: 250, format: "Brand package", req: ["Logo", "Palette", "Typography", "Flyer", "Social post", "Mockup"], skills: ["Portfolio design", "Brand systems"], brief: "Build a complete brand package that combines the best skills from the full Graphic Design Academy." },
 ];
+const gdReferenceSpecs: Record<string, { title: string; subtitle: string; bg: string; accent: string; ink: string; soft: string }> = {
+  first: { title: "Create Your Future", subtitle: "Motivational square graphic", bg: "#f7f3e8", accent: "#c2317e", ink: "#1f2937", soft: "#f7cfe4" },
+  principles: { title: "Before / After Poster", subtitle: "Clean contrast and spacing", bg: "#eef4ff", accent: "#2f5fe3", ink: "#172554", soft: "#bfdbfe" },
+  palette: { title: "Brand Color Palette", subtitle: "Primary, secondary, accent", bg: "#fff7ed", accent: "#d95f0e", ink: "#431407", soft: "#fed7aa" },
+  type: { title: "Type Hierarchy", subtitle: "Headline, subheading, body", bg: "#f5f3ff", accent: "#7c3aed", ink: "#2e1065", soft: "#ddd6fe" },
+  layout: { title: "Tech Event", subtitle: "Date, time, location, CTA", bg: "#ecfeff", accent: "#0891b2", ink: "#164e63", soft: "#a5f3fc" },
+  logo: { title: "Tech Logo Sheet", subtitle: "Mark, wordmark, one-color", bg: "#f8fafc", accent: "#0f766e", ink: "#134e4a", soft: "#99f6e4" },
+  flyer: { title: "AI Bootcamp", subtitle: "Flyer with strong call to action", bg: "#fef2f2", accent: "#dc2626", ink: "#450a0a", soft: "#fecaca" },
+  social: { title: "Social Campaign", subtitle: "Three connected post designs", bg: "#eff6ff", accent: "#2563eb", ink: "#1e3a8a", soft: "#bfdbfe" },
+  brand: { title: "TechStart Brand", subtitle: "Logo, palette, type, mockup", bg: "#f0fdf4", accent: "#16a34a", ink: "#14532d", soft: "#bbf7d0" },
+  photo: { title: "Before / After Edit", subtitle: "Photo crop and adjustment notes", bg: "#fafaf9", accent: "#57534e", ink: "#292524", soft: "#d6d3d1" },
+  ai: { title: "AI Promo Graphic", subtitle: "AI idea refined into design", bg: "#fdf4ff", accent: "#a21caf", ink: "#4a044e", soft: "#f5d0fe" },
+  final: { title: "Brand Package", subtitle: "Complete portfolio presentation", bg: "#fffbeb", accent: "#ca8a04", ink: "#422006", soft: "#fde68a" },
+};
+function GDReferencePreview({ id, compact = false }: { id: string; compact?: boolean }) {
+  const spec = gdReferenceSpecs[id] ?? gdReferenceSpecs.first;
+  const small = compact;
+  const titleSize = small ? 22 : 30;
+  const subSize = small ? 11 : 15;
+  const labelSize = small ? 8 : 11;
+  const mainArt = (() => {
+    switch (id) {
+      case "principles":
+        return <><rect x="54" y="120" width="118" height="150" rx="10" fill="#ffffff" opacity="0.82" /><rect x="206" y="120" width="180" height="150" rx="10" fill="#ffffff" /><path d="M75 145h76M75 165h45M75 205h88M75 226h36" stroke={spec.accent} strokeWidth="8" strokeLinecap="round" /><path d="M232 150h118M232 177h82M232 222h128" stroke={spec.ink} strokeWidth="10" strokeLinecap="round" /><circle cx="356" cy="238" r="18" fill={spec.accent} /></>;
+      case "palette":
+        return <>{["#2f5fe3", "#c2317e", "#d95f0e", "#16a34a"].map((color, i) => <rect key={color} x={58 + i * 78} y="128" width="62" height="120" rx="14" fill={color} />)}<path d="M64 278h250" stroke={spec.ink} strokeWidth="8" strokeLinecap="round" opacity="0.7" /></>;
+      case "type":
+        return <><text x="58" y="148" fill={spec.ink} fontSize="58" fontWeight="900">Aa</text><text x="58" y="199" fill={spec.accent} fontSize="34" fontWeight="800">Headline</text><path d="M58 228h246M58 252h190M58 276h220" stroke={spec.ink} strokeWidth="8" strokeLinecap="round" opacity="0.55" /></>;
+      case "layout":
+        return <><rect x="58" y="118" width="248" height="158" rx="18" fill="#ffffff" /><rect x="84" y="146" width="68" height="76" rx="10" fill={spec.accent} /><path d="M176 154h95M176 184h68M84 244h188" stroke={spec.ink} strokeWidth="10" strokeLinecap="round" /><circle cx="330" cy="238" r="28" fill={spec.soft} /></>;
+      case "logo":
+        return <><circle cx="126" cy="184" r="58" fill={spec.accent} /><path d="M101 192l22-54 36 82" stroke="#ffffff" strokeWidth="15" strokeLinecap="round" strokeLinejoin="round" /><path d="M214 162h134M214 197h94M86 278h260" stroke={spec.ink} strokeWidth="12" strokeLinecap="round" opacity="0.72" /></>;
+      case "flyer":
+        return <><rect x="72" y="108" width="248" height="190" rx="18" fill="#ffffff" /><path d="M100 145h156M100 181h112M100 218h178" stroke={spec.ink} strokeWidth="11" strokeLinecap="round" /><rect x="100" y="245" width="118" height="34" rx="17" fill={spec.accent} /><circle cx="292" cy="140" r="34" fill={spec.soft} /></>;
+      case "social":
+        return <>{[0, 1, 2].map((i) => <g key={i} transform={`translate(${58 + i * 108} 128)`}><rect width="88" height="118" rx="14" fill="#ffffff" /><circle cx="44" cy="42" r="22" fill={i === 1 ? spec.accent : spec.soft} /><path d="M22 84h44M22 101h32" stroke={spec.ink} strokeWidth="6" strokeLinecap="round" /></g>)}</>;
+      case "brand":
+        return <><rect x="58" y="126" width="116" height="116" rx="18" fill="#ffffff" /><circle cx="116" cy="184" r="34" fill={spec.accent} /><rect x="204" y="126" width="152" height="42" rx="10" fill={spec.soft} /><rect x="204" y="188" width="70" height="54" rx="10" fill={spec.accent} /><path d="M292 204h64M292 224h42" stroke={spec.ink} strokeWidth="8" strokeLinecap="round" /></>;
+      case "photo":
+        return <><rect x="58" y="126" width="135" height="126" rx="16" fill="#d6d3d1" /><rect x="221" y="126" width="135" height="126" rx="16" fill="#ffffff" /><path d="M72 230l48-54 34 35 25-28" stroke={spec.ink} strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" opacity="0.55" /><path d="M235 230l48-54 34 35 25-28" stroke={spec.accent} strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" /><path d="M204 154v74" stroke={spec.ink} strokeWidth="6" strokeLinecap="round" opacity="0.45" /></>;
+      case "ai":
+        return <><rect x="72" y="126" width="226" height="136" rx="18" fill="#ffffff" /><circle cx="124" cy="174" r="34" fill={spec.soft} /><path d="M116 174h16M124 166v16M178 157h84M178 187h58M104 232h166" stroke={spec.accent} strokeWidth="9" strokeLinecap="round" /><circle cx="320" cy="124" r="24" fill={spec.accent} opacity="0.75" /></>;
+      case "final":
+        return <><rect x="52" y="132" width="118" height="150" rx="16" fill="#ffffff" /><rect x="188" y="114" width="126" height="92" rx="14" fill={spec.soft} /><rect x="244" y="224" width="112" height="70" rx="14" fill={spec.accent} /><path d="M78 166h66M78 194h46M208 148h82M264 255h58" stroke={spec.ink} strokeWidth="8" strokeLinecap="round" opacity="0.72" /></>;
+      default:
+        return <><rect x="226" y="112" width="116" height="116" rx="20" fill={spec.accent} /><circle cx="284" cy="170" r="28" fill="#ffffff" opacity="0.55" /><path d="M72 150h118M72 188h86M72 250h176" stroke={spec.ink} strokeWidth="12" strokeLinecap="round" /><rect x="72" y="272" width="108" height="32" rx="16" fill={spec.accent} /></>;
+    }
+  })();
+  return (
+    <svg viewBox="0 0 420 320" role="img" aria-label={`${spec.title} design preview`} className="aspect-[4/3] w-full bg-paper">
+      <rect width="420" height="320" fill={spec.bg} />
+      <circle cx="364" cy="54" r="62" fill={spec.soft} opacity="0.85" />
+      <circle cx="32" cy="286" r="58" fill={spec.soft} opacity="0.55" />
+      <text x="34" y="52" fill={spec.ink} fontSize={labelSize} fontWeight="800" letterSpacing="1.5">DESIGN TASK</text>
+      <text x="34" y="86" fill={spec.ink} fontSize={titleSize} fontWeight="900">{spec.title}</text>
+      <text x="35" y="111" fill={spec.ink} fontSize={subSize} fontWeight="650" opacity="0.72">{spec.subtitle}</text>
+      {mainArt}
+    </svg>
+  );
+}
 const gdStart: GDElement[] = [
   { id: "bg", kind: "rect", x: 0, y: 0, w: 720, h: 540, fill: "#f7f3e8", text: "Background" },
   { id: "title", kind: "text", x: 64, y: 82, w: 430, h: 58, fill: "#1f2937", text: "CREATE YOUR FUTURE", fontSize: 40 },
@@ -1313,18 +1369,20 @@ export function GraphicDesignStudioSim() {
     <SimulationContainer title="Graphic Design Studio" subtitle="Canvas editor, projects, feedback, save/reopen, export, and portfolio" badge="Design Lab" accent="#c2317e">
       <div className="space-y-4">
         <div className="grid gap-2 lg:grid-cols-3">
-          {gdProjectBriefs.map((item) => <button key={item.id} onClick={() => setProjectId(item.id)} className={cn("rounded-lg border-1.5 px-3 py-3 text-left focus-ring", project.id === item.id ? "border-di bg-di-soft" : "border-line bg-paper/50")}><span className="block text-sm font-semibold">{item.title}</span><span className="mt-1 block font-mono text-[10px] uppercase tracking-wider text-mute">{item.level} · +{item.xp} XP</span></button>)}
+          {gdProjectBriefs.map((item) => (
+            <button key={item.id} onClick={() => setProjectId(item.id)} className={cn("overflow-hidden rounded-lg border-1.5 text-left focus-ring", project.id === item.id ? "border-di bg-di-soft" : "border-line bg-paper/50")}>
+              <GDReferencePreview id={item.id} compact />
+              <span className="block px-3 pb-3 pt-2 text-sm font-semibold">{item.title}</span>
+              <span className="block px-3 pb-3 font-mono text-[10px] uppercase tracking-wider text-mute">{item.level} · +{item.xp} XP</span>
+            </button>
+          ))}
         </div>
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)]">
           <div className="rounded-lg border-1.5 border-line bg-card p-4">
             <div className="flex flex-wrap items-start gap-3">
-              <div className="w-full overflow-hidden rounded-md border border-line bg-paper sm:w-56">
-                <div className="grid grid-cols-2 gap-px bg-line">
-                  {GD_REFERENCE_IMAGES.map((src, index) => (
-                    <img key={src} src={src} alt={`Graphic design reference example ${index + 1}`} className="aspect-[4/3] w-full bg-paper object-cover" loading="lazy" referrerPolicy="no-referrer" />
-                  ))}
-                </div>
-                <div className="border-t border-line px-3 py-2 text-[11px] font-semibold text-mute">Design reference</div>
+              <div className="w-full overflow-hidden rounded-md border border-line bg-paper sm:w-64">
+                <GDReferencePreview id={project.id} />
+                <div className="border-t border-line px-3 py-2 text-[11px] font-semibold text-mute">Design to build</div>
               </div>
               <div className="min-w-0 flex-1">
                 <p className="font-mono text-[10px] font-semibold uppercase tracking-wider text-di">Canva design workflow</p>
