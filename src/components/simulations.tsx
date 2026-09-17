@@ -1129,11 +1129,40 @@ function AITestPanel(props: {
 // ─── Graphic Design Studio ──────────────────────────────────────────────────
 
 type GDElement = { id: string; kind: "text" | "rect" | "circle" | "image"; x: number; y: number; w: number; h: number; fill: string; text?: string; fontSize?: number; rotate?: number };
+type GDProjectBrief = { id: string; title: string; level: string; xp: number; req: string[]; brief: string; format: string; skills: string[] };
+type GDWorkflowStatus = "started" | "canva-opened" | "design-in-progress" | "ready-for-submission" | "submitted" | "reviewed";
+type GDWorkflowState = {
+  status: GDWorkflowStatus;
+  canvaOpened: boolean;
+  checkedRequirements: Record<string, boolean>;
+  uploadedName?: string;
+  uploadedType?: string;
+  uploadedPreview?: string;
+  submittedAt?: number;
+  reviewedAt?: number;
+  feedback?: string;
+  xpAwarded?: number;
+};
+type GDCanvaPortfolioItem = { projectId: string; title: string; at: number; uploadName?: string; preview?: string; xp: number };
 const GD_KEY = "techhub-graphic-design-studio-v1";
-const gdProjectBriefs = [
-  { id: "first", title: "My First Graphic", level: "Beginner", xp: 50, req: ["Title", "Message", "Image", "Background"], brief: "Create a motivational graphic with a title, short message, image area, background, and readable type." },
-  { id: "flyer", title: "AI Bootcamp Flyer", level: "Intermediate", xp: 100, req: ["Event title", "Date", "Time", "Location", "CTA", "Logo"], brief: "Design a flyer for Agbenu Bridge TechHub's AI Bootcamp with clear event details and a strong call to action." },
-  { id: "brand", title: "TechStart Brand Board", level: "Advanced", xp: 200, req: ["Logo", "Color palette", "Typography", "Social graphic", "Business card"], brief: "Create a mini brand identity board for TechStart Academy." },
+const GD_WORKFLOW_KEY = `${GD_KEY}-canva-workflow`;
+const GD_CANVA_PORTFOLIO_KEY = `${GD_KEY}-canva-portfolio`;
+const DESIGN_TOOL_LINKS = {
+  canva: "https://www.canva.com/",
+};
+const gdProjectBriefs: GDProjectBrief[] = [
+  { id: "first", title: "My First Graphic", level: "Beginner", xp: 50, format: "Square post", req: ["Title", "Message", "Image", "Background"], skills: ["Basic layout", "Visual hierarchy"], brief: "Create a motivational graphic with a title, short message, image area, background, and readable type." },
+  { id: "principles", title: "Redesign the Bad Poster", level: "Beginner", xp: 60, format: "Poster", req: ["Clear heading", "Alignment", "Contrast", "Spacing"], skills: ["Contrast", "Alignment", "Balance"], brief: "Improve a crowded poster by using contrast, alignment, spacing, and a cleaner reading order." },
+  { id: "palette", title: "Brand Color Palette", level: "Beginner", xp: 70, format: "Brand board", req: ["Primary color", "Secondary color", "Accent color", "Usage note"], skills: ["Color theory", "Brand consistency"], brief: "Create a color palette for a youth technology brand and explain where each color should be used." },
+  { id: "type", title: "Typography Poster", level: "Beginner", xp: 70, format: "Poster", req: ["Headline", "Subheading", "Body text", "Two font styles"], skills: ["Typography", "Hierarchy"], brief: "Design a poster that shows strong type hierarchy with a headline, subheading, body text, and readable font choices." },
+  { id: "layout", title: "Technology Event Poster", level: "Intermediate", xp: 90, format: "Event poster", req: ["Event title", "Date", "Time", "Location", "CTA"], skills: ["Layout", "Information design"], brief: "Design a technology event poster that makes the most important information easy to scan." },
+  { id: "logo", title: "Technology Logo", level: "Intermediate", xp: 100, format: "Logo sheet", req: ["Logo mark", "Wordmark", "One-color version", "Short brand meaning"], skills: ["Logo design", "Brand symbols"], brief: "Create a simple technology logo with a mark, wordmark, and a short note explaining the brand idea." },
+  { id: "flyer", title: "AI Bootcamp Flyer", level: "Intermediate", xp: 100, format: "Flyer", req: ["Event title", "Date", "Time", "Location", "CTA", "Logo"], skills: ["Flyer design", "Call to action"], brief: "Design a flyer for Agbenu Bridge TechHub's AI Bootcamp with clear event details and a strong call to action." },
+  { id: "social", title: "Social Media Campaign", level: "Intermediate", xp: 120, format: "Three posts", req: ["Post 1", "Post 2", "Post 3", "Consistent style"], skills: ["Campaign design", "Content systems"], brief: "Create three social graphics for one campaign, keeping the colors, type, and message consistent." },
+  { id: "brand", title: "TechStart Brand Board", level: "Advanced", xp: 200, format: "Mini brand identity", req: ["Logo", "Color palette", "Typography", "Social graphic", "Business card"], skills: ["Brand identity", "Presentation"], brief: "Create a mini brand identity board for TechStart Academy." },
+  { id: "photo", title: "Before and After Edit", level: "Intermediate", xp: 120, format: "Photo edit", req: ["Before image", "After image", "Adjustment notes", "Clean crop"], skills: ["Photo editing", "Composition"], brief: "Edit a photo for a technology training advert and show the before, after, and the changes you made." },
+  { id: "ai", title: "AI-Assisted Promo Graphic", level: "Advanced", xp: 160, format: "Promo graphic", req: ["AI idea note", "Edited final design", "Readable text", "Brand colors"], skills: ["AI-assisted design", "Creative direction"], brief: "Use an AI idea or generated concept as inspiration, then refine it into a clear promotional graphic." },
+  { id: "final", title: "Complete Brand Package", level: "Capstone", xp: 250, format: "Brand package", req: ["Logo", "Palette", "Typography", "Flyer", "Social post", "Mockup"], skills: ["Portfolio design", "Brand systems"], brief: "Build a complete brand package that combines the best skills from the full Graphic Design Academy." },
 ];
 const gdStart: GDElement[] = [
   { id: "bg", kind: "rect", x: 0, y: 0, w: 720, h: 540, fill: "#f7f3e8", text: "Background" },
@@ -1144,6 +1173,37 @@ const gdStart: GDElement[] = [
   { id: "ctaText", kind: "text", x: 94, y: 397, w: 170, h: 30, fill: "#ffffff", text: "Start today", fontSize: 20 },
 ];
 const cloneGD = (items: GDElement[]) => items.map((item) => ({ ...item }));
+const emptyGDWorkflow = (): GDWorkflowState => ({ status: "started", canvaOpened: false, checkedRequirements: {} });
+const isTrustedCanvaUrl = (url: string) => {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" && ["canva.com", "www.canva.com"].includes(parsed.hostname);
+  } catch {
+    return false;
+  }
+};
+function CanvaLaunchButton({ onOpened }: { onOpened: () => void }) {
+  const [blocked, setBlocked] = useState(false);
+  const url = DESIGN_TOOL_LINKS.canva;
+  const openCanva = () => {
+    if (!isTrustedCanvaUrl(url)) return;
+    onOpened();
+    const opened = window.open(url, "_blank", "noopener,noreferrer");
+    if (!opened) setBlocked(true);
+  };
+  return (
+    <div className="space-y-2">
+      <button type="button" onClick={openCanva} className="btn btn-primary w-full justify-center">
+        Open Canva
+      </button>
+      {blocked && (
+        <a href={url} target="_blank" rel="noreferrer" onClick={onOpened} className="block rounded-md border border-line bg-paper px-3 py-2 text-center text-xs font-semibold text-di hover:border-di">
+          Browser blocked the popup. Tap here to open Canva.
+        </a>
+      )}
+    </div>
+  );
+}
 
 export function GraphicDesignStudioSim() {
   const [projectId, setProjectId] = useState("first");
@@ -1157,11 +1217,21 @@ export function GraphicDesignStudioSim() {
   const [portfolio, setPortfolio] = useState<{ title: string; at: number; elements: GDElement[] }[]>(() => {
     try { return JSON.parse(localStorage.getItem(`${GD_KEY}-portfolio`) || "[]"); } catch { return []; }
   });
+  const [workflowByProject, setWorkflowByProject] = useState<Record<string, GDWorkflowState>>(() => {
+    try { return JSON.parse(localStorage.getItem(GD_WORKFLOW_KEY) || "{}"); } catch { return {}; }
+  });
+  const [canvaPortfolio, setCanvaPortfolio] = useState<GDCanvaPortfolioItem[]>(() => {
+    try { return JSON.parse(localStorage.getItem(GD_CANVA_PORTFOLIO_KEY) || "[]"); } catch { return []; }
+  });
+  const [uploadError, setUploadError] = useState("");
   const project = gdProjectBriefs.find((item) => item.id === projectId) ?? gdProjectBriefs[0];
+  const workflow = workflowByProject[project.id] ?? emptyGDWorkflow();
   const selected = elements.find((item) => item.id === selectedId);
   const designText = elements.map((item) => `${item.kind} ${item.text ?? ""}`).join(" ").toLowerCase();
   const checks = project.req.map((req) => ({ req, ok: designText.includes(req.split(" ")[0].toLowerCase()) || (req === "Color palette" && new Set(elements.map((item) => item.fill)).size >= 3) }));
   const score = Math.round((checks.filter((item) => item.ok).length / checks.length) * 100);
+  const manualChecksComplete = project.req.every((req) => workflow.checkedRequirements[req]);
+  const canSubmitCanvaDesign = workflow.canvaOpened && manualChecksComplete && Boolean(workflow.uploadedName);
   const commit = (next: GDElement[]) => { setHistory((old) => [...old.slice(-14), cloneGD(elements)]); setFuture([]); setElements(next); };
   const update = (patch: Partial<GDElement>) => selected && commit(elements.map((item) => item.id === selected.id ? { ...item, ...patch } : item));
   const add = (kind: GDElement["kind"]) => {
@@ -1173,6 +1243,55 @@ export function GraphicDesignStudioSim() {
   const redo = () => { const next = future[0]; if (!next) return; setHistory((old) => [...old, cloneGD(elements)]); setElements(next); setFuture((old) => old.slice(1)); };
   const save = () => localStorage.setItem(GD_KEY, JSON.stringify({ projectId, elements }));
   const submit = () => { const next = [{ title: project.title, at: Date.now(), elements: cloneGD(elements) }, ...portfolio].slice(0, 8); setPortfolio(next); localStorage.setItem(`${GD_KEY}-portfolio`, JSON.stringify(next)); save(); };
+  const updateWorkflow = (patch: Partial<GDWorkflowState>) => {
+    setWorkflowByProject((old) => {
+      const current = old[project.id] ?? emptyGDWorkflow();
+      const next = { ...old, [project.id]: { ...current, ...patch } };
+      localStorage.setItem(GD_WORKFLOW_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+  const markCanvaOpened = () => updateWorkflow({ status: workflow.status === "started" ? "canva-opened" : workflow.status, canvaOpened: true });
+  const toggleRequirement = (req: string) => updateWorkflow({ checkedRequirements: { ...workflow.checkedRequirements, [req]: !workflow.checkedRequirements[req] }, status: workflow.canvaOpened ? "design-in-progress" : workflow.status });
+  const handleCanvaUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    setUploadError("");
+    if (!file) return;
+    const allowed = ["image/png", "image/jpeg", "application/pdf"];
+    if (!allowed.includes(file.type)) {
+      setUploadError("Upload a PNG, JPG, or PDF export from Canva.");
+      event.target.value = "";
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setUploadError("Keep the exported design under 8 MB for this classroom submission.");
+      event.target.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => updateWorkflow({
+      status: "design-in-progress",
+      uploadedName: file.name,
+      uploadedType: file.type,
+      uploadedPreview: typeof reader.result === "string" ? reader.result : undefined,
+    });
+    reader.readAsDataURL(file);
+  };
+  const markReadyForSubmission = () => canSubmitCanvaDesign && updateWorkflow({ status: "ready-for-submission" });
+  const submitCanvaDesign = () => {
+    if (!canSubmitCanvaDesign) return;
+    const submittedAt = Date.now();
+    const feedback = manualChecksComplete
+      ? "Submitted for teacher review. The checklist is complete, and your exported design is ready to discuss."
+      : "Submitted, but the checklist still needs review.";
+    const nextWorkflow: GDWorkflowState = { ...workflow, status: "submitted", submittedAt, reviewedAt: submittedAt, feedback, xpAwarded: project.xp };
+    const nextByProject = { ...workflowByProject, [project.id]: nextWorkflow };
+    const nextPortfolio = [{ projectId: project.id, title: project.title, at: submittedAt, uploadName: workflow.uploadedName, preview: workflow.uploadedPreview, xp: project.xp }, ...canvaPortfolio.filter((item) => item.projectId !== project.id)].slice(0, 12);
+    setWorkflowByProject(nextByProject);
+    setCanvaPortfolio(nextPortfolio);
+    localStorage.setItem(GD_WORKFLOW_KEY, JSON.stringify(nextByProject));
+    localStorage.setItem(GD_CANVA_PORTFOLIO_KEY, JSON.stringify(nextPortfolio));
+  };
   const exportSvg = () => { const svg = document.querySelector("#gd-studio-svg")?.outerHTML; if (!svg) return; const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" })); const a = document.createElement("a"); a.href = url; a.download = `${project.title.toLowerCase().replace(/\s+/g, "-")}.svg`; a.click(); URL.revokeObjectURL(url); };
   const remove = () => selected && selected.id !== "bg" && commit(elements.filter((item) => item.id !== selected.id));
   const duplicate = () => selected && commit([...elements, { ...selected, id: `${selected.id}-${Date.now()}`, x: selected.x + 24, y: selected.y + 24 }]);
@@ -1191,6 +1310,74 @@ export function GraphicDesignStudioSim() {
       <div className="space-y-4">
         <div className="grid gap-2 lg:grid-cols-3">
           {gdProjectBriefs.map((item) => <button key={item.id} onClick={() => setProjectId(item.id)} className={cn("rounded-lg border-1.5 px-3 py-3 text-left focus-ring", project.id === item.id ? "border-di bg-di-soft" : "border-line bg-paper/50")}><span className="block text-sm font-semibold">{item.title}</span><span className="mt-1 block font-mono text-[10px] uppercase tracking-wider text-mute">{item.level} · +{item.xp} XP</span></button>)}
+        </div>
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)]">
+          <div className="rounded-lg border-1.5 border-line bg-card p-4">
+            <div className="flex flex-wrap items-start gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="font-mono text-[10px] font-semibold uppercase tracking-wider text-di">Canva design workflow</p>
+                <h4 className="mt-1 font-display text-lg font-bold">{project.title}</h4>
+                <p className="mt-1 text-sm leading-relaxed text-mute">{project.brief}</p>
+                <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+                  <span className="rounded-md bg-paper px-2 py-1 font-mono text-mute">{project.format}</span>
+                  <span className="rounded-md bg-paper px-2 py-1 font-mono text-mute">{project.level}</span>
+                  <span className="rounded-md bg-gold-soft px-2 py-1 font-mono font-bold text-[#8a5a06]">+{project.xp} XP after submission</span>
+                </div>
+              </div>
+              <div className="w-full sm:w-48">
+                <CanvaLaunchButton onOpened={markCanvaOpened} />
+              </div>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              {(["started", "canva-opened", "design-in-progress", "ready-for-submission", "submitted", "reviewed"] as GDWorkflowStatus[]).map((status) => (
+                <div key={status} className={cn("rounded-md border px-3 py-2 text-xs", workflow.status === status ? "border-di bg-di-soft text-di" : "border-line bg-paper/50 text-mute")}>
+                  <span className="font-mono uppercase tracking-wider">{status.replace(/-/g, " ")}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-lg border-1.5 border-line bg-paper/50 p-4">
+            <h4 className="font-display text-sm font-bold">Bring your Canva design back</h4>
+            <label className="mt-3 block rounded-md border border-dashed border-line bg-card px-3 py-3 text-sm hover:border-di">
+              <span className="block font-semibold">Upload exported design</span>
+              <span className="mt-1 block text-xs text-mute">PNG, JPG, or PDF. This file stays in this browser for classroom review.</span>
+              <input type="file" accept=".png,.jpg,.jpeg,.pdf,image/png,image/jpeg,application/pdf" onChange={handleCanvaUpload} className="mt-3 block w-full text-xs" />
+            </label>
+            {uploadError && <p className="mt-2 text-xs font-semibold text-danger">{uploadError}</p>}
+            {workflow.uploadedName && (
+              <div className="mt-3 rounded-md border border-line bg-card p-3">
+                <div className="text-xs font-semibold">{workflow.uploadedName}</div>
+                {workflow.uploadedType?.startsWith("image/") && workflow.uploadedPreview && <img src={workflow.uploadedPreview} alt={`${project.title} uploaded preview`} className="mt-2 max-h-36 w-full rounded-md object-contain bg-paper" />}
+                {workflow.uploadedType === "application/pdf" && <p className="mt-2 text-xs text-mute">PDF attached for review.</p>}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="rounded-lg border-1.5 border-line bg-card p-4">
+            <h4 className="font-display text-sm font-bold">Manual requirements checklist</h4>
+            <p className="mt-1 text-xs leading-relaxed text-mute">Check each item after you confirm it in your exported design. The app does not pretend to inspect the image for you.</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {project.req.map((req) => (
+                <label key={req} className="flex min-h-12 items-center gap-2 rounded-md border border-line bg-paper/50 px-3 py-2 text-sm">
+                  <input type="checkbox" checked={Boolean(workflow.checkedRequirements[req])} onChange={() => toggleRequirement(req)} className="h-4 w-4 accent-[#c2317e]" />
+                  <span>{req}</span>
+                </label>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button className="btn btn-gold btn-sm" onClick={markReadyForSubmission} disabled={!canSubmitCanvaDesign}>Mark ready</button>
+              <button className="btn btn-primary btn-sm" onClick={submitCanvaDesign} disabled={!canSubmitCanvaDesign}>Submit Canva design</button>
+            </div>
+            {workflow.feedback && <p className="mt-3 rounded-md border border-se bg-se-soft px-3 py-2 text-xs font-semibold text-se">{workflow.feedback} Award: +{workflow.xpAwarded ?? project.xp} XP.</p>}
+          </div>
+          <div className="rounded-lg border-1.5 border-line bg-paper/50 p-4">
+            <h4 className="font-display text-sm font-bold">Design skills</h4>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {project.skills.map((skill) => <span key={skill} className="rounded-md bg-card px-2 py-1 text-xs font-semibold text-mute">{skill}</span>)}
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-mute">Canva opens in the browser because Canva protects its login and editor from being embedded inside other websites.</p>
+          </div>
         </div>
         <div className="grid gap-4 xl:grid-cols-[245px_minmax(0,1fr)_270px]">
           <div className="space-y-3">
@@ -1212,7 +1399,25 @@ export function GraphicDesignStudioSim() {
           <div className="space-y-3">
             <div className="rounded-lg border-1.5 border-line bg-card p-3"><h4 className="font-display text-sm font-bold">Inspector</h4>{selected ? <div className="mt-3 space-y-2">{selected.kind === "text" && <input className="inp" value={selected.text ?? ""} onChange={(event) => update({ text: event.target.value })} aria-label="Selected text" />}<input className="h-10 w-full rounded-md border border-line" type="color" value={selected.fill} onChange={(event) => update({ fill: event.target.value })} /><div className="grid grid-cols-2 gap-2"><input className="inp" type="number" value={Math.round(selected.x)} onChange={(event) => update({ x: Number(event.target.value) })} aria-label="X" /><input className="inp" type="number" value={Math.round(selected.y)} onChange={(event) => update({ y: Number(event.target.value) })} aria-label="Y" /><input className="inp" type="number" value={Math.round(selected.w)} onChange={(event) => update({ w: Number(event.target.value) })} aria-label="Width" /><input className="inp" type="number" value={Math.round(selected.h)} onChange={(event) => update({ h: Number(event.target.value) })} aria-label="Height" /></div>{selected.kind === "text" && <input className="inp" type="number" value={selected.fontSize ?? 24} onChange={(event) => update({ fontSize: Number(event.target.value) })} aria-label="Font size" />}<input type="range" min="-45" max="45" value={selected.rotate ?? 0} onChange={(event) => update({ rotate: Number(event.target.value) })} className="w-full" /><div className="flex gap-2"><button className="btn btn-ghost btn-sm" onClick={() => layer(-1)}>Layer down</button><button className="btn btn-ghost btn-sm" onClick={() => layer(1)}>Layer up</button></div></div> : <p className="mt-2 text-sm text-mute">Select an element.</p>}</div>
             <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3"><h4 className="font-display text-sm font-bold">Design review</h4><div className="mt-2 space-y-1 text-xs"><div>Typography {elements.some((item) => item.kind === "text") ? "✓" : "○"}</div><div>Color {new Set(elements.map((item) => item.fill)).size >= 2 ? "✓" : "○"}</div><div>Layout {elements.length >= 4 ? "✓" : "○"}</div><div>Hierarchy {elements.some((item) => (item.fontSize ?? 0) >= 32) ? "✓" : "⚠"}</div></div><p className="mt-2 text-[11px] leading-relaxed text-mute">Automated feedback is a practice guide, not professional human design review.</p></div>
-            <div className="rounded-lg border-1.5 border-line bg-card p-3"><h4 className="font-display text-sm font-bold">My Design Portfolio</h4><div className="mt-2 space-y-2">{portfolio.length ? portfolio.map((item) => <button key={`${item.title}-${item.at}`} onClick={() => { setProjectId(gdProjectBriefs.find((p) => p.title === item.title)?.id ?? "first"); setElements(item.elements); }} className="w-full rounded-md border border-line px-2 py-2 text-left text-xs hover:border-di">{item.title}<span className="block text-mute">{new Date(item.at).toLocaleDateString()}</span></button>) : <p className="text-xs text-mute">Submit a design to start your portfolio.</p>}</div></div>
+            <div className="rounded-lg border-1.5 border-line bg-card p-3">
+              <h4 className="font-display text-sm font-bold">My Design Portfolio</h4>
+              <div className="mt-2 space-y-2">
+                {canvaPortfolio.map((item) => (
+                  <button key={`${item.projectId}-${item.at}`} onClick={() => setProjectId(item.projectId)} className="w-full rounded-md border border-line px-2 py-2 text-left text-xs hover:border-di">
+                    <span className="font-semibold">{item.title}</span>
+                    <span className="block text-mute">Canva submission · {new Date(item.at).toLocaleDateString()}</span>
+                    {item.preview?.startsWith("data:image/") && <img src={item.preview} alt={`${item.title} portfolio preview`} className="mt-2 max-h-20 w-full rounded object-contain bg-paper" />}
+                  </button>
+                ))}
+                {portfolio.map((item) => (
+                  <button key={`${item.title}-${item.at}`} onClick={() => { setProjectId(gdProjectBriefs.find((p) => p.title === item.title)?.id ?? "first"); setElements(item.elements); }} className="w-full rounded-md border border-line px-2 py-2 text-left text-xs hover:border-di">
+                    {item.title}
+                    <span className="block text-mute">Studio draft · {new Date(item.at).toLocaleDateString()}</span>
+                  </button>
+                ))}
+                {!portfolio.length && !canvaPortfolio.length && <p className="text-xs text-mute">Submit a design to start your portfolio.</p>}
+              </div>
+            </div>
           </div>
         </div>
       </div>
