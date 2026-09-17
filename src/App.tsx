@@ -369,7 +369,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
   const { user } = useApp();
   if (!user) return null;
   return (
-    <aside className={cn("bg-sidebar-trace fixed inset-y-0 left-0 z-40 hidden flex-col bg-ink py-5 transition-[width,padding] duration-200 lg:flex relative", collapsed ? "w-20 px-3" : "w-60 px-3.5")}>
+    <aside className={cn("bg-sidebar-trace fixed inset-y-0 left-0 z-40 hidden flex-col bg-ink py-5 transition-[width,padding] duration-200 lg:flex", collapsed ? "w-20 px-3" : "w-60 px-3.5")}>
       <NavContent collapsed={collapsed} onToggle={onToggle} />
     </aside>
   );
