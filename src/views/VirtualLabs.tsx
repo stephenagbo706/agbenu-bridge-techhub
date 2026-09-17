@@ -8,6 +8,7 @@ import {
   NLPTextClassificationSim, AIBuilderLabSim, AICodingToolsSim,
   RobotSimulator, SensorSim, IoTSim, MicrocontrollerSim,
   APISim, DatabaseSim, BusinessModelSim, ProductDevSim,
+  GraphicDesignStudioSim,
   SimulationContainer, DiagramNode, DiagramArrow,
 } from "../components/simulations";
 
@@ -36,6 +37,7 @@ const LABS: LabDef[] = [
   // Innovation Labs
   { id: "lab-di-biz", courseId: "c-di", title: "Business Model Canvas", desc: "Build and validate a startup business model", icon: "📋", minutes: 15 },
   { id: "lab-di-prod", courseId: "c-di", title: "Product Development Sim", desc: "Walk through the product lifecycle", icon: "🚀", minutes: 12 },
+  { id: "lab-di-graphic-studio", courseId: "c-di", title: "Graphic Design Studio", desc: "Create posters, logos, brand boards, and portfolio designs", icon: "🎨", minutes: 25 },
 ];
 
 // ─── Diagram Components ──────────────────────────────────────────────────────
@@ -298,6 +300,7 @@ export function VirtualLabsView({ courseId }: { courseId?: string }) {
       case "lab-se-db": return <DatabaseSim />;
       case "lab-di-biz": return <BusinessModelSim />;
       case "lab-di-prod": return <ProductDevSim />;
+      case "lab-di-graphic-studio": return <GraphicDesignStudioSim />;
       default: return null;
     }
   };

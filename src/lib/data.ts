@@ -179,6 +179,138 @@ export const PROJECTS: Project[] = [
     ],
   },
   {
+    id: "p-di-gd-1", code: "PRJ-GD-01", title: "My First Motivational Graphic",
+    brief: "Create a simple motivational graphic with a headline, short message, image area, background, and readable typography.",
+    objectives: ["Apply a basic design brief", "Use hierarchy and spacing", "Save a first portfolio design"],
+    courseIds: ["c-di"], difficulty: "Guided", hours: 2,
+    milestones: [
+      { id: "p-di-gd-1-m1", title: "Choose message and audience" },
+      { id: "p-di-gd-1-m2", title: "Add title, message, image area, and background" },
+      { id: "p-di-gd-1-m3", title: "Review readability and spacing" },
+    ],
+  },
+  {
+    id: "p-di-gd-2", code: "PRJ-GD-02", title: "Design Principles Poster Redesign",
+    brief: "Improve a weak poster using balance, contrast, alignment, proximity, repetition, hierarchy, white space, and consistency.",
+    objectives: ["Diagnose layout problems", "Apply at least five principles", "Compare before and after design decisions"],
+    courseIds: ["c-di"], difficulty: "Guided", hours: 3,
+    milestones: [
+      { id: "p-di-gd-2-m1", title: "Identify five design problems" },
+      { id: "p-di-gd-2-m2", title: "Redesign the poster in the studio" },
+      { id: "p-di-gd-2-m3", title: "Write one improvement note for hierarchy, spacing, and alignment" },
+    ],
+  },
+  {
+    id: "p-di-gd-3", code: "PRJ-GD-03", title: "Brand Color Challenge",
+    brief: "Create a color palette for a technology company, school, food business, or fashion brand and test basic text contrast.",
+    objectives: ["Choose palette roles", "Explain color psychology", "Check readable text/background contrast"],
+    courseIds: ["c-di"], difficulty: "Guided", hours: 2,
+    milestones: [
+      { id: "p-di-gd-3-m1", title: "Choose brand type and mood" },
+      { id: "p-di-gd-3-m2", title: "Create primary, secondary, accent, background, and text colors" },
+      { id: "p-di-gd-3-m3", title: "Test contrast and document palette choices" },
+    ],
+  },
+  {
+    id: "p-di-gd-4", code: "PRJ-GD-04", title: "Typography Poster",
+    brief: "Create a poster using a headline, subtitle, body text, typography hierarchy, and appropriate font pairing.",
+    objectives: ["Build type hierarchy", "Pair fonts intentionally", "Improve readability with size and spacing"],
+    courseIds: ["c-di"], difficulty: "Guided", hours: 3,
+    milestones: [
+      { id: "p-di-gd-4-m1", title: "Choose message and font direction" },
+      { id: "p-di-gd-4-m2", title: "Create headline, subtitle, and body hierarchy" },
+      { id: "p-di-gd-4-m3", title: "Review readability on mobile-size preview" },
+    ],
+  },
+  {
+    id: "p-di-gd-5", code: "PRJ-GD-05", title: "Event Poster Layout",
+    brief: "Create a complete event poster using grid, alignment, hierarchy, spacing, image area, and typography.",
+    objectives: ["Use a grid", "Create visual flow", "Organize event information"],
+    courseIds: ["c-di"], difficulty: "Guided", hours: 3,
+    milestones: [
+      { id: "p-di-gd-5-m1", title: "Sketch title, image, paragraph, button, and logo zones" },
+      { id: "p-di-gd-5-m2", title: "Build the poster layout in the studio" },
+      { id: "p-di-gd-5-m3", title: "Check margins, alignment, and visual flow" },
+    ],
+  },
+  {
+    id: "p-di-gd-6", code: "PRJ-GD-06", title: "NovaTech Logo",
+    brief: "Create a simple, scalable, memorable logo for a fictional technology company called NovaTech.",
+    objectives: ["Choose logo type", "Use simple shapes and typography", "Test small-size readability"],
+    courseIds: ["c-di"], difficulty: "Guided", hours: 3,
+    milestones: [
+      { id: "p-di-gd-6-m1", title: "Choose wordmark, symbol, or combination direction" },
+      { id: "p-di-gd-6-m2", title: "Build the logo using text, shape, and color" },
+      { id: "p-di-gd-6-m3", title: "Test logo at small scale and simplify" },
+    ],
+  },
+  {
+    id: "p-di-gd-7", code: "PRJ-GD-07", title: "AI Bootcamp Flyer",
+    brief: "Design a flyer for Agbenu Bridge TechHub's AI Bootcamp with event name, date, time, location, registration information, logo, colors, and CTA.",
+    objectives: ["Prioritize event information", "Create a clear CTA", "Apply consistent branding"],
+    courseIds: ["c-di"], difficulty: "Independent", hours: 4,
+    milestones: [
+      { id: "p-di-gd-7-m1", title: "Add required event details and CTA" },
+      { id: "p-di-gd-7-m2", title: "Create flyer layout with image, logo, and colors" },
+      { id: "p-di-gd-7-m3", title: "Review print/digital readability" },
+    ],
+  },
+  {
+    id: "p-di-gd-8", code: "PRJ-GD-08", title: "Social Media Campaign",
+    brief: "Create three connected social media designs: announcement, promotional graphic, and call-to-action graphic.",
+    objectives: ["Use consistent campaign styling", "Adapt layouts for social media", "Create CTA-focused graphics"],
+    courseIds: ["c-di"], difficulty: "Independent", hours: 4,
+    milestones: [
+      { id: "p-di-gd-8-m1", title: "Define campaign message and visual system" },
+      { id: "p-di-gd-8-m2", title: "Create three connected designs" },
+      { id: "p-di-gd-8-m3", title: "Review consistency across the set" },
+    ],
+  },
+  {
+    id: "p-di-gd-9", code: "PRJ-GD-09", title: "Mini Brand Identity",
+    brief: "Create a logo, color palette, typography system, social media graphic, business card, and brand board.",
+    objectives: ["Build a brand identity system", "Apply visual consistency", "Prepare portfolio-ready brand board"],
+    courseIds: ["c-di"], difficulty: "Independent", hours: 5,
+    milestones: [
+      { id: "p-di-gd-9-m1", title: "Define brand personality" },
+      { id: "p-di-gd-9-m2", title: "Create logo, palette, and type system" },
+      { id: "p-di-gd-9-m3", title: "Create social graphic, business card, and brand board" },
+    ],
+  },
+  {
+    id: "p-di-gd-10", code: "PRJ-GD-10", title: "Photo Edit for Promotion",
+    brief: "Crop and enhance an image, add text and shapes, and keep a clear focal point for a promotional graphic.",
+    objectives: ["Use crop and image adjustments", "Work with layers", "Avoid over-editing"],
+    courseIds: ["c-di"], difficulty: "Independent", hours: 4,
+    milestones: [
+      { id: "p-di-gd-10-m1", title: "Choose image and crop direction" },
+      { id: "p-di-gd-10-m2", title: "Adjust brightness, contrast, and saturation" },
+      { id: "p-di-gd-10-m3", title: "Add text, shape, and final review" },
+    ],
+  },
+  {
+    id: "p-di-gd-11", code: "PRJ-GD-11", title: "AI-Assisted Design Challenge",
+    brief: "Create a promotional graphic using AI-assisted ideation, then explain what AI helped with and what you changed yourself.",
+    objectives: ["Generate a structured design brief", "Make human design decisions", "Reflect on responsible AI use"],
+    courseIds: ["c-di"], difficulty: "Independent", hours: 4,
+    milestones: [
+      { id: "p-di-gd-11-m1", title: "Create AI-assisted concept brief" },
+      { id: "p-di-gd-11-m2", title: "Design final human-edited graphic" },
+      { id: "p-di-gd-11-m3", title: "Explain AI contribution and human edits" },
+    ],
+  },
+  {
+    id: "p-di-gd-12", code: "PRJ-GD-12", title: "Graphic Design Portfolio Package",
+    brief: "Create a mini brand package for TechStart Academy: logo, color palette, typography system, social media post, flyer, business card, and brand board.",
+    objectives: ["Complete a multi-piece design package", "Show consistent brand identity", "Prepare final portfolio evidence"],
+    courseIds: ["c-di"], difficulty: "Capstone", hours: 8,
+    milestones: [
+      { id: "p-di-gd-12-m1", title: "Logo, palette, and type system complete" },
+      { id: "p-di-gd-12-m2", title: "Social post, flyer, and business card complete" },
+      { id: "p-di-gd-12-m3", title: "Brand board and final reflection complete" },
+    ],
+  },
+  {
     id: "p-cap-1", code: "PRJ-CAP-01", title: "Smart Agriculture System",
     brief:
       "The capstone integrates all four technology areas into one working solution: an IoT sensor rig monitors soil and climate, a web application displays live telemetry, an AI layer analyses the data and issues planting or watering recommendations, and a business model turns the system into a viable product for small farms. This is what the four-course structure is for.",
@@ -237,6 +369,12 @@ export const SKILLS: Skill[] = [
   { id: "sk-di-biz",    domain: "Digital Innovation", name: "Business Modeling", via: { lessons: ["l-di-7", "l-di-8"] } },
   { id: "sk-di-mkt",    domain: "Digital Innovation", name: "Positioning & Growth", via: { lessons: ["l-di-9", "l-di-10"] } },
   { id: "sk-di-launch", domain: "Digital Innovation", name: "Launch & Iteration", via: { lessons: ["l-di-11", "l-di-12"] } },
+  { id: "sk-gd-foundations", domain: "Digital Innovation", name: "Graphic Design Foundations", via: { lessons: ["l-di-gd-1", "l-di-gd-2"], project: "p-di-gd-1" } },
+  { id: "sk-gd-color-type", domain: "Digital Innovation", name: "Color & Typography", via: { lessons: ["l-di-gd-3", "l-di-gd-4"], project: "p-di-gd-4" } },
+  { id: "sk-gd-layout-logo", domain: "Digital Innovation", name: "Layout & Logo Design", via: { lessons: ["l-di-gd-5", "l-di-gd-6"], project: "p-di-gd-6" } },
+  { id: "sk-gd-social-brand", domain: "Digital Innovation", name: "Social & Brand Identity Design", via: { lessons: ["l-di-gd-7", "l-di-gd-8", "l-di-gd-9"], project: "p-di-gd-9" } },
+  { id: "sk-gd-photo-ai", domain: "Digital Innovation", name: "Photo Editing & AI-Assisted Design", via: { lessons: ["l-di-gd-10", "l-di-gd-11"], project: "p-di-gd-11" } },
+  { id: "sk-gd-portfolio", domain: "Digital Innovation", name: "Graphic Design Portfolio", via: { lessons: ["l-di-gd-12"], project: "p-di-gd-12" } },
 
   { id: "sk-int-systems", domain: "Integration", name: "Cross-Domain Systems Builder", via: { project: "p-cap-1" } },
 ];
@@ -253,6 +391,12 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "ach-robotics-builder", title: "Robotics Builder",  desc: "Completed a robotics or IoT project.", metric: "Complete a Robotics & IoT project" },
   { id: "ach-code-builder",     title: "Code Builder",      desc: "Completed a software engineering project.", metric: "Complete a Software project" },
   { id: "ach-innovator",        title: "Innovator",         desc: "Completed a digital innovation project.", metric: "Complete an Innovation project" },
+  { id: "ach-design-explorer",  title: "Design Explorer",   desc: "Completed the first Graphic Design module.", metric: "Finish Graphic Design introduction" },
+  { id: "ach-color-creator",    title: "Color Creator",     desc: "Completed a color-theory design project.", metric: "Complete Brand Color Challenge" },
+  { id: "ach-logo-designer",    title: "Logo Designer",     desc: "Completed a logo-design project.", metric: "Complete NovaTech Logo" },
+  { id: "ach-social-designer",  title: "Social Designer",   desc: "Completed a social-media campaign project.", metric: "Complete Social Media Campaign" },
+  { id: "ach-ai-design-explorer", title: "AI Design Explorer", desc: "Completed an AI-assisted design challenge.", metric: "Complete AI-Assisted Design Challenge" },
+  { id: "ach-graphic-design-creator", title: "Graphic Design Creator", desc: "Completed the Graphic Design portfolio package.", metric: "Complete Graphic Design final project" },
   { id: "ach-tech-creator",     title: "Tech Creator",      desc: "Completed projects spanning three or more technology areas.", metric: "Projects across 3+ areas" },
   { id: "ach-halfway",          title: "Halfway Forge",     desc: "Passed 50% of the full lesson curriculum.", metric: "Reach 50% lesson progress" },
 ];
@@ -405,6 +549,43 @@ export const VIDEOS: Video[] = [
     published: true,
     createdAt: Date.now() - 8 * 86400000,
     updatedAt: Date.now() - 8 * 86400000,
+  },
+  // Graphic Design Academy Videos
+  {
+    id: "v-gd-1", lessonId: "l-di-gd-1", title: "Graphic Design Basics", description: "Beginner overview of what graphic design is and how visual communication works in everyday media.", videoUrl: "https://www.adobe.com/creativecloud/design/discover/graphic-design.html", thumbnailUrl: undefined, provider: "external", duration: 480, captionsUrl: undefined, sortOrder: 1, isRequired: true, published: true, createdAt: Date.now() - 7 * 86400000, updatedAt: Date.now() - 7 * 86400000,
+  },
+  {
+    id: "v-gd-2", lessonId: "l-di-gd-2", title: "Foundations of Graphic Design: Principles", description: "A visual introduction to principles such as balance, contrast, alignment, hierarchy, and spacing.", videoUrl: "https://www.adobe.com/learn/illustrator", thumbnailUrl: undefined, provider: "external", duration: 600, captionsUrl: undefined, sortOrder: 1, isRequired: true, published: true, createdAt: Date.now() - 7 * 86400000, updatedAt: Date.now() - 7 * 86400000,
+  },
+  {
+    id: "v-gd-3", lessonId: "l-di-gd-3", title: "Understanding Color Combinations", description: "Learn color relationships, harmony, and how colors affect composition, legibility, and clarity.", videoUrl: "https://keekee360design.com/blog/understanding-color-combinations-ep-3-foundations-of-graphic-design-adobe-creative-cloud/", thumbnailUrl: undefined, provider: "external", duration: 360, captionsUrl: undefined, sortOrder: 1, isRequired: true, published: true, createdAt: Date.now() - 7 * 86400000, updatedAt: Date.now() - 7 * 86400000,
+  },
+  {
+    id: "v-gd-4", lessonId: "l-di-gd-4", title: "Typography Essentials", description: "Communicate clearly with basic typography principles, readable type, and expressive font choices.", videoUrl: "https://www.adobe.com/learn/illustrator/web/intro-to-typography-video", thumbnailUrl: undefined, provider: "external", duration: 420, captionsUrl: undefined, sortOrder: 1, isRequired: true, published: true, createdAt: Date.now() - 7 * 86400000, updatedAt: Date.now() - 7 * 86400000,
+  },
+  {
+    id: "v-gd-5", lessonId: "l-di-gd-5", title: "Layout and Composition Foundations", description: "Explore grids, composition, alignment, spacing, and how to guide the viewer's eye.", videoUrl: "https://www.adobe.com/learn/illustrator", thumbnailUrl: undefined, provider: "external", duration: 540, captionsUrl: undefined, sortOrder: 1, isRequired: true, published: true, createdAt: Date.now() - 7 * 86400000, updatedAt: Date.now() - 7 * 86400000,
+  },
+  {
+    id: "v-gd-6", lessonId: "l-di-gd-6", title: "Logo Design Basics", description: "Learn how simple, scalable logo marks use shape, type, color, and memorability.", videoUrl: "https://www.adobe.com/creativecloud/design/discover/logo-design.html", thumbnailUrl: undefined, provider: "external", duration: 540, captionsUrl: undefined, sortOrder: 1, isRequired: true, published: true, createdAt: Date.now() - 7 * 86400000, updatedAt: Date.now() - 7 * 86400000,
+  },
+  {
+    id: "v-gd-7", lessonId: "l-di-gd-7", title: "Poster and Flyer Design Basics", description: "Learn how event information, imagery, layout, and calls to action work together.", videoUrl: "https://www.adobe.com/creativecloud/design/discover/flyer-design.html", thumbnailUrl: undefined, provider: "external", duration: 500, captionsUrl: undefined, sortOrder: 1, isRequired: true, published: true, createdAt: Date.now() - 7 * 86400000, updatedAt: Date.now() - 7 * 86400000,
+  },
+  {
+    id: "v-gd-8", lessonId: "l-di-gd-8", title: "Social Media Graphic Design", description: "Plan strong social media visuals with campaign consistency, clear hierarchy, and mobile-first readability.", videoUrl: "https://www.adobe.com/express/learn/blog/social-media-design", thumbnailUrl: undefined, provider: "external", duration: 480, captionsUrl: undefined, sortOrder: 1, isRequired: true, published: true, createdAt: Date.now() - 7 * 86400000, updatedAt: Date.now() - 7 * 86400000,
+  },
+  {
+    id: "v-gd-9", lessonId: "l-di-gd-9", title: "Brand Identity Basics", description: "Learn how logo, color, typography, imagery, and brand personality form a consistent visual identity.", videoUrl: "https://www.adobe.com/creativecloud/business/teams/resources/how-to/brand-identity.html", thumbnailUrl: undefined, provider: "external", duration: 540, captionsUrl: undefined, sortOrder: 1, isRequired: true, published: true, createdAt: Date.now() - 7 * 86400000, updatedAt: Date.now() - 7 * 86400000,
+  },
+  {
+    id: "v-gd-10", lessonId: "l-di-gd-10", title: "Photo Editing Fundamentals", description: "Practice crop, resize, brightness, contrast, saturation, exposure, filters, text, shapes, and layers.", videoUrl: "https://www.adobe.com/creativecloud/photography/discover/photo-editing.html", thumbnailUrl: undefined, provider: "external", duration: 600, captionsUrl: undefined, sortOrder: 1, isRequired: true, published: true, createdAt: Date.now() - 7 * 86400000, updatedAt: Date.now() - 7 * 86400000,
+  },
+  {
+    id: "v-gd-11", lessonId: "l-di-gd-11", title: "AI-Assisted Graphic Design", description: "Use AI for ideation, prompts, copy, palettes, critique, and image workflows while keeping human review.", videoUrl: "https://www.adobe.com/products/firefly.html", thumbnailUrl: undefined, provider: "external", duration: 540, captionsUrl: undefined, sortOrder: 1, isRequired: true, published: true, createdAt: Date.now() - 7 * 86400000, updatedAt: Date.now() - 7 * 86400000,
+  },
+  {
+    id: "v-gd-12", lessonId: "l-di-gd-12", title: "Build a Graphic Design Portfolio", description: "Prepare connected design work for a portfolio, including brand identity, social graphics, flyers, and presentation boards.", videoUrl: "https://www.adobe.com/creativecloud/design/discover/design-portfolio.html", thumbnailUrl: undefined, provider: "external", duration: 600, captionsUrl: undefined, sortOrder: 1, isRequired: true, published: true, createdAt: Date.now() - 7 * 86400000, updatedAt: Date.now() - 7 * 86400000,
   },
   // Robotics Course Videos
   {

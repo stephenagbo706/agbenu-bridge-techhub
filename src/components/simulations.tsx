@@ -1126,6 +1126,100 @@ function AITestPanel(props: {
   );
 }
 
+// ─── Graphic Design Studio ──────────────────────────────────────────────────
+
+type GDElement = { id: string; kind: "text" | "rect" | "circle" | "image"; x: number; y: number; w: number; h: number; fill: string; text?: string; fontSize?: number; rotate?: number };
+const GD_KEY = "techhub-graphic-design-studio-v1";
+const gdProjectBriefs = [
+  { id: "first", title: "My First Graphic", level: "Beginner", xp: 50, req: ["Title", "Message", "Image", "Background"], brief: "Create a motivational graphic with a title, short message, image area, background, and readable type." },
+  { id: "flyer", title: "AI Bootcamp Flyer", level: "Intermediate", xp: 100, req: ["Event title", "Date", "Time", "Location", "CTA", "Logo"], brief: "Design a flyer for Agbenu Bridge TechHub's AI Bootcamp with clear event details and a strong call to action." },
+  { id: "brand", title: "TechStart Brand Board", level: "Advanced", xp: 200, req: ["Logo", "Color palette", "Typography", "Social graphic", "Business card"], brief: "Create a mini brand identity board for TechStart Academy." },
+];
+const gdStart: GDElement[] = [
+  { id: "bg", kind: "rect", x: 0, y: 0, w: 720, h: 540, fill: "#f7f3e8", text: "Background" },
+  { id: "title", kind: "text", x: 64, y: 82, w: 430, h: 58, fill: "#1f2937", text: "CREATE YOUR FUTURE", fontSize: 40 },
+  { id: "message", kind: "text", x: 68, y: 156, w: 330, h: 40, fill: "#4b5563", text: "Learn. Design. Improve.", fontSize: 22 },
+  { id: "image", kind: "image", x: 440, y: 92, w: 190, h: 178, fill: "#2f5fe3", text: "Image" },
+  { id: "cta", kind: "rect", x: 68, y: 382, w: 210, h: 52, fill: "#c2317e", text: "CTA" },
+  { id: "ctaText", kind: "text", x: 94, y: 397, w: 170, h: 30, fill: "#ffffff", text: "Start today", fontSize: 20 },
+];
+const cloneGD = (items: GDElement[]) => items.map((item) => ({ ...item }));
+
+export function GraphicDesignStudioSim() {
+  const [projectId, setProjectId] = useState("first");
+  const [elements, setElements] = useState<GDElement[]>(() => {
+    try { return JSON.parse(localStorage.getItem(GD_KEY) || "").elements ?? gdStart; } catch { return gdStart; }
+  });
+  const [selectedId, setSelectedId] = useState("title");
+  const [history, setHistory] = useState<GDElement[][]>([]);
+  const [future, setFuture] = useState<GDElement[][]>([]);
+  const [drag, setDrag] = useState<{ id: string; dx: number; dy: number } | null>(null);
+  const [portfolio, setPortfolio] = useState<{ title: string; at: number; elements: GDElement[] }[]>(() => {
+    try { return JSON.parse(localStorage.getItem(`${GD_KEY}-portfolio`) || "[]"); } catch { return []; }
+  });
+  const project = gdProjectBriefs.find((item) => item.id === projectId) ?? gdProjectBriefs[0];
+  const selected = elements.find((item) => item.id === selectedId);
+  const designText = elements.map((item) => `${item.kind} ${item.text ?? ""}`).join(" ").toLowerCase();
+  const checks = project.req.map((req) => ({ req, ok: designText.includes(req.split(" ")[0].toLowerCase()) || (req === "Color palette" && new Set(elements.map((item) => item.fill)).size >= 3) }));
+  const score = Math.round((checks.filter((item) => item.ok).length / checks.length) * 100);
+  const commit = (next: GDElement[]) => { setHistory((old) => [...old.slice(-14), cloneGD(elements)]); setFuture([]); setElements(next); };
+  const update = (patch: Partial<GDElement>) => selected && commit(elements.map((item) => item.id === selected.id ? { ...item, ...patch } : item));
+  const add = (kind: GDElement["kind"]) => {
+    const id = `${kind}-${Date.now()}`;
+    const item: GDElement = kind === "text" ? { id, kind, x: 120, y: 120, w: 260, h: 48, fill: "#1f2937", text: "New text", fontSize: 26 } : kind === "circle" ? { id, kind, x: 150, y: 150, w: 120, h: 120, fill: "#2f5fe3" } : kind === "image" ? { id, kind, x: 180, y: 140, w: 190, h: 130, fill: "#8ecae6", text: "Image" } : { id, kind, x: 140, y: 140, w: 170, h: 90, fill: "#c2317e" };
+    commit([...elements, item]); setSelectedId(id);
+  };
+  const undo = () => { const prev = history[history.length - 1]; if (!prev) return; setFuture((old) => [cloneGD(elements), ...old]); setElements(prev); setHistory((old) => old.slice(0, -1)); };
+  const redo = () => { const next = future[0]; if (!next) return; setHistory((old) => [...old, cloneGD(elements)]); setElements(next); setFuture((old) => old.slice(1)); };
+  const save = () => localStorage.setItem(GD_KEY, JSON.stringify({ projectId, elements }));
+  const submit = () => { const next = [{ title: project.title, at: Date.now(), elements: cloneGD(elements) }, ...portfolio].slice(0, 8); setPortfolio(next); localStorage.setItem(`${GD_KEY}-portfolio`, JSON.stringify(next)); save(); };
+  const exportSvg = () => { const svg = document.querySelector("#gd-studio-svg")?.outerHTML; if (!svg) return; const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" })); const a = document.createElement("a"); a.href = url; a.download = `${project.title.toLowerCase().replace(/\s+/g, "-")}.svg`; a.click(); URL.revokeObjectURL(url); };
+  const remove = () => selected && selected.id !== "bg" && commit(elements.filter((item) => item.id !== selected.id));
+  const duplicate = () => selected && commit([...elements, { ...selected, id: `${selected.id}-${Date.now()}`, x: selected.x + 24, y: selected.y + 24 }]);
+  const layer = (dir: 1 | -1) => { if (!selected) return; const i = elements.findIndex((item) => item.id === selected.id); const j = i + dir; if (j < 0 || j >= elements.length) return; const next = cloneGD(elements); [next[i], next[j]] = [next[j], next[i]]; commit(next); };
+  const pointerMove = (event: React.PointerEvent<SVGSVGElement>) => {
+    if (!drag) return;
+    const box = event.currentTarget.getBoundingClientRect();
+    const x = ((event.clientX - box.left) / box.width) * 720;
+    const y = ((event.clientY - box.top) / box.height) * 540;
+    setElements((items) => items.map((item) => item.id === drag.id ? { ...item, x: Math.max(0, Math.min(700, x - drag.dx)), y: Math.max(0, Math.min(520, y - drag.dy)) } : item));
+  };
+  const pointerUp = () => { if (drag) save(); setDrag(null); };
+
+  return (
+    <SimulationContainer title="Graphic Design Studio" subtitle="Canvas editor, projects, feedback, save/reopen, export, and portfolio" badge="Design Lab" accent="#c2317e">
+      <div className="space-y-4">
+        <div className="grid gap-2 lg:grid-cols-3">
+          {gdProjectBriefs.map((item) => <button key={item.id} onClick={() => setProjectId(item.id)} className={cn("rounded-lg border-1.5 px-3 py-3 text-left focus-ring", project.id === item.id ? "border-di bg-di-soft" : "border-line bg-paper/50")}><span className="block text-sm font-semibold">{item.title}</span><span className="mt-1 block font-mono text-[10px] uppercase tracking-wider text-mute">{item.level} · +{item.xp} XP</span></button>)}
+        </div>
+        <div className="grid gap-4 xl:grid-cols-[245px_minmax(0,1fr)_270px]">
+          <div className="space-y-3">
+            <div className="rounded-lg border-1.5 border-line bg-card p-3"><h4 className="font-display text-sm font-bold">Project brief</h4><p className="mt-2 text-sm leading-relaxed text-mute">{project.brief}</p><div className="mt-3 h-2 overflow-hidden rounded-full bg-line"><div className="h-full bg-di" style={{ width: `${score}%` }} /></div><div className="mt-2 space-y-1 text-xs">{checks.map((item) => <div key={item.req}>{item.ok ? "✓" : "○"} {item.req}</div>)}</div></div>
+            <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3"><h4 className="font-display text-sm font-bold">Assets</h4><div className="mt-2 grid grid-cols-2 gap-2"><button className="btn btn-ghost btn-sm" onClick={() => add("text")}>Text</button><button className="btn btn-ghost btn-sm" onClick={() => add("rect")}>Shape</button><button className="btn btn-ghost btn-sm" onClick={() => add("circle")}>Circle</button><button className="btn btn-ghost btn-sm" onClick={() => add("image")}>Image</button></div></div>
+          </div>
+          <div className="rounded-lg border-1.5 border-line bg-[#ece7da] p-3">
+            <div className="mb-2 flex flex-wrap gap-2"><button className="btn btn-ghost btn-sm" onClick={undo} disabled={!history.length}>Undo</button><button className="btn btn-ghost btn-sm" onClick={redo} disabled={!future.length}>Redo</button><button className="btn btn-ghost btn-sm" onClick={duplicate}>Duplicate</button><button className="btn btn-ghost btn-sm" onClick={remove}>Delete</button><button className="btn btn-gold btn-sm" onClick={save}>Save</button><button className="btn btn-primary btn-sm" onClick={submit}>Submit</button><button className="btn btn-dark btn-sm" onClick={exportSvg}>Export SVG</button></div>
+            <svg id="gd-studio-svg" viewBox="0 0 720 540" className="aspect-[4/3] w-full rounded-md bg-white shadow-sm" onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerLeave={pointerUp}>
+              {elements.map((item) => <g key={item.id} transform={`rotate(${item.rotate ?? 0} ${item.x + item.w / 2} ${item.y + item.h / 2})`} onPointerDown={(event) => { setSelectedId(item.id); setDrag({ id: item.id, dx: (event.nativeEvent.offsetX / event.currentTarget.ownerSVGElement!.clientWidth) * 720 - item.x, dy: (event.nativeEvent.offsetY / event.currentTarget.ownerSVGElement!.clientHeight) * 540 - item.y }); }}>
+                {item.kind === "text" && <text x={item.x} y={item.y + (item.fontSize ?? 24)} fill={item.fill} fontSize={item.fontSize ?? 24} fontFamily="Inter, Arial" fontWeight={item.id === "title" ? 800 : 600}>{item.text}</text>}
+                {item.kind === "rect" && <rect x={item.x} y={item.y} width={item.w} height={item.h} rx={10} fill={item.fill} />}
+                {item.kind === "circle" && <ellipse cx={item.x + item.w / 2} cy={item.y + item.h / 2} rx={item.w / 2} ry={item.h / 2} fill={item.fill} />}
+                {item.kind === "image" && <><rect x={item.x} y={item.y} width={item.w} height={item.h} rx={12} fill={item.fill} /><circle cx={item.x + item.w * 0.32} cy={item.y + item.h * 0.35} r={22} fill="#ffffff55" /><path d={`M${item.x + 18} ${item.y + item.h - 20} L${item.x + item.w * 0.48} ${item.y + item.h * 0.56} L${item.x + item.w - 18} ${item.y + item.h - 20}Z`} fill="#ffffff88" /></>}
+                {selectedId === item.id && <rect x={item.x - 4} y={item.y - 4} width={item.w + 8} height={item.h + 8} fill="none" stroke="#c2317e" strokeDasharray="6 4" strokeWidth={2} />}
+              </g>)}
+            </svg>
+          </div>
+          <div className="space-y-3">
+            <div className="rounded-lg border-1.5 border-line bg-card p-3"><h4 className="font-display text-sm font-bold">Inspector</h4>{selected ? <div className="mt-3 space-y-2">{selected.kind === "text" && <input className="inp" value={selected.text ?? ""} onChange={(event) => update({ text: event.target.value })} aria-label="Selected text" />}<input className="h-10 w-full rounded-md border border-line" type="color" value={selected.fill} onChange={(event) => update({ fill: event.target.value })} /><div className="grid grid-cols-2 gap-2"><input className="inp" type="number" value={Math.round(selected.x)} onChange={(event) => update({ x: Number(event.target.value) })} aria-label="X" /><input className="inp" type="number" value={Math.round(selected.y)} onChange={(event) => update({ y: Number(event.target.value) })} aria-label="Y" /><input className="inp" type="number" value={Math.round(selected.w)} onChange={(event) => update({ w: Number(event.target.value) })} aria-label="Width" /><input className="inp" type="number" value={Math.round(selected.h)} onChange={(event) => update({ h: Number(event.target.value) })} aria-label="Height" /></div>{selected.kind === "text" && <input className="inp" type="number" value={selected.fontSize ?? 24} onChange={(event) => update({ fontSize: Number(event.target.value) })} aria-label="Font size" />}<input type="range" min="-45" max="45" value={selected.rotate ?? 0} onChange={(event) => update({ rotate: Number(event.target.value) })} className="w-full" /><div className="flex gap-2"><button className="btn btn-ghost btn-sm" onClick={() => layer(-1)}>Layer down</button><button className="btn btn-ghost btn-sm" onClick={() => layer(1)}>Layer up</button></div></div> : <p className="mt-2 text-sm text-mute">Select an element.</p>}</div>
+            <div className="rounded-lg border-1.5 border-line bg-paper/50 p-3"><h4 className="font-display text-sm font-bold">Design review</h4><div className="mt-2 space-y-1 text-xs"><div>Typography {elements.some((item) => item.kind === "text") ? "✓" : "○"}</div><div>Color {new Set(elements.map((item) => item.fill)).size >= 2 ? "✓" : "○"}</div><div>Layout {elements.length >= 4 ? "✓" : "○"}</div><div>Hierarchy {elements.some((item) => (item.fontSize ?? 0) >= 32) ? "✓" : "⚠"}</div></div><p className="mt-2 text-[11px] leading-relaxed text-mute">Automated feedback is a practice guide, not professional human design review.</p></div>
+            <div className="rounded-lg border-1.5 border-line bg-card p-3"><h4 className="font-display text-sm font-bold">My Design Portfolio</h4><div className="mt-2 space-y-2">{portfolio.length ? portfolio.map((item) => <button key={`${item.title}-${item.at}`} onClick={() => { setProjectId(gdProjectBriefs.find((p) => p.title === item.title)?.id ?? "first"); setElements(item.elements); }} className="w-full rounded-md border border-line px-2 py-2 text-left text-xs hover:border-di">{item.title}<span className="block text-mute">{new Date(item.at).toLocaleDateString()}</span></button>) : <p className="text-xs text-mute">Submit a design to start your portfolio.</p>}</div></div>
+          </div>
+        </div>
+      </div>
+    </SimulationContainer>
+  );
+}
+
 // ─── Robot Movement Simulator ────────────────────────────────────────────────
 
 type Direction = "up" | "down" | "left" | "right";
