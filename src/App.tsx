@@ -197,11 +197,16 @@ function App() {
 function BootApp() {
   const { user } = useApp();
   const [booting, setBooting] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem("techhub-sidebar-collapsed") === "1");
 
   useEffect(() => {
     const timer = window.setTimeout(() => setBooting(false), 3000);
     return () => window.clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("techhub-sidebar-collapsed", sidebarCollapsed ? "1" : "0");
+  }, [sidebarCollapsed]);
 
   if (booting) {
     return <LoadingScreen />;
@@ -218,9 +223,9 @@ function BootApp() {
 
   return (
     <div className="bg-blueprint min-h-screen">
-      <Sidebar />
+      <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed((current) => !current)} />
       <MobileDrawer />
-      <div className="lg:pl-60">
+      <div className={cn("transition-[padding] duration-200", sidebarCollapsed ? "lg:pl-20" : "lg:pl-60")}>
         <Topbar />
         <main className="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6 sm:pt-8">
           <View />
@@ -234,13 +239,13 @@ function BootApp() {
 
 // ─── Sidebar ────────────────────────────────────────────────────────────────
 
-function Brand() {
+function Brand({ collapsed = false }: { collapsed?: boolean }) {
   return (
-    <div className="flex items-center gap-2.5 px-1">
+    <div className={cn("flex items-center gap-2.5 px-1", collapsed && "justify-center px-0")}>
       <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg border-1.5 border-brand bg-ink2 text-brand">
         <img src="/abt-logo.png" alt="Agbenu Bridge TechHub logo" className="h-full w-full object-cover" />
       </span>
-      <div>
+      <div className={cn(collapsed && "sr-only")}>
         <div className="font-display text-[15px] font-bold leading-none tracking-tight text-paper">Agbenu Bridge TechHub</div>
         <div className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.22em] text-paper/45">Learn Technology. Build the Future.</div>
       </div>
@@ -248,7 +253,7 @@ function Brand() {
   );
 }
 
-function NavContent() {
+function NavContent({ collapsed = false, onToggle }: { collapsed?: boolean; onToggle?: () => void }) {
   const app = useApp();
   const { user, route } = app;
   if (!user) return null;
@@ -257,30 +262,45 @@ function NavContent() {
 
   return (
     <>
-      <Brand />
-      <nav className="mt-6 flex-1 space-y-5 overflow-y-auto pr-1 thin-scroll">
+      <div className={cn("flex items-center", collapsed ? "justify-center" : "justify-between gap-2")}>
+        <Brand collapsed={collapsed} />
+        {onToggle && (
+          <button
+            onClick={onToggle}
+            className={cn("hidden h-8 w-8 items-center justify-center rounded-md border-1.5 border-paper/10 text-paper/60 transition-colors hover:bg-paper/10 hover:text-paper lg:flex", collapsed && "absolute -right-3 top-5 bg-ink shadow-sm")}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <Icon name={collapsed ? "arrowR" : "arrowL"} size={15} />
+          </button>
+        )}
+      </div>
+      <nav className={cn("mt-6 flex-1 space-y-5 overflow-y-auto thin-scroll", collapsed ? "pr-0" : "pr-1")}>
         {isStaff ? (
           <div>
-            <div className="mb-1.5 px-3 font-mono text-[9.5px] uppercase tracking-[0.18em] text-paper/35">Staff</div>
+            <div className={cn("mb-1.5 px-3 font-mono text-[9.5px] uppercase tracking-[0.18em] text-paper/35", collapsed && "sr-only")}>Staff</div>
             <button
               onClick={() => app.nav({ name: "admin" })}
+              title={collapsed ? "Admin console" : undefined}
               className={cn(
-                "flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-semibold transition-colors",
+                "flex w-full items-center rounded-md py-2 text-sm font-semibold transition-colors",
+                collapsed ? "justify-center px-0" : "gap-2.5 px-3",
                 route.name === "admin" ? "bg-paper/12 text-gold" : "text-paper/70 hover:bg-paper/8 hover:text-paper",
               )}
             >
-              <Icon name="shield" size={16} /> Admin console
-              <span className="dot-live ml-auto h-1.5 w-1.5 rounded-full bg-gold" />
+              <Icon name="shield" size={16} /> <span className={cn(collapsed && "sr-only")}>Admin console</span>
+              <span className={cn("dot-live h-1.5 w-1.5 rounded-full bg-gold", collapsed ? "absolute ml-6 mt-[-18px]" : "ml-auto")} />
             </button>
           </div>
         ) : (
           STUDENT_NAV.map((sec) => (
             <div key={sec.section}>
-              <div className="mb-1.5 px-3 font-mono text-[9.5px] uppercase tracking-[0.18em] text-paper/35">{sec.section}</div>
+              <div className={cn("mb-1.5 px-3 font-mono text-[9.5px] uppercase tracking-[0.18em] text-paper/35", collapsed && "sr-only")}>{sec.section}</div>
               <div className="space-y-0.5">
                 {sec.items.map((it) => (
                   <button
                     key={it.route}
+                    title={collapsed ? it.label : undefined}
                     onClick={() => {
                       // For labs, include active course ID if available
                       if (it.route === "labs" && app.hasActiveCourse()) {
@@ -291,13 +311,15 @@ function NavContent() {
                       }
                     }}
                     className={cn(
-                      "flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-semibold transition-all",
+                      "flex w-full items-center rounded-md py-2 text-sm font-semibold transition-all",
+                      collapsed ? "justify-center px-0" : "gap-2.5 px-3",
                       activeName === it.route
                         ? "bg-paper/12 text-gold shadow-[inset_2.5px_0_0_0_var(--color-gold)]"
                         : "text-paper/70 hover:bg-paper/8 hover:text-paper",
                     )}
                   >
-                    <Icon name={it.icon} size={16} /> {it.label}
+                    <Icon name={it.icon} size={16} /> <span className={cn(collapsed && "sr-only")}>{it.label}</span>
+                    {it.route === "liveclasses" && !collapsed && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-danger" />}
                   </button>
                 ))}
               </div>
@@ -305,7 +327,7 @@ function NavContent() {
           ))
         )}
 
-        {!isStaff && app.hasActiveCourse() && (
+        {!isStaff && app.hasActiveCourse() && !collapsed && (
           <div>
             <div className="mb-1.5 px-3 font-mono text-[9.5px] uppercase tracking-[0.18em] text-paper/35">In progress</div>
             <div className="space-y-1 px-1">
@@ -328,9 +350,9 @@ function NavContent() {
         )}
       </nav>
       <div className="mt-4 border-t-1.5 border-paper/10 pt-4">
-        <div className="flex items-center gap-2.5">
+        <div className={cn("flex items-center gap-2.5", collapsed && "justify-center")}>
           <Avatar user={user} size={34} />
-          <div className="min-w-0 flex-1">
+          <div className={cn("min-w-0 flex-1", collapsed && "sr-only")}>
             <div className="truncate text-[13px] font-bold text-paper">{user.name}</div>
             <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-paper/45">{user.role}</div>
           </div>
@@ -343,12 +365,12 @@ function NavContent() {
   );
 }
 
-function Sidebar() {
+function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const { user } = useApp();
   if (!user) return null;
   return (
-    <aside className="bg-sidebar-trace fixed inset-y-0 left-0 z-40 hidden w-60 flex-col bg-ink px-3.5 py-5 lg:flex">
-      <NavContent />
+    <aside className={cn("bg-sidebar-trace fixed inset-y-0 left-0 z-40 hidden flex-col bg-ink py-5 transition-[width,padding] duration-200 lg:flex relative", collapsed ? "w-20 px-3" : "w-60 px-3.5")}>
+      <NavContent collapsed={collapsed} onToggle={onToggle} />
     </aside>
   );
 }

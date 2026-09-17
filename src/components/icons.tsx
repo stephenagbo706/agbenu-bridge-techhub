@@ -73,6 +73,13 @@ const P: Record<string, ReactNode> = {
   arrowR: <path d="M4 12h16M13.5 5.5L20 12l-6.5 6.5" />,
   arrowL: <path d="M20 12H4M10.5 5.5L4 12l6.5 6.5" />,
   play: <path d="M7.5 4.5l12 7.5-12 7.5z" />,
+  video: (
+    <>
+      <rect x="3.5" y="6.5" width="12.5" height="11" rx="2" />
+      <path d="M16 10l4.5-2.5v9L16 14z" />
+      <path d="M7.5 10.5h4" />
+    </>
+  ),
   chevD: <path d="M5 9l7 7 7-7" />,
   chevR: <path d="M9 5l7 7-7 7" />,
   plus: <path d="M12 4.5v15M4.5 12h15" />,
