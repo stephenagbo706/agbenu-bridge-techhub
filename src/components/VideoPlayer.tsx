@@ -43,6 +43,7 @@ export function VideoPlayer({ video, className }: VideoPlayerProps) {
   const isYouTube = isYouTubeUrl(video.videoUrl);
   const isVimeo = isVimeoUrl(video.videoUrl);
   const isExternalPlayer = isYouTube || isVimeo;
+  const isLinkedResource = video.provider === "external" && !isExternalPlayer;
 
   // Format time as MM:SS
   const formatTime = (seconds: number): string => {
@@ -69,7 +70,7 @@ export function VideoPlayer({ video, className }: VideoPlayerProps) {
 
   // Load video and resume position (only for HTML5 video)
   useEffect(() => {
-    if (isExternalPlayer) return; // Skip for YouTube/Vimeo
+    if (isExternalPlayer || isLinkedResource) return; // Skip for iframe/external lesson resources
     
     const videoEl = videoRef.current;
     if (!videoEl) return;
@@ -120,7 +121,7 @@ export function VideoPlayer({ video, className }: VideoPlayerProps) {
         clearTimeout(progressSaveTimer.current);
       }
     };
-  }, [video.id, debouncedSaveProgress, saveProgress, app, isExternalPlayer]);
+  }, [video.id, debouncedSaveProgress, saveProgress, app, isExternalPlayer, isLinkedResource]);
 
   // Toggle play/pause (only for HTML5 video)
   const togglePlay = () => {
@@ -258,6 +259,41 @@ export function VideoPlayer({ video, className }: VideoPlayerProps) {
             <Icon name="refresh" size={14} /> Retry
           </button>
         </div>
+      </div>
+    );
+  }
+
+  if (isLinkedResource) {
+    return (
+      <div className={cn("card-ink overflow-hidden bg-card", className)}>
+        <div className="grid gap-4 p-4 sm:grid-cols-[180px_minmax(0,1fr)] sm:p-5">
+          <div className="flex aspect-video items-center justify-center rounded-md border-1.5 border-line bg-ink text-white">
+            {video.thumbnailUrl ? (
+              <img src={video.thumbnailUrl} alt="" className="h-full w-full rounded-md object-cover" />
+            ) : (
+              <Icon name="play" size={36} />
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-wider text-mute">External lesson video</p>
+            <h3 className="mt-1 font-display text-base font-bold">{video.title}</h3>
+            <p className="mt-1 text-sm leading-relaxed text-mute">{video.description}</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <a href={video.videoUrl} target="_blank" rel="noreferrer" className="btn btn-primary btn-sm">
+                <Icon name="play" size={14} /> Open video
+              </a>
+              <button type="button" onClick={() => app.completeVideo(video.id)} className="btn btn-ghost btn-sm">
+                <Icon name="check" size={14} /> Mark complete
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {progress?.completed && (
+          <div className="border-t border-line bg-se-soft px-4 py-2 text-xs font-semibold text-se">
+            <Icon name="check" size={12} /> Completed
+          </div>
+        )}
       </div>
     );
   }

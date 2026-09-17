@@ -38,6 +38,14 @@ function appendMissingById<T extends { id: string }>(current: T[], seed: T[]): T
   return missing.length ? [...current, ...missing] : current;
 }
 
+function upsertSeedById<T extends { id: string }>(current: T[], seed: T[]): T[] {
+  const seedById = new Map(seed.map((item) => [item.id, item]));
+  const merged = current.map((item) => seedById.get(item.id) ?? item);
+  const ids = new Set(merged.map((item) => item.id));
+  const missing = seed.filter((item) => !ids.has(item.id));
+  return missing.length ? [...merged, ...missing] : merged;
+}
+
 function mergeSeedContent(parsed: DB): DB {
   const seed = buildSeedDB();
   return {
@@ -50,7 +58,7 @@ function mergeSeedContent(parsed: DB): DB {
     projects: appendMissingById(parsed.projects ?? [], seed.projects),
     skills: appendMissingById(parsed.skills ?? [], seed.skills),
     achievements: appendMissingById(parsed.achievements ?? [], seed.achievements),
-    videos: appendMissingById(parsed.videos ?? [], seed.videos),
+    videos: upsertSeedById(parsed.videos ?? [], seed.videos),
   };
 }
 
